@@ -19,6 +19,10 @@ on:
         description: "Lotus npm version used by Bodhi release (for example: latest or 2026.3.8)"
         required: false
         default: "latest"
+      lotus_skip_tests:
+        description: "Pass true to skip Lotus publish workflow tests"
+        required: false
+        default: "true"
 
 permissions:
   contents: read
@@ -47,6 +51,7 @@ jobs:
           LOTUS_REF: ${{ github.event.inputs.lotus_ref }}
           BODHI_REF: ${{ github.event.inputs.bodhi_ref }}
           LOTUS_VERSION: ${{ github.event.inputs.lotus_version }}
+          LOTUS_SKIP_TESTS: ${{ github.event.inputs.lotus_skip_tests }}
         run: |
           set -euo pipefail
 
@@ -94,7 +99,7 @@ jobs:
           }
 
           dispatch_and_wait "bigduu/Bamboo-agent" "publish-crate.yml" "${BAMBOO_REF}"
-          dispatch_and_wait "bigduu/Lotus" "publish-npm.yml" "${LOTUS_REF}"
+          dispatch_and_wait "bigduu/Lotus" "publish-npm.yml" "${LOTUS_REF}" "skip_tests=${LOTUS_SKIP_TESTS}"
           dispatch_and_wait "bigduu/Bodhi" "release.yml" "${BODHI_REF}" "lotus_version=${LOTUS_VERSION}"
 
           echo "Release train completed successfully."

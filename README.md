@@ -90,3 +90,4 @@ Required secret in the **Zenith** repo:
 Suggested trigger:
 
 - Manual: `Actions -> Release Train -> Run workflow`
+- Optional input: `lotus_skip_tests=true` (default) to skip Lotus publish tests during coordinated release.
