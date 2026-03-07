@@ -100,7 +100,7 @@ Release manifest fields:
 ```json
 {
   "refs": { "bamboo": "main", "lotus": "main", "bodhi": "main" },
-  "versions": { "release": "2026.3.9", "bamboo": "2026.3.9", "lotus": "2026.3.9", "bodhi": "2026.3.9" },
+  "versions": { "release": "2026.3.11", "bamboo": "2026.3.11", "lotus": "2026.3.11", "bodhi": "2026.3.11" },
   "options": { "lotus_skip_tests": true }
 }
 ```
