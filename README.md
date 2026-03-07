@@ -93,3 +93,9 @@ Suggested trigger:
 - Optional input: `bamboo_version` (default `latest`) to control which `bamboo-agent` crates.io version Bodhi embeds.
 - Optional input: `lotus_version` (default `latest`) to control which `@bigduu/lotus` npm version Bodhi bundles.
 - Optional input: `lotus_skip_tests=true` (default) to skip Lotus publish tests during coordinated release.
+
+Single release entrypoint policy:
+
+- Use **only** `Zenith -> Release Train` for normal releases.
+- Sub-repo auto release triggers were disabled to avoid split/duplicate publish paths.
+- Manual sub-repo publish workflows remain available for emergency recovery only.
