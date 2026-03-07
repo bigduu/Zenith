@@ -1,0 +1,100 @@
+name: Release Train
+
+on:
+  workflow_dispatch:
+    inputs:
+      bamboo_ref:
+        description: "Ref for Bamboo release workflow"
+        required: false
+        default: "main"
+      lotus_ref:
+        description: "Ref for Lotus publish workflow"
+        required: false
+        default: "main"
+      bodhi_ref:
+        description: "Ref for Bodhi release workflow"
+        required: false
+        default: "main"
+      lotus_version:
+        description: "Lotus npm version used by Bodhi release (for example: latest or 2026.3.8)"
+        required: false
+        default: "latest"
+
+permissions:
+  contents: read
+
+jobs:
+  orchestrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate release token
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_ORCHESTRATOR_TOKEN }}
+        run: |
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "Missing RELEASE_ORCHESTRATOR_TOKEN secret."
+            echo "Create a token with permissions to run and read workflows in:"
+            echo "- bigduu/Bamboo-agent"
+            echo "- bigduu/Lotus"
+            echo "- bigduu/Bodhi"
+            exit 1
+          fi
+
+      - name: Run Bamboo -> Lotus -> Bodhi
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_ORCHESTRATOR_TOKEN }}
+          BAMBOO_REF: ${{ github.event.inputs.bamboo_ref }}
+          LOTUS_REF: ${{ github.event.inputs.lotus_ref }}
+          BODHI_REF: ${{ github.event.inputs.bodhi_ref }}
+          LOTUS_VERSION: ${{ github.event.inputs.lotus_version }}
+        run: |
+          set -euo pipefail
+
+          dispatch_and_wait() {
+            local repo="$1"
+            local workflow="$2"
+            local ref="$3"
+            shift 3
+
+            local start_epoch
+            start_epoch="$(date -u +%s)"
+
+            echo "Dispatching ${workflow} on ${repo}@${ref}"
+            local cmd=(gh workflow run "${workflow}" -R "${repo}" --ref "${ref}")
+            for input in "$@"; do
+              cmd+=(-f "${input}")
+            done
+            "${cmd[@]}"
+
+            local run_id=""
+            for _ in $(seq 1 90); do
+              run_id="$(gh run list \
+                -R "${repo}" \
+                --workflow "${workflow}" \
+                --event workflow_dispatch \
+                --branch "${ref}" \
+                --limit 20 \
+                --json databaseId,createdAt \
+                --jq "[.[] | select((.createdAt | fromdateiso8601) >= ${start_epoch})] | first | .databaseId // empty")"
+
+              if [ -n "${run_id}" ]; then
+                break
+              fi
+              sleep 5
+            done
+
+            if [ -z "${run_id}" ]; then
+              echo "Unable to find workflow run for ${repo}:${workflow}"
+              exit 1
+            fi
+
+            echo "Watching run ${run_id} for ${repo}:${workflow}"
+            gh run watch "${run_id}" -R "${repo}" --interval 20 --exit-status
+            echo "Completed ${repo}:${workflow}"
+          }
+
+          dispatch_and_wait "bigduu/Bamboo-agent" "publish-crate.yml" "${BAMBOO_REF}"
+          dispatch_and_wait "bigduu/Lotus" "publish-npm.yml" "${LOTUS_REF}"
+          dispatch_and_wait "bigduu/Bodhi" "release.yml" "${BODHI_REF}" "lotus_version=${LOTUS_VERSION}"
+
+          echo "Release train completed successfully."

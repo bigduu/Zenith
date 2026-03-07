@@ -67,3 +67,26 @@ If submodule URLs are updated in `.gitmodules`:
 git submodule sync --recursive
 git submodule update --init --recursive
 ```
+
+## Coordinated Release Train
+
+Zenith now provides a root workflow to orchestrate cross-repo releases in order:
+
+1. `bamboo` -> publish crate (`publish-crate.yml`)
+2. `lotus` -> publish npm package (`publish-npm.yml`)
+3. `bodhi` -> build and publish Tauri binaries (`release.yml`)
+
+Workflow file:
+
+- `.github/workflows/release-train.yml`
+
+Required secret in the **Zenith** repo:
+
+- `RELEASE_ORCHESTRATOR_TOKEN`: token that can trigger and read workflows in:
+  - `bigduu/Bamboo-agent`
+  - `bigduu/Lotus`
+  - `bigduu/Bodhi`
+
+Suggested trigger:
+
+- Manual: `Actions -> Release Train -> Run workflow`
