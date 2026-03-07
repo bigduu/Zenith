@@ -110,6 +110,12 @@ Typical version bump flow:
 2. Commit and push to Zenith `main`.
 3. Run `Release Train` with default `from_manifest` inputs.
 
+Version guardrails:
+
+- `bamboo_version` must exist on crates.io (for example `bamboo-agent@2026.3.3`).
+- `lotus_version` must exist on npm (for example `@bigduu/lotus@2026.3.8`).
+- Release Train now waits for those versions after Bamboo/Lotus publish and fails early with a clear error if they are unavailable.
+
 Single release entrypoint policy:
 
 - Use **only** `Zenith -> Release Train` for normal releases.

@@ -172,8 +172,66 @@ jobs:
             echo "Completed ${repo}:${workflow}"
           }
 
+          wait_for_crates_version() {
+            local crate_name="$1"
+            local version="$2"
+            local max_attempts=30
+            local attempt=1
+
+            if [ "${version}" = "latest" ]; then
+              return 0
+            fi
+
+            echo "Validating crates.io availability: ${crate_name}@${version}"
+            while [ "${attempt}" -le "${max_attempts}" ]; do
+              if curl -fsS "https://crates.io/api/v1/crates/${crate_name}/${version}" >/dev/null; then
+                echo "Found ${crate_name}@${version} on crates.io"
+                return 0
+              fi
+              echo "Attempt ${attempt}/${max_attempts}: ${crate_name}@${version} not visible on crates.io yet; retrying in 10s..."
+              attempt=$((attempt + 1))
+              sleep 10
+            done
+
+            echo "Unable to find ${crate_name}@${version} on crates.io."
+            echo "Bamboo publish workflow only publishes the version in Bamboo's Cargo.toml."
+            echo "Please bump Bamboo Cargo.toml version (or update Zenith manifest to an existing crate version) and retry."
+            exit 1
+          }
+
+          wait_for_npm_version() {
+            local package_path_escaped="$1"
+            local version="$2"
+            local max_attempts=30
+            local attempt=1
+
+            if [ "${version}" = "latest" ]; then
+              return 0
+            fi
+
+            echo "Validating npm availability: ${package_path_escaped/@/%40}@${version}"
+            while [ "${attempt}" -le "${max_attempts}" ]; do
+              if curl -fsS "https://registry.npmjs.org/${package_path_escaped}/${version}" >/dev/null; then
+                echo "Found ${package_path_escaped/@/%40}@${version} on npm"
+                return 0
+              fi
+              echo "Attempt ${attempt}/${max_attempts}: ${package_path_escaped/@/%40}@${version} not visible on npm yet; retrying in 10s..."
+              attempt=$((attempt + 1))
+              sleep 10
+            done
+
+            echo "Unable to find ${package_path_escaped/@/%40}@${version} on npm."
+            echo "Lotus publish workflow only publishes the version in Lotus package.json."
+            echo "Please bump Lotus package.json version (or update Zenith manifest to an existing npm version) and retry."
+            exit 1
+          }
+
           dispatch_and_wait "bigduu/Bamboo-agent" "publish-crate.yml" "${BAMBOO_REF}"
+          wait_for_crates_version "bamboo-agent" "${BAMBOO_VERSION}"
+
           dispatch_and_wait "bigduu/Lotus" "publish-npm.yml" "${LOTUS_REF}" "skip_tests=${LOTUS_SKIP_TESTS}"
+          wait_for_npm_version "@bigduu%2flotus" "${LOTUS_VERSION}"
+
           dispatch_and_wait "bigduu/Bodhi" "release.yml" "${BODHI_REF}" "bamboo_version=${BAMBOO_VERSION}" "lotus_version=${LOTUS_VERSION}"
 
           echo "Release train completed successfully."
