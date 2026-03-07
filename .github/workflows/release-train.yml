@@ -16,7 +16,7 @@ on:
         required: false
         default: "from_manifest"
       release_version:
-        description: "Unified version for Bamboo + Lotus publish (use 'from_manifest' to read .versions.release)"
+        description: "Unified version for Bamboo + Lotus + Bodhi publish (use 'from_manifest' to read .versions.release)"
         required: false
         default: "from_manifest"
       bamboo_version:
@@ -25,6 +25,10 @@ on:
         default: "from_manifest"
       lotus_version:
         description: "Lotus npm version used by Bodhi release (use 'from_manifest' to read Zenith config)"
+        required: false
+        default: "from_manifest"
+      bodhi_version:
+        description: "Bodhi app version used for release tag/assets (use 'from_manifest' to read Zenith config)"
         required: false
         default: "from_manifest"
       lotus_skip_tests:
@@ -103,6 +107,15 @@ jobs:
             LOTUS_VERSION="$(resolve_value "${LOTUS_VERSION_INPUT}" '.versions.lotus')"
           fi
 
+          BODHI_VERSION_INPUT="${{ github.event.inputs.bodhi_version }}"
+          if [ -n "${BODHI_VERSION_INPUT}" ] && [ "${BODHI_VERSION_INPUT}" != "from_manifest" ]; then
+            BODHI_VERSION="${BODHI_VERSION_INPUT}"
+          elif [ -n "${RELEASE_VERSION}" ] && [ "${RELEASE_VERSION}" != "null" ]; then
+            BODHI_VERSION="${RELEASE_VERSION}"
+          else
+            BODHI_VERSION="$(resolve_value "${BODHI_VERSION_INPUT}" '.versions.bodhi')"
+          fi
+
           LOTUS_SKIP_TESTS="$(resolve_value "${{ github.event.inputs.lotus_skip_tests }}" '.options.lotus_skip_tests')"
 
           case "${LOTUS_SKIP_TESTS}" in
@@ -120,6 +133,7 @@ jobs:
             echo "release_version=${RELEASE_VERSION}"
             echo "bamboo_version=${BAMBOO_VERSION}"
             echo "lotus_version=${LOTUS_VERSION}"
+            echo "bodhi_version=${BODHI_VERSION}"
             echo "lotus_skip_tests=${LOTUS_SKIP_TESTS}"
           } >> "${GITHUB_OUTPUT}"
 
@@ -131,6 +145,7 @@ jobs:
           - release_version=${RELEASE_VERSION}
           - bamboo_version=${BAMBOO_VERSION}
           - lotus_version=${LOTUS_VERSION}
+          - bodhi_version=${BODHI_VERSION}
           - lotus_skip_tests=${LOTUS_SKIP_TESTS}
           EOF
 
@@ -155,6 +170,7 @@ jobs:
           BODHI_REF: ${{ steps.resolve.outputs.bodhi_ref }}
           BAMBOO_VERSION: ${{ steps.resolve.outputs.bamboo_version }}
           LOTUS_VERSION: ${{ steps.resolve.outputs.lotus_version }}
+          BODHI_VERSION: ${{ steps.resolve.outputs.bodhi_version }}
           LOTUS_SKIP_TESTS: ${{ steps.resolve.outputs.lotus_skip_tests }}
         run: |
           set -euo pipefail
@@ -262,6 +278,6 @@ jobs:
           dispatch_and_wait "bigduu/Lotus" "publish-npm.yml" "${LOTUS_REF}" "version=${LOTUS_VERSION}" "skip_tests=${LOTUS_SKIP_TESTS}"
           wait_for_npm_version "@bigduu%2flotus" "${LOTUS_VERSION}"
 
-          dispatch_and_wait "bigduu/Bodhi" "release.yml" "${BODHI_REF}" "bamboo_version=${BAMBOO_VERSION}" "lotus_version=${LOTUS_VERSION}"
+          dispatch_and_wait "bigduu/Bodhi" "release.yml" "${BODHI_REF}" "bodhi_version=${BODHI_VERSION}" "bamboo_version=${BAMBOO_VERSION}" "lotus_version=${LOTUS_VERSION}"
 
           echo "Release train completed successfully."

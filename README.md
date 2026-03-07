@@ -92,15 +92,15 @@ Suggested trigger:
 
 - Manual: `Actions -> Release Train -> Run workflow`
 - Leave inputs as `from_manifest` to use values from `.github/release-train.config.json`.
-- For one-click unified releases, set only `release_version` (it drives both Bamboo and Lotus publish versions).
-- You can still override `bamboo_version` or `lotus_version` independently when needed.
+- For one-click unified releases, set only `release_version` (it drives Bamboo, Lotus, and Bodhi versions).
+- You can still override `bamboo_version`, `lotus_version`, or `bodhi_version` independently when needed.
 
 Release manifest fields:
 
 ```json
 {
   "refs": { "bamboo": "main", "lotus": "main", "bodhi": "main" },
-  "versions": { "release": "2026.3.9", "bamboo": "2026.3.9", "lotus": "2026.3.9" },
+  "versions": { "release": "2026.3.9", "bamboo": "2026.3.9", "lotus": "2026.3.9", "bodhi": "2026.3.9" },
   "options": { "lotus_skip_tests": true }
 }
 ```
@@ -115,6 +115,7 @@ Version guardrails:
 
 - Release Train passes version inputs to Bamboo/Lotus publish workflows, so those workflows publish the requested versions directly.
 - After each publish, Zenith waits until `bamboo-agent@<version>` appears on crates.io and `@bigduu/lotus@<version>` appears on npm before starting Bodhi.
+- Zenith also passes `bodhi_version` to Bodhi release workflow so the generated Tauri release tag/version matches the unified train version.
 - If registry propagation fails, the train stops early with a clear error.
 
 Single release entrypoint policy:
