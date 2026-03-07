@@ -5,6 +5,7 @@
     "bodhi": "main"
   },
   "versions": {
+    "release": "2026.3.9",
     "bamboo": "2026.3.9",
     "lotus": "2026.3.9"
   },

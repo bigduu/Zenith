@@ -92,29 +92,30 @@ Suggested trigger:
 
 - Manual: `Actions -> Release Train -> Run workflow`
 - Leave inputs as `from_manifest` to use values from `.github/release-train.config.json`.
-- Override any input at dispatch time when you need a one-off release without changing the manifest.
+- For one-click unified releases, set only `release_version` (it drives both Bamboo and Lotus publish versions).
+- You can still override `bamboo_version` or `lotus_version` independently when needed.
 
 Release manifest fields:
 
 ```json
 {
   "refs": { "bamboo": "main", "lotus": "main", "bodhi": "main" },
-  "versions": { "bamboo": "2026.3.3", "lotus": "2026.3.8" },
+  "versions": { "release": "2026.3.9", "bamboo": "2026.3.9", "lotus": "2026.3.9" },
   "options": { "lotus_skip_tests": true }
 }
 ```
 
 Typical version bump flow:
 
-1. Update `.github/release-train.config.json`.
+1. Update `.github/release-train.config.json` (`versions.release` is the preferred single knob).
 2. Commit and push to Zenith `main`.
 3. Run `Release Train` with default `from_manifest` inputs.
 
 Version guardrails:
 
-- `bamboo_version` must exist on crates.io (for example `bamboo-agent@2026.3.3`).
-- `lotus_version` must exist on npm (for example `@bigduu/lotus@2026.3.8`).
-- Release Train now waits for those versions after Bamboo/Lotus publish and fails early with a clear error if they are unavailable.
+- Release Train passes version inputs to Bamboo/Lotus publish workflows, so those workflows publish the requested versions directly.
+- After each publish, Zenith waits until `bamboo-agent@<version>` appears on crates.io and `@bigduu/lotus@<version>` appears on npm before starting Bodhi.
+- If registry propagation fails, the train stops early with a clear error.
 
 Single release entrypoint policy:
 

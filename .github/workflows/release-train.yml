@@ -15,6 +15,10 @@ on:
         description: "Ref for Bodhi release workflow (use 'from_manifest' to read Zenith config)"
         required: false
         default: "from_manifest"
+      release_version:
+        description: "Unified version for Bamboo + Lotus publish (use 'from_manifest' to read .versions.release)"
+        required: false
+        default: "from_manifest"
       bamboo_version:
         description: "bamboo-agent crate version used by Bodhi release (use 'from_manifest' to read Zenith config)"
         required: false
@@ -73,8 +77,32 @@ jobs:
           BAMBOO_REF="$(resolve_value "${{ github.event.inputs.bamboo_ref }}" '.refs.bamboo')"
           LOTUS_REF="$(resolve_value "${{ github.event.inputs.lotus_ref }}" '.refs.lotus')"
           BODHI_REF="$(resolve_value "${{ github.event.inputs.bodhi_ref }}" '.refs.bodhi')"
-          BAMBOO_VERSION="$(resolve_value "${{ github.event.inputs.bamboo_version }}" '.versions.bamboo')"
-          LOTUS_VERSION="$(resolve_value "${{ github.event.inputs.lotus_version }}" '.versions.lotus')"
+
+          RELEASE_VERSION_INPUT="${{ github.event.inputs.release_version }}"
+          if [ -z "${RELEASE_VERSION_INPUT}" ] || [ "${RELEASE_VERSION_INPUT}" = "from_manifest" ]; then
+            RELEASE_VERSION="$(jq -r '.versions.release // empty' "${CONFIG_FILE}")"
+          else
+            RELEASE_VERSION="${RELEASE_VERSION_INPUT}"
+          fi
+
+          BAMBOO_VERSION_INPUT="${{ github.event.inputs.bamboo_version }}"
+          if [ -n "${BAMBOO_VERSION_INPUT}" ] && [ "${BAMBOO_VERSION_INPUT}" != "from_manifest" ]; then
+            BAMBOO_VERSION="${BAMBOO_VERSION_INPUT}"
+          elif [ -n "${RELEASE_VERSION}" ] && [ "${RELEASE_VERSION}" != "null" ]; then
+            BAMBOO_VERSION="${RELEASE_VERSION}"
+          else
+            BAMBOO_VERSION="$(resolve_value "${BAMBOO_VERSION_INPUT}" '.versions.bamboo')"
+          fi
+
+          LOTUS_VERSION_INPUT="${{ github.event.inputs.lotus_version }}"
+          if [ -n "${LOTUS_VERSION_INPUT}" ] && [ "${LOTUS_VERSION_INPUT}" != "from_manifest" ]; then
+            LOTUS_VERSION="${LOTUS_VERSION_INPUT}"
+          elif [ -n "${RELEASE_VERSION}" ] && [ "${RELEASE_VERSION}" != "null" ]; then
+            LOTUS_VERSION="${RELEASE_VERSION}"
+          else
+            LOTUS_VERSION="$(resolve_value "${LOTUS_VERSION_INPUT}" '.versions.lotus')"
+          fi
+
           LOTUS_SKIP_TESTS="$(resolve_value "${{ github.event.inputs.lotus_skip_tests }}" '.options.lotus_skip_tests')"
 
           case "${LOTUS_SKIP_TESTS}" in
@@ -89,6 +117,7 @@ jobs:
             echo "bamboo_ref=${BAMBOO_REF}"
             echo "lotus_ref=${LOTUS_REF}"
             echo "bodhi_ref=${BODHI_REF}"
+            echo "release_version=${RELEASE_VERSION}"
             echo "bamboo_version=${BAMBOO_VERSION}"
             echo "lotus_version=${LOTUS_VERSION}"
             echo "lotus_skip_tests=${LOTUS_SKIP_TESTS}"
@@ -99,6 +128,7 @@ jobs:
           - bamboo_ref=${BAMBOO_REF}
           - lotus_ref=${LOTUS_REF}
           - bodhi_ref=${BODHI_REF}
+          - release_version=${RELEASE_VERSION}
           - bamboo_version=${BAMBOO_VERSION}
           - lotus_version=${LOTUS_VERSION}
           - lotus_skip_tests=${LOTUS_SKIP_TESTS}
@@ -194,8 +224,8 @@ jobs:
             done
 
             echo "Unable to find ${crate_name}@${version} on crates.io."
-            echo "Bamboo publish workflow only publishes the version in Bamboo's Cargo.toml."
-            echo "Please bump Bamboo Cargo.toml version (or update Zenith manifest to an existing crate version) and retry."
+            echo "Bamboo publish workflow publishes the requested workflow input version."
+            echo "Set release_version/bamboo_version to an unused semantic version and retry."
             exit 1
           }
 
@@ -221,15 +251,15 @@ jobs:
             done
 
             echo "Unable to find ${package_path_escaped/@/%40}@${version} on npm."
-            echo "Lotus publish workflow only publishes the version in Lotus package.json."
-            echo "Please bump Lotus package.json version (or update Zenith manifest to an existing npm version) and retry."
+            echo "Lotus publish workflow publishes the requested workflow input version."
+            echo "Set release_version/lotus_version to an unused semantic version and retry."
             exit 1
           }
 
-          dispatch_and_wait "bigduu/Bamboo-agent" "publish-crate.yml" "${BAMBOO_REF}"
+          dispatch_and_wait "bigduu/Bamboo-agent" "publish-crate.yml" "${BAMBOO_REF}" "version=${BAMBOO_VERSION}"
           wait_for_crates_version "bamboo-agent" "${BAMBOO_VERSION}"
 
-          dispatch_and_wait "bigduu/Lotus" "publish-npm.yml" "${LOTUS_REF}" "skip_tests=${LOTUS_SKIP_TESTS}"
+          dispatch_and_wait "bigduu/Lotus" "publish-npm.yml" "${LOTUS_REF}" "version=${LOTUS_VERSION}" "skip_tests=${LOTUS_SKIP_TESTS}"
           wait_for_npm_version "@bigduu%2flotus" "${LOTUS_VERSION}"
 
           dispatch_and_wait "bigduu/Bodhi" "release.yml" "${BODHI_REF}" "bamboo_version=${BAMBOO_VERSION}" "lotus_version=${LOTUS_VERSION}"
