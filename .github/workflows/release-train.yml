@@ -223,18 +223,24 @@ jobs:
             local version="$2"
             local max_attempts=30
             local attempt=1
+            local url
+            local http_status
 
             if [ "${version}" = "latest" ]; then
               return 0
             fi
 
+            url="https://crates.io/api/v1/crates/${crate_name}/${version}"
             echo "Validating crates.io availability: ${crate_name}@${version}"
             while [ "${attempt}" -le "${max_attempts}" ]; do
-              if curl -fsS "https://crates.io/api/v1/crates/${crate_name}/${version}" >/dev/null; then
+              http_status="$(curl -sS -o /dev/null -w "%{http_code}" \
+                -H "User-Agent: zenith-release-train/1.0 (+https://github.com/bigduu/Zenith)" \
+                "${url}" || true)"
+              if [ "${http_status}" = "200" ]; then
                 echo "Found ${crate_name}@${version} on crates.io"
                 return 0
               fi
-              echo "Attempt ${attempt}/${max_attempts}: ${crate_name}@${version} not visible on crates.io yet; retrying in 10s..."
+              echo "Attempt ${attempt}/${max_attempts}: ${crate_name}@${version} not visible on crates.io yet (status=${http_status}); retrying in 10s..."
               attempt=$((attempt + 1))
               sleep 10
             done
@@ -250,18 +256,24 @@ jobs:
             local version="$2"
             local max_attempts=30
             local attempt=1
+            local url
+            local http_status
 
             if [ "${version}" = "latest" ]; then
               return 0
             fi
 
+            url="https://registry.npmjs.org/${package_path_escaped}/${version}"
             echo "Validating npm availability: ${package_path_escaped/@/%40}@${version}"
             while [ "${attempt}" -le "${max_attempts}" ]; do
-              if curl -fsS "https://registry.npmjs.org/${package_path_escaped}/${version}" >/dev/null; then
+              http_status="$(curl -sS -o /dev/null -w "%{http_code}" \
+                -H "User-Agent: zenith-release-train/1.0 (+https://github.com/bigduu/Zenith)" \
+                "${url}" || true)"
+              if [ "${http_status}" = "200" ]; then
                 echo "Found ${package_path_escaped/@/%40}@${version} on npm"
                 return 0
               fi
-              echo "Attempt ${attempt}/${max_attempts}: ${package_path_escaped/@/%40}@${version} not visible on npm yet; retrying in 10s..."
+              echo "Attempt ${attempt}/${max_attempts}: ${package_path_escaped/@/%40}@${version} not visible on npm yet (status=${http_status}); retrying in 10s..."
               attempt=$((attempt + 1))
               sleep 10
             done
