@@ -1,0 +1,14 @@
+{
+  "refs": {
+    "bamboo": "main",
+    "lotus": "main",
+    "bodhi": "main"
+  },
+  "versions": {
+    "bamboo": "2026.3.3",
+    "lotus": "2026.3.8"
+  },
+  "options": {
+    "lotus_skip_tests": true
+  }
+}

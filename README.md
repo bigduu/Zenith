@@ -79,6 +79,7 @@ Zenith now provides a root workflow to orchestrate cross-repo releases in order:
 Workflow file:
 
 - `.github/workflows/release-train.yml`
+- `.github/release-train.config.json` (central release manifest)
 
 Required secret in the **Zenith** repo:
 
@@ -90,9 +91,24 @@ Required secret in the **Zenith** repo:
 Suggested trigger:
 
 - Manual: `Actions -> Release Train -> Run workflow`
-- Optional input: `bamboo_version` (default `latest`) to control which `bamboo-agent` crates.io version Bodhi embeds.
-- Optional input: `lotus_version` (default `latest`) to control which `@bigduu/lotus` npm version Bodhi bundles.
-- Optional input: `lotus_skip_tests=true` (default) to skip Lotus publish tests during coordinated release.
+- Leave inputs as `from_manifest` to use values from `.github/release-train.config.json`.
+- Override any input at dispatch time when you need a one-off release without changing the manifest.
+
+Release manifest fields:
+
+```json
+{
+  "refs": { "bamboo": "main", "lotus": "main", "bodhi": "main" },
+  "versions": { "bamboo": "2026.3.3", "lotus": "2026.3.8" },
+  "options": { "lotus_skip_tests": true }
+}
+```
+
+Typical version bump flow:
+
+1. Update `.github/release-train.config.json`.
+2. Commit and push to Zenith `main`.
+3. Run `Release Train` with default `from_manifest` inputs.
 
 Single release entrypoint policy:
 

@@ -4,29 +4,29 @@ on:
   workflow_dispatch:
     inputs:
       bamboo_ref:
-        description: "Ref for Bamboo release workflow"
+        description: "Ref for Bamboo release workflow (use 'from_manifest' to read Zenith config)"
         required: false
-        default: "main"
+        default: "from_manifest"
       lotus_ref:
-        description: "Ref for Lotus publish workflow"
+        description: "Ref for Lotus publish workflow (use 'from_manifest' to read Zenith config)"
         required: false
-        default: "main"
+        default: "from_manifest"
       bodhi_ref:
-        description: "Ref for Bodhi release workflow"
+        description: "Ref for Bodhi release workflow (use 'from_manifest' to read Zenith config)"
         required: false
-        default: "main"
+        default: "from_manifest"
       bamboo_version:
-        description: "bamboo-agent crate version used by Bodhi release (for example: latest or 2026.3.3)"
+        description: "bamboo-agent crate version used by Bodhi release (use 'from_manifest' to read Zenith config)"
         required: false
-        default: "latest"
+        default: "from_manifest"
       lotus_version:
-        description: "Lotus npm version used by Bodhi release (for example: latest or 2026.3.8)"
+        description: "Lotus npm version used by Bodhi release (use 'from_manifest' to read Zenith config)"
         required: false
-        default: "latest"
+        default: "from_manifest"
       lotus_skip_tests:
-        description: "Pass true to skip Lotus publish workflow tests"
+        description: "Pass true to skip Lotus publish workflow tests (use 'from_manifest' to read Zenith config)"
         required: false
-        default: "true"
+        default: "from_manifest"
 
 permissions:
   contents: read
@@ -35,6 +35,75 @@ jobs:
   orchestrate:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve release inputs from Zenith config
+        id: resolve
+        run: |
+          set -euo pipefail
+          CONFIG_FILE=".github/release-train.config.json"
+
+          if [ ! -f "${CONFIG_FILE}" ]; then
+            echo "Missing ${CONFIG_FILE}"
+            exit 1
+          fi
+
+          jq -e . "${CONFIG_FILE}" >/dev/null
+
+          resolve_value() {
+            local input_value="$1"
+            local jq_path="$2"
+            local resolved
+
+            if [ -z "${input_value}" ] || [ "${input_value}" = "from_manifest" ]; then
+              resolved="$(jq -r "${jq_path} // empty" "${CONFIG_FILE}")"
+            else
+              resolved="${input_value}"
+            fi
+
+            if [ -z "${resolved}" ] || [ "${resolved}" = "null" ]; then
+              echo "Missing value for ${jq_path} in ${CONFIG_FILE}"
+              exit 1
+            fi
+
+            printf '%s' "${resolved}"
+          }
+
+          BAMBOO_REF="$(resolve_value "${{ github.event.inputs.bamboo_ref }}" '.refs.bamboo')"
+          LOTUS_REF="$(resolve_value "${{ github.event.inputs.lotus_ref }}" '.refs.lotus')"
+          BODHI_REF="$(resolve_value "${{ github.event.inputs.bodhi_ref }}" '.refs.bodhi')"
+          BAMBOO_VERSION="$(resolve_value "${{ github.event.inputs.bamboo_version }}" '.versions.bamboo')"
+          LOTUS_VERSION="$(resolve_value "${{ github.event.inputs.lotus_version }}" '.versions.lotus')"
+          LOTUS_SKIP_TESTS="$(resolve_value "${{ github.event.inputs.lotus_skip_tests }}" '.options.lotus_skip_tests')"
+
+          case "${LOTUS_SKIP_TESTS}" in
+            true|false) ;;
+            *)
+              echo "lotus_skip_tests must be true or false, got: ${LOTUS_SKIP_TESTS}"
+              exit 1
+              ;;
+          esac
+
+          {
+            echo "bamboo_ref=${BAMBOO_REF}"
+            echo "lotus_ref=${LOTUS_REF}"
+            echo "bodhi_ref=${BODHI_REF}"
+            echo "bamboo_version=${BAMBOO_VERSION}"
+            echo "lotus_version=${LOTUS_VERSION}"
+            echo "lotus_skip_tests=${LOTUS_SKIP_TESTS}"
+          } >> "${GITHUB_OUTPUT}"
+
+          cat <<EOF
+          Resolved release inputs:
+          - bamboo_ref=${BAMBOO_REF}
+          - lotus_ref=${LOTUS_REF}
+          - bodhi_ref=${BODHI_REF}
+          - bamboo_version=${BAMBOO_VERSION}
+          - lotus_version=${LOTUS_VERSION}
+          - lotus_skip_tests=${LOTUS_SKIP_TESTS}
+          EOF
+
       - name: Validate release token
         env:
           GH_TOKEN: ${{ secrets.RELEASE_ORCHESTRATOR_TOKEN }}
@@ -51,12 +120,12 @@ jobs:
       - name: Run Bamboo -> Lotus -> Bodhi
         env:
           GH_TOKEN: ${{ secrets.RELEASE_ORCHESTRATOR_TOKEN }}
-          BAMBOO_REF: ${{ github.event.inputs.bamboo_ref }}
-          LOTUS_REF: ${{ github.event.inputs.lotus_ref }}
-          BODHI_REF: ${{ github.event.inputs.bodhi_ref }}
-          BAMBOO_VERSION: ${{ github.event.inputs.bamboo_version }}
-          LOTUS_VERSION: ${{ github.event.inputs.lotus_version }}
-          LOTUS_SKIP_TESTS: ${{ github.event.inputs.lotus_skip_tests }}
+          BAMBOO_REF: ${{ steps.resolve.outputs.bamboo_ref }}
+          LOTUS_REF: ${{ steps.resolve.outputs.lotus_ref }}
+          BODHI_REF: ${{ steps.resolve.outputs.bodhi_ref }}
+          BAMBOO_VERSION: ${{ steps.resolve.outputs.bamboo_version }}
+          LOTUS_VERSION: ${{ steps.resolve.outputs.lotus_version }}
+          LOTUS_SKIP_TESTS: ${{ steps.resolve.outputs.lotus_skip_tests }}
         run: |
           set -euo pipefail
 
