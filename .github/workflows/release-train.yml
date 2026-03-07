@@ -15,6 +15,10 @@ on:
         description: "Ref for Bodhi release workflow"
         required: false
         default: "main"
+      bamboo_version:
+        description: "bamboo-agent crate version used by Bodhi release (for example: latest or 2026.3.3)"
+        required: false
+        default: "latest"
       lotus_version:
         description: "Lotus npm version used by Bodhi release (for example: latest or 2026.3.8)"
         required: false
@@ -50,6 +54,7 @@ jobs:
           BAMBOO_REF: ${{ github.event.inputs.bamboo_ref }}
           LOTUS_REF: ${{ github.event.inputs.lotus_ref }}
           BODHI_REF: ${{ github.event.inputs.bodhi_ref }}
+          BAMBOO_VERSION: ${{ github.event.inputs.bamboo_version }}
           LOTUS_VERSION: ${{ github.event.inputs.lotus_version }}
           LOTUS_SKIP_TESTS: ${{ github.event.inputs.lotus_skip_tests }}
         run: |
@@ -100,6 +105,6 @@ jobs:
 
           dispatch_and_wait "bigduu/Bamboo-agent" "publish-crate.yml" "${BAMBOO_REF}"
           dispatch_and_wait "bigduu/Lotus" "publish-npm.yml" "${LOTUS_REF}" "skip_tests=${LOTUS_SKIP_TESTS}"
-          dispatch_and_wait "bigduu/Bodhi" "release.yml" "${BODHI_REF}" "lotus_version=${LOTUS_VERSION}"
+          dispatch_and_wait "bigduu/Bodhi" "release.yml" "${BODHI_REF}" "bamboo_version=${BAMBOO_VERSION}" "lotus_version=${LOTUS_VERSION}"
 
           echo "Release train completed successfully."

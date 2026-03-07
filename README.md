@@ -90,4 +90,6 @@ Required secret in the **Zenith** repo:
 Suggested trigger:
 
 - Manual: `Actions -> Release Train -> Run workflow`
+- Optional input: `bamboo_version` (default `latest`) to control which `bamboo-agent` crates.io version Bodhi embeds.
+- Optional input: `lotus_version` (default `latest`) to control which `@bigduu/lotus` npm version Bodhi bundles.
 - Optional input: `lotus_skip_tests=true` (default) to skip Lotus publish tests during coordinated release.
