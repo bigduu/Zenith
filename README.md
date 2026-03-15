@@ -1,10 +1,11 @@
 # Zenith Monorepo Index
 
-Zenith is a lightweight umbrella repository that tracks three independent projects as Git submodules:
+Zenith is a lightweight umbrella repository that tracks four independent projects as Git submodules:
 
 - `bamboo` -> `https://github.com/bigduu/Bamboo-agent.git`
 - `bodhi` -> `https://github.com/bigduu/Bodhi.git`
 - `lotus` -> `https://github.com/bigduu/Lotus.git`
+- `pavilion` -> `https://github.com/bigduu/Pavilion.git` (official website and docs for end users and developers)
 
 ## Clone
 
@@ -36,7 +37,7 @@ git submodule update --remote --recursive
 After submodule pointers change, commit them in Zenith:
 
 ```bash
-git add .gitmodules bamboo bodhi lotus
+git add .gitmodules bamboo bodhi lotus pavilion
 git commit -m "chore: bump submodule pointers"
 git push
 ```
