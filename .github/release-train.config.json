@@ -11,6 +11,6 @@
     "bodhi": "2026.3.50"
   },
   "options": {
-    "lotus_skip_tests": true
+    "lotus_skip_tests": false
   }
 }

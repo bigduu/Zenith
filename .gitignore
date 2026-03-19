@@ -1,0 +1,11 @@
+# Root-level generated reports
+TEST_COVERAGE*.md
+FINAL_*COVERAGE*.md
+
+# Generic temporary files
+*.tmp
+
+# Common build artifacts across submodules
+**/node_modules/
+**/target/
+**/dist/
