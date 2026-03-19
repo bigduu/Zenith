@@ -65,7 +65,7 @@ jobs:
             local resolved
 
             if [ -z "${input_value}" ] || [ "${input_value}" = "from_manifest" ]; then
-              resolved="$(jq -r "${jq_path} // empty" "${CONFIG_FILE}")"
+              resolved="$(jq -r "${jq_path} | if . == null then empty else . end" "${CONFIG_FILE}")"
             else
               resolved="${input_value}"
             fi
