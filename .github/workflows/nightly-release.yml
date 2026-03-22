@@ -1,0 +1,131 @@
+name: Nightly Release
+
+on:
+  schedule:
+    # UTC 04:00 = 北京时间 12:00 (每天)
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Force release even if already released today"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  CONFIG_FILE: ".github/release-train.config.json"
+
+jobs:
+  auto-version:
+    name: Calculate next version
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.version.outputs.new_version }}
+      should_release: ${{ steps.version.outputs.should_release }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_ORCHESTRATOR_TOKEN }}
+
+      - name: Calculate next version
+        id: version
+        run: |
+          set -euo pipefail
+
+          CURRENT="$(jq -r '.versions.release' "${CONFIG_FILE}")"
+          echo "Current version: ${CURRENT}"
+
+          # Parse current version: YYYY.M.N
+          IFS='.' read -r OLD_YEAR OLD_MONTH OLD_N <<< "${CURRENT}"
+
+          # Current date (UTC)
+          YEAR="$(date -u +%Y)"
+          MONTH="$(date -u +%-m)"
+
+          if [ "${YEAR}" = "${OLD_YEAR}" ] && [ "${MONTH}" = "${OLD_MONTH}" ]; then
+            # Same year.month → increment N
+            NEW_N=$((OLD_N + 1))
+          else
+            # New year or new month → reset to 1
+            NEW_N=1
+          fi
+
+          NEW_VERSION="${YEAR}.${MONTH}.${NEW_N}"
+          echo "New version: ${NEW_VERSION}"
+          echo "new_version=${NEW_VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "should_release=true" >> "${GITHUB_OUTPUT}"
+
+      - name: Update release-train.config.json
+        if: steps.version.outputs.should_release == 'true'
+        run: |
+          set -euo pipefail
+          NEW_VERSION="${{ steps.version.outputs.new_version }}"
+
+          # Update all version fields in config
+          jq --arg v "${NEW_VERSION}" '
+            .versions.release = $v |
+            .versions.bamboo = $v |
+            .versions.lotus = $v |
+            .versions.bodhi = $v
+          ' "${CONFIG_FILE}" > "${CONFIG_FILE}.tmp"
+          mv "${CONFIG_FILE}.tmp" "${CONFIG_FILE}"
+
+          echo "Updated ${CONFIG_FILE}:"
+          cat "${CONFIG_FILE}"
+
+      - name: Commit and push version bump
+        if: steps.version.outputs.should_release == 'true'
+        run: |
+          set -euo pipefail
+          NEW_VERSION="${{ steps.version.outputs.new_version }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add "${CONFIG_FILE}"
+          git diff --cached --quiet && {
+            echo "No changes to commit (version already up-to-date)."
+            exit 0
+          }
+
+          git commit -m "chore: bump release version to ${NEW_VERSION} [nightly]"
+          git push
+
+  trigger-release-train:
+    name: Trigger Release Train
+    needs: auto-version
+    if: needs.auto-version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Dispatch Release Train
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_ORCHESTRATOR_TOKEN }}
+        run: |
+          set -euo pipefail
+          NEW_VERSION="${{ needs.auto-version.outputs.new_version }}"
+
+          echo "Dispatching release-train with version ${NEW_VERSION}"
+          echo "Release order: Bamboo → Lotus → Bodhi"
+
+          # The release-train.yml workflow reads from config.json by default
+          # (all inputs default to "from_manifest"), so we just need to trigger it.
+          # The config was already updated in the previous job.
+          #
+          # Override lotus_skip_tests=true for nightly to avoid blocking on tests.
+          gh workflow run release-train.yml \
+            --ref main \
+            -f release_version="${NEW_VERSION}" \
+            -f lotus_skip_tests=true
+
+          echo "Release train dispatched. Monitor at:"
+          echo "https://github.com/${{ github.repository }}/actions/workflows/release-train.yml"
