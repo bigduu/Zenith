@@ -10,3 +10,6 @@
 [submodule "pavilion"]
 	path = pavilion
 	url = https://github.com/bigduu/Pavilion.git
+[submodule "bodhi-server"]
+	path = bodhi-server
+	url = https://github.com/bigduu/bodhi-server.git

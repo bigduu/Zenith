@@ -1,11 +1,12 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Zenith is a thin monorepo wrapper around four Git submodules:
+Zenith is a thin monorepo wrapper around five Git submodules:
 - `bamboo/`: Rust AI-agent backend framework (`src/`, `tests/`, `docs/`).
 - `lotus/`: React + Vite web app (`src/`, `e2e/`, `public/`).
 - `bodhi/`: Tauri desktop shell (`src-tauri/`) that coordinates with `lotus`.
 - `pavilion/`: React + Vite official website and docs (`src/`, `public/`).
+- `bodhi-server/`: Go backend API server (`api/`, `internal/`, `cmd/`).
 
 Root files (`README.md`, `.gitmodules`) manage submodule pointers; most feature work happens inside submodules.
 
@@ -40,6 +41,97 @@ Follow Conventional Commit style already used in history (for example, `chore: b
 - Commit in the submodule first, push, then commit updated pointer in root.
 - Keep root commits focused on pointer updates or monorepo docs/config.
 - PRs should include: scope summary, affected submodule(s), test evidence, and screenshots for UI-facing changes.
+
+## Multi-Agent Collaboration
+
+This project uses [GitHub Projects "Zenith Roadmap"](https://github.com/users/bigduu/projects/3) to coordinate multiple agents working in parallel across submodules.
+
+### Workflow
+
+```
+Backlog → Triaged → Ready → In Progress → In Review → Done
+```
+
+### 1. Claiming a Task
+
+- Pick from Board "Ready" column, sorted by Priority (P0 first).
+- Prefer tasks matching your current module to avoid context switching.
+- Comment on the Issue: `🔒 claimed by <agent-id> at <timestamp>`.
+- Update Board: Status → In Progress, set Assignee Type and Branch fields.
+
+### 2. Parallel Constraints
+
+- Same module: max 2 agents simultaneously (e.g. one feature + one fix).
+- `scope:cross-module` tasks: serialize — wait until all involved modules are free.
+- Always work in an isolated worktree: `git worktree add` or equivalent.
+
+### 3. Branch Naming
+
+```
+<module>/<type>/<issue-number>-<short-desc>
+```
+
+Examples:
+- `lotus/feat/142-conversation-export`
+- `bamboo/fix/88-streaming-timeout`
+- `bodhi/refactor/55-window-mgmt`
+
+### 4. Commit Conventions
+
+Follow Conventional Commits. Reference the Issue in the body:
+
+```
+feat: add conversation export (#142)
+```
+
+Commit in the submodule first, push, then update the root pointer if needed.
+
+### 5. Pull Request
+
+- One PR per Issue.
+- PR description must include:
+  - **Summary**: what changed and why
+  - **Test Plan**: how to verify
+  - **Screenshots**: for any UI change
+- Add `review:needed` label and set Board Status → In Review.
+
+### 6. Review
+
+- Agents may cross-review PRs in **different** modules.
+- After agent review, add `review:agent` label — signals human final review.
+- Human merges after approval.
+- Review checklist:
+  - [ ] Meets Acceptance Criteria from the Issue
+  - [ ] Tests pass and coverage is adequate
+  - [ ] No security concerns (OWASP top 10)
+  - [ ] Follows project code style (cargo fmt/clippy, prettier)
+
+### 7. Completion
+
+- Merge → Board Status → Done.
+- Delete the working branch.
+- Update root submodule pointer if the submodule changed.
+
+### Labels
+
+See `.github/labels.tsv` for the full label taxonomy. Key labels:
+
+| Label | Meaning |
+|-------|---------|
+| `agent:ready` | Well-scoped task ready for an agent |
+| `agent:locked` | Claimed — do not pick up |
+| `agent:blocked` | Stuck on a dependency |
+| `review:needed` | Waiting for review |
+| `review:agent` | Agent review done, human needed |
+| `scope:cross-module` | Requires coordination across modules |
+
+### Issue Title Convention
+
+```
+[module] type: short description
+```
+
+Examples: `[lotus] feat: add conversation export`, `[bamboo] fix: streaming timeout`
 
 ## Release Playbook
 Use this checklist for every Bamboo/Lotus/Bodhi release.
