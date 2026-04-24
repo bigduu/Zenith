@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 env:
   CONFIG_FILE: ".github/release-train.config.json"
@@ -112,7 +113,9 @@ jobs:
 
       - name: Dispatch Release Train
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_ORCHESTRATOR_TOKEN }}
+          # This dispatch targets a workflow in the current Zenith repository.
+          # Use the workflow-scoped GitHub token, which now has actions:write.
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           NEW_VERSION="${{ needs.auto-version.outputs.new_version }}"
