@@ -30,7 +30,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.RELEASE_ORCHESTRATOR_TOKEN }}
+          # Pushes in this job target the current Zenith repository only.
+          # Use the workflow-scoped GitHub token with contents:write instead of the
+          # cross-repo release orchestrator token, which may not have write access here.
+          token: ${{ github.token }}
 
       - name: Calculate next version
         id: version
