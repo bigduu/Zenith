@@ -1,0 +1,32 @@
+# Zenith Label Definitions
+# Used by scripts/sync-labels.sh to apply consistent labels across all repos
+#
+# Format: name color description
+
+# --- Type Labels ---
+type:feature	#a2eeef	New feature or enhancement
+type:bug		#d73a4a	Something isn't working
+type:refactor	#c5def5	Code refactoring
+type:test		#bfdadc	Test coverage or test infrastructure
+type:chore		#fef2c0	Maintenance, deps, tooling
+type:docs		#0075ca	Documentation
+type:infra		#fbca04	Infrastructure, CI/CD, deployment
+
+# --- Agent Workflow Labels ---
+agent:ready		#0e8a16	Ready for an agent to pick up
+agent:locked	#b60205	Claimed by an agent — do not touch
+agent:blocked	#bfd4f2	Blocked by dependency or conflict
+
+# --- Review Labels ---
+review:needed	#fbca04	Waiting for review
+review:agent	#5319e7	Agent review done, waiting for human
+review:changes	#e11d48	Changes requested
+
+# --- Scope Labels ---
+scope:cross-module	#1d76db	Affects multiple modules — coordinate carefully
+
+# --- Priority Labels ---
+priority:P0		#b60205	Critical — fix immediately
+priority:P1		#d93f0b	High — this sprint
+priority:P2		#fbca04	Medium — plan accordingly
+priority:P3		#0e8a16	Low — when possible

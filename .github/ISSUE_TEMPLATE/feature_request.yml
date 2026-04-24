@@ -1,0 +1,78 @@
+name: Feature Request
+description: New feature or enhancement for any module
+labels:
+  - type:feature
+body:
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      description: Which module does this affect?
+      options:
+        - bamboo
+        - lotus
+        - bodhi
+        - bodhi-server
+        - pavilion
+        - zenith-root
+        - cross-module
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: One sentence describing the objective
+      placeholder: "e.g. Add conversation export to JSON/PDF"
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Concrete checklist to verify the feature is complete
+      placeholder: |
+        - [ ] Export button visible in conversation header
+        - [ ] Supports JSON and PDF formats
+        - [ ] Shows progress indicator during export
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Background, design docs, dependencies, or related issues
+      placeholder: "e.g. Depends on bamboo streaming API (#123)"
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P2 - Medium (default)
+        - P0 - Critical
+        - P1 - High
+        - P3 - Low
+      default: 0
+
+  - type: dropdown
+    id: effort
+    attributes:
+      label: Effort Estimate
+      options:
+        - M - 1-4h (default)
+        - S - <1h
+        - L - 1-2d
+        - XL - 2d+
+      default: 0
+
+  - type: checkboxes
+    id: agent_ready
+    attributes:
+      label: Agent Ready
+      description: Check if this task can be picked up by an AI agent
+      options:
+        - label: This task is well-defined enough for an agent to execute independently

@@ -9,3 +9,5 @@ FINAL_*COVERAGE*.md
 **/node_modules/
 **/target/
 **/dist/
+
+claude_code

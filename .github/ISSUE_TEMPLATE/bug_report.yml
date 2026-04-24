@@ -1,0 +1,63 @@
+name: Bug Report
+description: Report a defect or unexpected behavior
+labels:
+  - type:bug
+body:
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      description: Which module has the bug?
+      options:
+        - bamboo
+        - lotus
+        - bodhi
+        - bodhi-server
+        - pavilion
+        - zenith-root
+        - cross-module
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What went wrong?
+      placeholder: "e.g. Conversation list doesn't refresh after deleting a message"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How to trigger the bug
+      placeholder: |
+        1. Open conversation
+        2. Delete a message
+        3. Observe conversation list
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should happen instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, app version, browser, etc.
+      placeholder: "e.g. macOS 15.4, Bodhi v2026.4.2"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs / Screenshots
+      description: Paste error messages or attach screenshots
+      render: shell

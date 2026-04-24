@@ -1,0 +1,87 @@
+name: Task
+description: Internal task — refactor, test, chore, or other tracked work
+labels:
+  - type:chore
+body:
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module
+      options:
+        - bamboo
+        - lotus
+        - bodhi
+        - bodhi-server
+        - pavilion
+        - zenith-root
+        - cross-module
+    validations:
+      required: true
+
+  - type: dropdown
+    id: task_type
+    attributes:
+      label: Task Type
+      options:
+        - test
+        - refactor
+        - chore
+        - docs
+        - infra
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What needs to be done
+      placeholder: "e.g. Increase test coverage for bamboo session types to 90%"
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Concrete checklist
+      placeholder: |
+        - [ ] All session type files have corresponding test files
+        - [ ] Branch coverage >= 90%
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Background or related issues
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P2 - Medium (default)
+        - P0 - Critical
+        - P1 - High
+        - P3 - Low
+      default: 0
+
+  - type: dropdown
+    id: effort
+    attributes:
+      label: Effort Estimate
+      options:
+        - M - 1-4h (default)
+        - S - <1h
+        - L - 1-2d
+        - XL - 2d+
+      default: 0
+
+  - type: checkboxes
+    id: agent_ready
+    attributes:
+      label: Agent Ready
+      options:
+        - label: This task is well-defined enough for an agent to execute independently
