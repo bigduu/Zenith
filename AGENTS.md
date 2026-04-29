@@ -134,33 +134,59 @@ See `.github/labels.tsv` for the full label taxonomy. Key labels:
 Examples: `[lotus] feat: add conversation export`, `[bamboo] fix: streaming timeout`
 
 ## Release Playbook
-Use this checklist for every Bamboo/Lotus/Bodhi release.
+Use this checklist for every release train. The only normal release entrypoint is `Zenith -> release-train.yml`.
 
-1. Commit local work in each changed submodule and push:
-   - `cd bamboo && git add -A && git commit -m "<message>" && git push origin main`
-   - `cd lotus && git add -A && git commit -m "<message>" && git push origin main`
-   - `cd bodhi && git add -A && git commit -m "<message>" && git push origin main`
-   - If website changed: `cd pavilion && git add -A && git commit -m "<message>" && git push origin main`
-2. Bump release version in manifests:
+1. Collect and commit local work by feature in each changed submodule:
+   - Check status first: `git status -sb` and `git submodule status`.
+   - Commit related changes in small logical groups (Conventional Commits), then push submodule branches.
+   - Typical commands:
+     - `cd bamboo && git add -A && git commit -m "<message>" && git push origin main`
+     - `cd lotus && git add -A && git commit -m "<message>" && git push origin main`
+     - `cd bodhi && git add -A && git commit -m "<message>" && git push origin main`
+     - If website changed: `cd pavilion && git add -A && git commit -m "<message>" && git push origin main`
+
+2. Run release gates (must pass before version bump):
+   - `cd bamboo && cargo fmt --check && cargo clippy && cargo test`
+   - `cd lotus && npm run type-check && npm run test:run && npm run lint`
+   - `cd bodhi && npm run web:verify:migration && npm run web:verify:docs-boundary`
+   - If website changed: `cd pavilion && npm run lint && npm run build`
+   - For cross-page UI or workflow changes, also run `cd lotus && npm run test:e2e`.
+
+3. Bump release version in manifests:
    - `bamboo/Cargo.toml`
    - `lotus/package.json` and `lotus/package-lock.json`
    - `bodhi/package.json`, `bodhi/package-lock.json`, `bodhi/src-tauri/Cargo.toml`, `bodhi/src-tauri/tauri.conf.json`, `bodhi/Cargo.lock`
    - `.github/release-train.config.json` (`versions.release`, `versions.bamboo`, `versions.lotus`, `versions.bodhi`)
-3. Commit and push version bump in each released submodule:
+   - Helpful commands:
+     - `cd lotus && npm version <version> --no-git-tag-version`
+     - `cd bodhi && npm version <version> --no-git-tag-version`
+
+4. Commit and push version bumps in each released submodule:
    - `cd bamboo && git add Cargo.toml && git commit -m "chore: bump version to <version>" && git push origin main`
    - `cd lotus && git add package.json package-lock.json && git commit -m "chore: bump version to <version>" && git push origin main`
    - `cd bodhi && git add package.json package-lock.json src-tauri/Cargo.toml src-tauri/tauri.conf.json Cargo.lock && git commit -m "chore: bump version to <version>" && git push origin main`
-4. Commit and push root pointer/config updates:
-   - `git add .github/release-train.config.json .gitmodules bamboo lotus bodhi pavilion README.md AGENTS.md`
+
+5. Commit and push root pointer/config updates:
+   - `git add .github/release-train.config.json bamboo lotus bodhi pavilion`
    - `git commit -m "chore: prepare <version> release train"`
    - `git push origin main`
-5. Trigger release train:
+
+6. Trigger release train:
    - `gh workflow run release-train.yml -R bigduu/Zenith --ref main -f release_version=<version> -f bamboo_version=<version> -f lotus_version=<version> -f bodhi_version=<version> -f bamboo_ref=main -f lotus_ref=main -f bodhi_ref=main`
-6. Watch and verify:
+
+7. Watch and verify release chain:
    - `gh run watch <root_run_id> -R bigduu/Zenith --exit-status`
    - `gh run list -R bigduu/Bamboo-agent --workflow publish-crate.yml --limit 1`
    - `gh run list -R bigduu/Lotus --workflow publish-npm.yml --limit 1`
    - `gh run list -R bigduu/Bodhi --workflow release.yml --limit 1`
-7. If Bodhi Linux fails with npm `ETARGET` for Lotus:
-   - wait until `npm view @bigduu/lotus@<version> version` succeeds
-   - rerun failed job only: `gh run rerun <bodhi_run_id> -R bigduu/Bodhi --failed`
+
+8. Failure handling:
+   - If Bodhi Linux fails with npm `ETARGET` for Lotus:
+     - Wait until `npm view @bigduu/lotus@<version> version` succeeds.
+     - Rerun failed jobs only: `gh run rerun <bodhi_run_id> -R bigduu/Bodhi --failed`.
+   - If root release train fails due transient GitHub API issues, resume the chain manually in the same Bamboo -> Lotus -> Bodhi order.
+
+9. Post-release checks:
+   - `git status -sb` at root and inside all submodules (must be clean).
+   - `npm view @bigduu/lotus@<version> version`
+   - `cargo search bamboo-agent --limit 1` (confirm expected version is published)
