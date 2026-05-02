@@ -5,10 +5,10 @@
     "bodhi": "main"
   },
   "versions": {
-    "release": "2026.5.1",
-    "bamboo": "2026.5.1",
-    "lotus": "2026.5.1",
-    "bodhi": "2026.5.1"
+    "release": "2026.5.2",
+    "bamboo": "2026.5.2",
+    "lotus": "2026.5.2",
+    "bodhi": "2026.5.2"
   },
   "options": {
     "lotus_skip_tests": false
