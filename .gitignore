@@ -1,3 +1,6 @@
+# macOS
+.DS_Store
+
 # Root-level generated reports
 TEST_COVERAGE*.md
 FINAL_*COVERAGE*.md
