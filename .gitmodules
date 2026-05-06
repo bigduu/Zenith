@@ -3,7 +3,7 @@
 	url = https://github.com/bigduu/Bamboo-agent.git
 [submodule "bodhi"]
 	path = bodhi
-	url = https://github.com/bigduu/Bodhi.git
+	url = https://github.com/bigduu/Bodhi-AI.git
 [submodule "lotus"]
 	path = lotus
 	url = https://github.com/bigduu/Lotus.git
