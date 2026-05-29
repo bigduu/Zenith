@@ -290,6 +290,6 @@ jobs:
           dispatch_and_wait "bigduu/Lotus" "publish-npm.yml" "${LOTUS_REF}" "version=${LOTUS_VERSION}" "skip_tests=${LOTUS_SKIP_TESTS}"
           wait_for_npm_version "@bigduu%2flotus" "${LOTUS_VERSION}"
 
-          dispatch_and_wait "bigduu/Bodhi" "release.yml" "${BODHI_REF}" "bodhi_version=${BODHI_VERSION}" "bamboo_version=${BAMBOO_VERSION}" "lotus_version=${LOTUS_VERSION}"
+          dispatch_and_wait "bigduu/Bodhi" "deploy.yml" "${BODHI_REF}"
 
           echo "Release train completed successfully."
