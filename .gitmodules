@@ -13,3 +13,6 @@
 [submodule "bodhi-server"]
 	path = bodhi-server
 	url = https://github.com/bigduu/bodhi-server.git
+[submodule "nova"]
+	path = nova
+	url = https://github.com/bigduu/Nova.git
