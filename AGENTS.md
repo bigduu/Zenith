@@ -10,6 +10,10 @@ Zenith is a thin monorepo wrapper around five Git submodules:
 
 Root files (`README.md`, `.gitmodules`) manage submodule pointers; most feature work happens inside submodules.
 
+Key architecture docs (in `bamboo/docs/`):
+- `architecture-overview.md` — start here: how the broker-mediated sub-agent system deploys (broker / orchestrator / worker), how the crates are organized, and how the deployment capability works.
+- `remote-mailbox-broker-design.md` — the standalone message broker + `ask_agent`/`deploy_agent` design (SHIPPED status).
+
 ## Build, Test, and Development Commands
 From repository root:
 - `git submodule update --init --recursive` - initialize all module checkouts.
