@@ -13,6 +13,7 @@ Root files (`README.md`, `.gitmodules`) manage submodule pointers; most feature 
 Key architecture docs (in `bamboo/docs/`):
 - `architecture-overview.md` — start here: how the broker-mediated sub-agent system deploys (broker / orchestrator / worker), how the crates are organized, and how the deployment capability works.
 - `remote-mailbox-broker-design.md` — the standalone message broker + `ask_agent`/`deploy_agent` design (SHIPPED status).
+- `remote-actor-plan.md` — remote-actor seams (P0/P1/P2): launcher / discovery / placement abstractions.
 
 ## Build, Test, and Development Commands
 From repository root:
