@@ -162,7 +162,7 @@ cd bamboo
 cargo run -- serve --port 9562
 ```
 
-> `bamboo serve` 接受 `--port` / `--bind` / `--data-dir` / `--workers` 等可选参数覆盖配置文件；定义见 `bamboo/src/bin/bamboo.rs`。不传 `--port` 时使用配置文件中的端口。
+> `bamboo serve` 接受 `--port` / `--bind` / `--data-dir` / `--static-dir` / `--workers` 等可选参数覆盖配置文件；定义见 `bamboo/src/bin/bamboo.rs`。不传 `--port` 时使用配置文件中的端口。（其余子命令见 `bamboo --help`：`config`、`-p` headless、`actor`、`broker`、`broker-agent`。）
 
 ### 维护 submodule 指针
 

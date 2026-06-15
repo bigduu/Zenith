@@ -162,7 +162,7 @@ cd bamboo
 cargo run -- serve --port 9562
 ```
 
-> `bamboo serve` accepts optional `--port` / `--bind` / `--data-dir` / `--workers` overrides; defined in `bamboo/src/bin/bamboo.rs`. Without `--port` it uses the configured port.
+> `bamboo serve` accepts optional `--port` / `--bind` / `--data-dir` / `--static-dir` / `--workers` overrides; defined in `bamboo/src/bin/bamboo.rs`. Without `--port` it uses the configured port. (Run `bamboo --help` for the other subcommands: `config`, `-p` headless, `actor`, `broker`, `broker-agent`.)
 
 ### Manage submodule pointers
 
