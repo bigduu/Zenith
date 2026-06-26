@@ -16,3 +16,6 @@
 [submodule "nova"]
 	path = nova
 	url = https://github.com/bigduu/Nova.git
+[submodule "lotus-next"]
+	path = lotus-next
+	url = https://github.com/bigduu/lotus-next.git
