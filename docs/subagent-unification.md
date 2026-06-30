@@ -132,6 +132,33 @@ Phase 0 is pure refactor. Phase 1 is the architectural pivot (validate local lat
 
 ---
 
+## 5b. Implementation plan — mapped from code (2026-06-30)
+
+Status of the pivot: **Phase 1 is DONE** (local children run over the in-process bus; direct-WS + warm pool + first-frame watchdog; steer + approval carried over the bus). **Phase 3's base landed** (`BrokerCore.subscribers` now keeps the `Hello` role and exposes `connected()` / `connected_by_role()` — the bus is the live-actor registry). The rest, mapped to exact sites:
+
+### Phase 0 — shared resolvers (the 5-rule / 2-mechanism drift)
+- **Two model families today:** the actor-child path resolves model *parent-side* and ships it (`actor_adapter.rs` `build_spec` ≈ L464: `session.model_ref` → `job.model` + `default_provider`), while the deployed broker-agent resolves *worker-side* from local `Config` (`src/broker_agent.rs` ≈ L97: `--model` → `defaults.sub_agent` → `defaults.chat`). Both sit on the canonical config layer (`model_config_helper.rs::resolve_subagent_model_ref` L485; `config.rs` get_model L1587). Upstream feeders: tool arg + per-type routing (`sub_agent.rs` L678/685), session inherit (`child_session/actions.rs` L32), enqueue (`child_session_adapter.rs` L521).
+- **Do:** one `resolve_child_model(config, requested, default_provider) -> ModelRefSpec` in `model_config_helper`; route both `build_spec` sites through it. NOTE: unifying the deployed fallback onto the canonical chain is a *behavior change* to that path — gate on tests.
+- **MCP:** the decision exists only at `broker_agent.rs` L117-130 (`mcp_proxy` XOR portable `mcp`); the actor path sets nothing (builtin-only). XOR guard already in `provision.rs::validate` L299. `resolve_child_mcp` extracts L117-130; granting actor children MCP is a *deliberate* later flip, not silent.
+
+### Phase 2 — one handle + one launcher (the riskiest)
+- **Two handles:** `SpawnedChild` (`fleet.rs:31`, owned `Child` | remote) vs `DeployedAgent` (`deploy.rs:78`, `Process{child,cleanup}` | `Remote(dyn RemoteDeployment)`). Merge → `ActorHandle{ mailbox_id, kill }` (both already encode local-process-vs-process-less internally).
+- **Two launchers → one `ActorLauncher` seam:** fold the `Deployer` family (`deploy.rs` Local/Docker/Ssh + `deploy_russh.rs` Russh) AND the runner's `PlacementKind` arms (`actor_adapter.rs` Local=bus-spawn / Remote=connect-wss / Schedulable=registry-resolve) into launcher impls — all return "an actor on the bus."
+- **The one real divergence:** deployed workers self-resolve from local `Config::new()` (`broker_agent.rs::build_spec` L66); local workers get a parent-built `ProvisionSpec` over stdin. Phase 2 ships the full `ProvisionSpec` to deployed actors too (deleting worker-side `build_spec`), so `AgentDeployment` (`deploy.rs:20`, argv+env) becomes a derived argv view, not a source of truth. **Gate on `trust_level`** (creds on the wire — T4) and keep cluster-fabric UX identical.
+
+### Phase 3 — bus is the registry (cutover + deletions)
+- **Done:** role capture + `connected_by_role` (`core.rs`).
+- **Cutover:** `resolve_schedulable_worker` (`actor_adapter.rs:637`, the only live registry *read*) → query the bus (`connected_by_role(pool)`) instead of `RegistryFabric.discover` + lease + 3-try failover. Requires schedulable workers to share the queried bus (depends on Phase 2's "everyone dials the bus"). For a *remote* bus add a `ClientFrame::ListConnected{role}` frame.
+- **Delete:** `FileFabric`/`Fabric` (`discovery.rs`) is already off every production path post-Phase-1 — drop the vestigial `fabric_dir` from `ProvisionSpec` + the test-only `spawn_worker` rendezvous; retire `RegistryFabric` + server `AgentRegistry` (`agents.rs`) after the cutover. KEEP `DeployedRegistry`'s kill-ownership (the bus knows connection, not which OS handle this process must reap) — source only its *list/liveness* from the bus.
+
+### Phase 4 — security/durability
+- **Done:** approval-delegation over the bus (steer + approval landed in Phase 1's tail).
+- **Per-actor mailbox tokens:** replace the single shared bus token with scoped per-actor tokens (least-privilege) — touches the `Hello` auth (`server.rs:64`) + `spec.bus.token`. Mailbox purge on stop; tiered in-memory vs maildir durability tuning.
+
+Sequencing: 0 → 2 → 3-cutover → 4. Each is shippable behind the actor e2e suites; 2 is the pivot (ship full spec to deployed) that 3-cutover depends on.
+
+---
+
 ## 5. Out of scope
 
 - The schedule pipeline being a root in-process run that drops Guardian — a separate schedule-RFC.
