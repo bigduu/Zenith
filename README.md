@@ -1,14 +1,27 @@
+<div align="center">
+
 # Zenith
 
-> 📖 中文版请看 **[README.zh-CN.md](./README.zh-CN.md)**
+### Bodhi AI — the local-first desktop agent that does the work, not just chats.
 
-> **In one line: the single entry point that ties a "get-things-done" AI desktop product together with the entire system behind it.**
+**It uses tools, keeps memory, and shows you every step — not just a final answer.**
+Zenith is its home base: the desktop product, UI, Rust runtime, Go backend, and docs
+in one recursive clone, released in lockstep.
 
-Bodhi AI turns AI from a chat box into a desktop workbench that actually does the work: you hand it a task, it uses tools, keeps memory, and produces results — and you can watch the whole thing happen, not just read a final answer. Zenith is the home base that holds the desktop product, the UI, the execution engine, the backend, and the docs together — and keeps their releases in sync.
+[![Submodule Guard](https://img.shields.io/github/actions/workflow/status/bigduu/Zenith/submodule-guard.yml?branch=main&label=submodule%20guard&logo=github)](https://github.com/bigduu/Zenith/actions/workflows/submodule-guard.yml)
+[![Release Train](https://img.shields.io/badge/release%20train-Bamboo%20→%20Lotus%20→%20Bodhi-1f6feb)](https://github.com/bigduu/Zenith/actions/workflows/release-train.yml)
+[![Versioning](https://img.shields.io/badge/versioning-nightly%20YYYY.M.N-8a2be2)](https://github.com/bigduu/Zenith/actions/workflows/nightly-release.yml)
+[![中文 README](https://img.shields.io/badge/lang-中文-red)](./README.zh-CN.md)
 
-First time here? Start with **[Bodhi AI](https://github.com/bigduu/Bodhi-AI)**.
+**[▶ Start with Bodhi AI](https://github.com/bigduu/Bodhi-AI)** · [Lotus](https://github.com/bigduu/Lotus) · [Bamboo](https://github.com/bigduu/Bamboo-agent) · [Bodhi Server](https://github.com/bigduu/bodhi-server) · [Pavilion](https://github.com/bigduu/Pavilion) · [Architecture Overview](https://github.com/bigduu/Pavilion/blob/main/articles/zenith-architecture-overview.md)
 
-[Bodhi AI](https://github.com/bigduu/Bodhi-AI) · [Lotus](https://github.com/bigduu/Lotus) · [Bamboo](https://github.com/bigduu/Bamboo-agent) · [Bodhi Server](https://github.com/bigduu/bodhi-server) · [Pavilion](https://github.com/bigduu/Pavilion) · [Architecture Overview](https://github.com/bigduu/Pavilion/blob/main/articles/zenith-architecture-overview.md)
+</div>
+
+<!-- TODO(readme): a product demo GIF/screenshot of Bodhi AI right here is the single biggest
+     click/star driver (cf. aider's screencast). Borrow one from Pavilion/Bodhi when ready:
+     <p align="center"><img src="./docs/assets/bodhi-demo.gif" alt="Bodhi AI in action" width="100%"></p> -->
+
+> Bodhi AI turns AI from a chat box into a desktop workbench that actually does the work: you hand it a task, it uses tools, keeps memory, and produces results — and you can watch the whole thing happen. **Zenith** ties the product, the UI, the execution engine, the backend, and the docs together — and keeps their releases in sync.
 
 ---
 

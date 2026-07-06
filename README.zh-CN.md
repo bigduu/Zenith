@@ -1,14 +1,27 @@
+<div align="center">
+
 # Zenith
 
-> 📖 For English, see **[README.md](./README.md)**
+### Bodhi AI —— 本地优先的桌面 agent，真正动手干活，而不只是聊天。
 
-> **一句话：把一个能真正帮你把事情做完的 AI 桌面产品，连同它背后的整套系统，组织在同一个仓库里。**
+**它会用工具、有记忆、每一步都看得见 —— 给你的不只是一个最终答案。**
+Zenith 是它的大本营：桌面产品、UI、Rust 运行时、Go 后端与文档，
+一次 `--recursive` clone 全到位，并同步发布。
 
-Bodhi AI 想把 AI 从一个只会聊天的窗口，变成一个真正能推进工作的桌面工作台：你交代任务，它使用工具、留下记忆、把结果做出来，整个过程你都看得见。Zenith 就是这套系统的总入口——它把桌面产品、界面、执行引擎、服务端和官网文档组织在一起，并统一它们的发布节奏。
+[![Submodule Guard](https://img.shields.io/github/actions/workflow/status/bigduu/Zenith/submodule-guard.yml?branch=main&label=submodule%20guard&logo=github)](https://github.com/bigduu/Zenith/actions/workflows/submodule-guard.yml)
+[![Release Train](https://img.shields.io/badge/release%20train-Bamboo%20→%20Lotus%20→%20Bodhi-1f6feb)](https://github.com/bigduu/Zenith/actions/workflows/release-train.yml)
+[![Versioning](https://img.shields.io/badge/versioning-nightly%20YYYY.M.N-8a2be2)](https://github.com/bigduu/Zenith/actions/workflows/nightly-release.yml)
+[![English README](https://img.shields.io/badge/lang-English-blue)](./README.md)
 
-**第一次来？先打开 [Bodhi AI](https://github.com/bigduu/Bodhi-AI)。**
+**[▶ 先看 Bodhi AI](https://github.com/bigduu/Bodhi-AI)** · [Lotus](https://github.com/bigduu/Lotus) · [Bamboo](https://github.com/bigduu/Bamboo-agent) · [Bodhi Server](https://github.com/bigduu/bodhi-server) · [Pavilion](https://github.com/bigduu/Pavilion) · [架构总览](https://github.com/bigduu/Pavilion/blob/main/articles/zenith-architecture-overview.md)
 
-[Bodhi AI](https://github.com/bigduu/Bodhi-AI) · [Lotus](https://github.com/bigduu/Lotus) · [Bamboo](https://github.com/bigduu/Bamboo-agent) · [Bodhi Server](https://github.com/bigduu/bodhi-server) · [Pavilion](https://github.com/bigduu/Pavilion) · [架构总览](https://github.com/bigduu/Pavilion/blob/main/articles/zenith-architecture-overview.md)
+</div>
+
+<!-- TODO(readme): 这里放一张 Bodhi AI 的产品演示 GIF/截图，是最大的点击/star 驱动（参考 aider 的录屏）。
+     素材就绪后从 Pavilion/Bodhi 借用：
+     <p align="center"><img src="./docs/assets/bodhi-demo.gif" alt="Bodhi AI 实际运行" width="100%"></p> -->
+
+> Bodhi AI 想把 AI 从一个只会聊天的窗口，变成一个真正能推进工作的桌面工作台：你交代任务，它使用工具、留下记忆、把结果做出来，整个过程你都看得见。**Zenith** 把产品、界面、执行引擎、服务端和文档组织在一起，并统一它们的发布节奏。
 
 ---
 
