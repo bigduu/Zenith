@@ -1,6 +1,14 @@
 # Lotus → Lotus-Next 迁移体检与落地计划
 
-> 状态:**计划已定稿** · 最后更新:2026-06-28
+> 状态:**功能补齐大批次已落地** · 最后更新:2026-07-07
+>
+> **2026-07-07 大批次(用户拍板:除 i18n 全部同步;传输只要 WSS 不要 SSE):**
+> 1. **传输 WSS-only 完成**:删除两条 legacy SSE 路径 + WS→SSE 回退机制 + `bodhi_api_v2_ws` 开关(净 −541 行);v2Stream 即唯一传输,初连失败与断线同走有界退避重连;msgpack 保持 opt-in。§2.2 的 "v2 WebSocket 传输 🟡" 行已过时 → ✅ 且比 lotus 更进一步(lotus 还保留回退)。
+> 2. **运行期可见性完成**(审计发现的最大洞):useChat 接上 tool_start/token/complete、task_list_*、token_budget、compression 事件 → live 工具卡(分段时间线,修多轮文本堆积)、Inspector 任务清单实时 + 评估横幅、用量环实时、状态行。
+> 3. **流式韧性完成**:被动观察引擎(他端/定时任务驱动的 run 自动订阅)、搁浅终态回收、visibilitychange 回收、WS 重连即时 reconcile(WSS-only 后这些是必需品,不再有 SSE 兜底)。
+> 4. **Settings 深度(9 路并行实现)**:定时任务全触发类型+策略+run-now+历史(修复 P0:cron 字段 `expression`→`expr`,创建从未生效)、Providers 深度(enabled 开关/类型变更/defaults.*/overrides/OAuth 打磨)、MCP 深度(编辑/env/cwd/headers/工具列表)、技能启停+搜索、通知后端偏好、系统面板(代理/记忆/子代理/工具/访问密码/模型限额/会话维护)、集群 tab + MachineTag(#33/#34 数据层已逐字移植)、指标仪表盘(纯 SVG)、提示词 + 工作流 tab + CommandService、导出 PDF 改渲染管线(CJK 安全)。
+> 5. **聊天集成**:enhance_prompt 管线恢复(此前静默缺失)、新会话系统提示词预设 chip、SlashMenu 合并工作流(/v1/commands + 发送展开)、键盘导航(↑↓/Enter/Tab/Esc)、每会话草稿、待答问题会话打开恢复、AI 生成标题、主题跟随系统、Root 启动顺序修复(密码门先于 setup 探测)+ 有界重试、preloadError 自动重载、根 ErrorBoundary。
+> **仍未做**:FileChangeViewer/Diffs 区、HomeDashboard + 模板启动器、单 pane 多会话并发流式(useChat per-session buffer Map)、侧栏过滤/内容搜索/批量删除、命令面板深度、mermaid 缩放/主题、消息上下文操作、输入历史、Run Project Dream、引导 tour、传输测试套件;生产切换(选项 B)仍按 dev-first 分期推迟。
 >
 > **已拍板的方向决策:**
 > 1. **产品定位 = next 渐进取代 lotus**(最终走选项 B:打包脚本改服 lotus-next;lotus 在 next 达到功能水位后退役)。
