@@ -1,0 +1,14 @@
+# Dev-profile tuning to slow down target/ disk growth.
+# Cargo merges config.toml upward from the build directory, so this applies to
+# every Rust workspace under this tree (bamboo/, nova/, bodhi/, and any
+# .claude/worktrees/* checkouts). Release profiles are untouched — nova's MCP
+# binary and all shipped artifacts build from release.
+
+[profile.dev]
+# Line tables keep file:line in backtraces at a fraction of full debuginfo size.
+debug = "line-tables-only"
+
+# Third-party dependencies get no debug info at all ("*" excludes workspace
+# members, so bamboo_*/nova/bodhi crates keep their line tables).
+[profile.dev.package."*"]
+debug = false
