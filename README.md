@@ -9,7 +9,7 @@ Zenith is its home base: the desktop product, UI, Rust runtime, Go backend, and 
 in one recursive clone, released in lockstep.
 
 [![Submodule Guard](https://img.shields.io/github/actions/workflow/status/bigduu/Zenith/submodule-guard.yml?branch=main&label=submodule%20guard&logo=github)](https://github.com/bigduu/Zenith/actions/workflows/submodule-guard.yml)
-[![Release Train](https://img.shields.io/badge/release%20train-Bamboo%20→%20Lotus%20→%20Bodhi-1f6feb)](https://github.com/bigduu/Zenith/actions/workflows/release-train.yml)
+[![Release Train](https://img.shields.io/badge/release%20train-Lotus%20→%20Bamboo%20→%20Bodhi-1f6feb)](https://github.com/bigduu/Zenith/actions/workflows/release-train.yml)
 [![Versioning](https://img.shields.io/badge/versioning-nightly%20YYYY.M.N-8a2be2)](https://github.com/bigduu/Zenith/actions/workflows/nightly-release.yml)
 [![中文 README](https://img.shields.io/badge/lang-中文-red)](./README.zh-CN.md)
 
@@ -31,7 +31,7 @@ in one recursive clone, released in lockstep.
 |---|---|
 | **A map of the whole system** | One repo shows how product, UI, runtime, backend, and docs divide the work and fit together |
 | **Five submodules, one clone** | Pull the full stack in a single recursive clone |
-| **Coordinated release train** | Bamboo → Lotus → Bodhi published in order, all driven by one config file |
+| **Coordinated release train** | Lotus → Bamboo → Bodhi published in dependency order, all driven by one config file |
 | **Daily nightly versioning** | Calendar-versioned (`YYYY.M.N`) auto-bump and nightly release |
 | **Submodule guard** | CI validates submodule pointers on every push and PR |
 | **Clear "start here" routing** | Whether you want the product, the frontend, or the runtime, there is a clear door in |
@@ -105,13 +105,15 @@ The five-way split exists so each layer can evolve on its own yet converge into 
 
 Shipping several repos at once, in dependency order, is error-prone. Zenith reduces it to one config plus one workflow.
 
-The order is fixed:
+The order is fixed by the dependency graph:
 
-1. **Bamboo** → publish crate (`publish-crate.yml` in `bigduu/Bamboo-agent`)
-2. **Lotus** → publish npm package `@bigduu/lotus` (`publish-npm.yml` in `bigduu/Lotus`)
-3. **Bodhi** → build & ship desktop assets (`deploy.yml` in `bigduu/Bodhi-AI`)
+1. **Lotus** → publish npm package `@bigduu/lotus` (`publish-npm.yml` in `bigduu/Lotus`)
+2. **Bamboo** → publish crates, embedding that exact Lotus as the web frontend (`publish-crate.yml` in `bigduu/Bamboo-agent`)
+3. **Bodhi** → build & ship desktop assets consuming both (`release.yml` in `bigduu/Bodhi-AI`)
 
 Between steps, the train **waits until the artifact is actually visible on crates.io / npm** before continuing (see `wait_for_crates_version` / `wait_for_npm_version` in `release-train.yml`). All versions and refs default to `.github/release-train.config.json` (`from_manifest`), and can be overridden when dispatched manually.
+
+The train also supports **partial releases**: dispatch with `targets` (e.g. `bamboo,bodhi`) to release a subset — excluded repos are pinned to the last published versions recorded in the config, and a pre-flight check refuses to reuse an already-published version (pass `resume=true` to resume a partially completed train instead). After a successful run, the train writes the published versions back to the config, and the nightly bump additionally scans the registries for the month's highest published number — so the counter never collides with an ad-hoc release.
 
 Current config (`.github/release-train.config.json`):
 
@@ -127,7 +129,7 @@ Related workflows (under `.github/workflows/`):
 
 | Workflow | Purpose |
 |---|---|
-| `release-train.yml` | Manual coordinated release: Bamboo → Lotus → Bodhi |
+| `release-train.yml` | Coordinated release (full or partial via `targets`): Lotus → Bamboo → Bodhi |
 | `nightly-release.yml` | Daily nightly auto-bump (`YYYY.M.N`) at 04:00 UTC |
 | `submodule-guard.yml` | Validates submodule pointers on push & PR |
 

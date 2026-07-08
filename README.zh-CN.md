@@ -9,7 +9,7 @@ Zenith 是它的大本营：桌面产品、UI、Rust 运行时、Go 后端与文
 一次 `--recursive` clone 全到位，并同步发布。
 
 [![Submodule Guard](https://img.shields.io/github/actions/workflow/status/bigduu/Zenith/submodule-guard.yml?branch=main&label=submodule%20guard&logo=github)](https://github.com/bigduu/Zenith/actions/workflows/submodule-guard.yml)
-[![Release Train](https://img.shields.io/badge/release%20train-Bamboo%20→%20Lotus%20→%20Bodhi-1f6feb)](https://github.com/bigduu/Zenith/actions/workflows/release-train.yml)
+[![Release Train](https://img.shields.io/badge/release%20train-Lotus%20→%20Bamboo%20→%20Bodhi-1f6feb)](https://github.com/bigduu/Zenith/actions/workflows/release-train.yml)
 [![Versioning](https://img.shields.io/badge/versioning-nightly%20YYYY.M.N-8a2be2)](https://github.com/bigduu/Zenith/actions/workflows/nightly-release.yml)
 [![English README](https://img.shields.io/badge/lang-English-blue)](./README.md)
 
@@ -31,7 +31,7 @@ Zenith 是它的大本营：桌面产品、UI、Rust 运行时、Go 后端与文
 |---|---|
 | **整套系统的地图** | 一个仓库就能看清产品、UI、runtime、backend、文档如何分工与协作 |
 | **5 个 submodule 一键拉取** | `--recursive` 一次拉全栈，不用手动跑五个仓库 |
-| **协调发布列车** | Bamboo → Lotus → Bodhi 顺序发布，版本号从一份配置统一驱动 |
+| **协调发布列车** | Lotus → Bamboo → Bodhi 按依赖顺序发布，版本号从一份配置统一驱动 |
 | **每日 Nightly 自动版本** | 按 `YYYY.M.N` 日历版本自动递增并触发发布 |
 | **指针守护** | CI 在每次 push / PR 校验 submodule 指针的健康 |
 | **明确的“从哪开始”** | 无论你想看产品、写前端还是改 runtime，都有明确入口 |
@@ -105,13 +105,15 @@ Zenith 最大的价值，是让任何一个人都能快速找到正确的入口�
 
 多个仓库要同时升级版本、按依赖顺序发布，很容易出错。Zenith 用一份配置 + 一条 workflow 把它变成一次点击。
 
-发布顺序固定为：
+发布顺序由依赖关系固定为：
 
-1. **Bamboo** → 发布 crate（`bigduu/Bamboo-agent` 的 `publish-crate.yml`）
-2. **Lotus** → 发布 npm 包 `@bigduu/lotus`（`bigduu/Lotus` 的 `publish-npm.yml`）
-3. **Bodhi** → 构建并发布桌面产物（`bigduu/Bodhi-AI` 的 `deploy.yml`）
+1. **Lotus** → 发布 npm 包 `@bigduu/lotus`（`bigduu/Lotus` 的 `publish-npm.yml`）
+2. **Bamboo** → 发布 crate，并把当天这个 Lotus 嵌入为 web 前端（`bigduu/Bamboo-agent` 的 `publish-crate.yml`）
+3. **Bodhi** → 构建并发布桌面产物，消费前两者（`bigduu/Bodhi-AI` 的 `release.yml`）
 
 每一步之间，release train 会**等待制品在 crates.io / npm 上真正可见**后再进入下一步（见 `release-train.yml` 中的 `wait_for_crates_version` / `wait_for_npm_version`）。所有版本与 ref 默认从 `.github/release-train.config.json` 读取（`from_manifest`），也可在手动触发时覆盖。
+
+列车也支持**部分发车**：手动触发时传 `targets`（如 `bamboo,bodhi`）只发布子集——未选中的仓库固定使用配置中记录的最近已发布版本；预检会拒绝复用已发布过的版本号（重跑半途失败的列车请传 `resume=true`）。列车成功后会把实际发布的版本写回配置，nightly 定版时还会扫描 registry 取当月最大序号，保证计数器不会与临时发布撞号。
 
 当前配置 (`.github/release-train.config.json`):
 
@@ -127,7 +129,7 @@ Zenith 最大的价值，是让任何一个人都能快速找到正确的入口�
 
 | Workflow | 作用 |
 |---|---|
-| `release-train.yml` | 手动触发的协调发布：Bamboo → Lotus → Bodhi |
+| `release-train.yml` | 协调发布（全量或用 `targets` 部分发车）：Lotus → Bamboo → Bodhi |
 | `nightly-release.yml` | 每天 UTC 04:00（北京时间 12:00）按 `YYYY.M.N` 自动递增版本并触发 |
 | `submodule-guard.yml` | 每次 push / PR 校验 submodule 指针 |
 
