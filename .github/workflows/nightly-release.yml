@@ -38,11 +38,13 @@ jobs:
 
       - name: Calculate next version
         id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
           CURRENT="$(jq -r '.versions.release' "${CONFIG_FILE}")"
-          echo "Current version: ${CURRENT}"
+          echo "Current version (Zenith config): ${CURRENT}"
 
           # Parse current version: YYYY.M.N
           IFS='.' read -r OLD_YEAR OLD_MONTH OLD_N <<< "${CURRENT}"
@@ -51,14 +53,40 @@ jobs:
           YEAR="$(date -u +%Y)"
           MONTH="$(date -u +%-m)"
 
+          MAX_N=0
           if [ "${YEAR}" = "${OLD_YEAR}" ] && [ "${MONTH}" = "${OLD_MONTH}" ]; then
-            # Same year.month → increment N
-            NEW_N=$((OLD_N + 1))
-          else
-            # New year or new month → reset to 1
-            NEW_N=1
+            MAX_N="${OLD_N}"
           fi
 
+          # Ad-hoc or partial releases can publish versions the config never
+          # recorded (and a failed write-back leaves it behind), so also scan
+          # what the registries actually hold for this year.month and advance
+          # past the highest. A registry query failure only logs — the config
+          # floor still applies, and the release train's collision pre-flight
+          # refuses to reuse an occupied version loudly rather than silently.
+          USER_AGENT="zenith-nightly-release/1.0 (+https://github.com/${{ github.repository }})"
+          PATTERN="^${YEAR}\.${MONTH}\.[0-9]+$"
+
+          REMOTE_VERSIONS="$(
+            {
+              curl -sS -H "User-Agent: ${USER_AGENT}" "https://crates.io/api/v1/crates/bamboo-agent" \
+                | jq -r '.versions[].num' || true
+              curl -sS -H "User-Agent: ${USER_AGENT}" "https://registry.npmjs.org/@bigduu%2flotus" \
+                | jq -r '.versions | keys[]' || true
+              gh release list -R bigduu/Bodhi-AI --limit 100 --json tagName \
+                --jq '.[].tagName | sub("^app-v"; "")' || true
+            } 2>/dev/null | { grep -E "${PATTERN}" || true; } | sort -u
+          )"
+
+          for version in ${REMOTE_VERSIONS}; do
+            n="${version##*.}"
+            if [ "${n}" -gt "${MAX_N}" ]; then
+              echo "Registry already has ${version}; advancing the counter past it"
+              MAX_N="${n}"
+            fi
+          done
+
+          NEW_N=$((MAX_N + 1))
           NEW_VERSION="${YEAR}.${MONTH}.${NEW_N}"
           echo "New version: ${NEW_VERSION}"
           echo "new_version=${NEW_VERSION}" >> "${GITHUB_OUTPUT}"
@@ -121,7 +149,7 @@ jobs:
           NEW_VERSION="${{ needs.auto-version.outputs.new_version }}"
 
           echo "Dispatching release-train with version ${NEW_VERSION}"
-          echo "Release order: Bamboo → Lotus → Bodhi"
+          echo "Release order: Lotus → Bamboo → Bodhi"
 
           # The release-train.yml workflow reads from config.json by default
           # (all inputs default to "from_manifest"), so we just need to trigger it.
