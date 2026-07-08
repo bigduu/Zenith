@@ -50,7 +50,8 @@ jobs:
         uses: actions/github-script@v9
         with:
           script: |
-            const core = require("@actions/core");
+            // `core` is injected by github-script; redeclaring it is a
+            // SyntaxError that failed this check on every PR.
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
 
