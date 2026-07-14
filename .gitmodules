@@ -19,3 +19,6 @@
 [submodule "lotus-next"]
 	path = lotus-next
 	url = https://github.com/bigduu/lotus-next.git
+[submodule "magpie"]
+	path = magpie
+	url = git@github.com:bigduu/Magpie.git
