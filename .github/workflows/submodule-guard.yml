@@ -20,15 +20,42 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Sync and update submodules
-        run: |
-          git submodule sync --recursive
-          git submodule update --init --recursive
-
-      - name: Verify submodule HEADs match gitlinks
+      - name: Validate changed submodule pointers
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
         run: |
           set -euo pipefail
-          while read -r path; do
+
+          base_sha="$BASE_SHA"
+          if [ -z "$base_sha" ] || [[ "$base_sha" =~ ^0+$ ]] || ! git cat-file -e "$base_sha^{commit}"; then
+            base_sha="$(git rev-parse HEAD^)"
+          fi
+
+          changed="$(
+            git diff --raw --no-renames "$base_sha" HEAD |
+              awk 'substr($1, 2) == "160000" || $2 == "160000" { print $6 }'
+          )"
+          if [ -z "$changed" ]; then
+            echo "No submodule pointer changes detected."
+            exit 0
+          fi
+
+          current=()
+          while IFS= read -r path; do
+            if [ "$(git ls-tree HEAD "$path" | awk '{print $1}')" = "160000" ]; then
+              current+=("$path")
+            else
+              echo "Submodule removed: $path"
+            fi
+          done <<< "$changed"
+          if [ "${#current[@]}" -eq 0 ]; then
+            exit 0
+          fi
+
+          git submodule sync -- "${current[@]}"
+          git submodule update --init -- "${current[@]}"
+
+          for path in "${current[@]}"; do
             expected="$(git ls-tree HEAD "$path" | awk '{print $3}')"
             actual="$(git -C "$path" rev-parse HEAD)"
             echo "Checking $path: expected=$expected actual=$actual"
@@ -36,10 +63,9 @@ jobs:
               echo "Submodule pointer mismatch for $path"
               exit 1
             fi
-          done < <(git config -f .gitmodules --get-regexp '^submodule\..*\.path$' | awk '{print $2}')
+          done
 
-      - name: Print submodule status
-        run: git submodule status --recursive
+          git submodule status -- "${current[@]}"
 
   require-submodule-notes:
     name: Require Submodule Notes (PR)
