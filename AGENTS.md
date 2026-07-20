@@ -103,8 +103,12 @@ Commit in the submodule first, push, then update the root pointer if needed.
 ### 6. Review
 
 - Agents may cross-review PRs in **different** modules.
-- After agent review, add `review:agent` label — signals human final review.
-- Human merges after approval.
+- After agent review, add `review:agent` label and remove `review:needed`.
+- Agents may merge when acceptance criteria are satisfied, required checks are green,
+  no unresolved review thread or requested change remains, the live PR head/base and
+  mergeability have been reverified, and branch protection permits the merge.
+  Human approval is required only when explicitly requested by the user or repository
+  protection rules.
 - Review checklist:
   - [ ] Meets Acceptance Criteria from the Issue
   - [ ] Tests pass and coverage is adequate
@@ -127,7 +131,7 @@ See `.github/labels.tsv` for the full label taxonomy. Key labels:
 | `agent:locked` | Claimed — do not pick up |
 | `agent:blocked` | Stuck on a dependency |
 | `review:needed` | Waiting for review |
-| `review:agent` | Agent review done, human needed |
+| `review:agent` | Agent review complete; merge gates may proceed |
 | `scope:cross-module` | Requires coordination across modules |
 
 ### Issue Title Convention
