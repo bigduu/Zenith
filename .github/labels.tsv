@@ -19,7 +19,7 @@ agent:blocked	#bfd4f2	Blocked by dependency or conflict
 
 # --- Review Labels ---
 review:needed	#fbca04	Waiting for review
-review:agent	#5319e7	Agent review done, waiting for human
+review:agent	#5319e7	Agent review complete; merge gates may proceed
 review:changes	#e11d48	Changes requested
 
 # --- Scope Labels ---
