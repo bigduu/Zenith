@@ -70,6 +70,40 @@ Backlog → Triaged → Ready → In Progress → In Review → Done
 - `scope:cross-module` tasks: serialize — wait until all involved modules are free.
 - Always work in an isolated worktree: `git worktree add` or equivalent.
 
+### 2.1 Scope Control and Issue Splitting
+
+- Before implementation, define one end-to-end acceptance slice, its explicit
+  in-scope files/systems, its non-goals, and a 4-8 hour delivery estimate.
+- Recheck scope after roughly 4 hours. If the work is likely to exceed 8 hours,
+  split it before adding another subsystem. Work that reaches 12 elapsed working
+  hours is a hard stop: preserve the WIP, turn the parent into a tracking Issue,
+  and continue only through smaller child Issues and fresh branches/worktrees.
+- Treat any of the following as an immediate split signal:
+  - a second independent persistence, recovery, or lifecycle protocol;
+  - changes spanning more than two independently deployable subsystems;
+  - multiple acceptance criteria that can be shipped and verified separately;
+  - a patch growing beyond roughly 15 core files or 1,500-2,000 net new lines;
+  - a review finding whose reproduction and fix do not require the current
+    Issue's acceptance path.
+- Do not follow a chain of adjacent findings into unrelated repairs. A valid
+  finding is not automatically a blocker for the current Issue. Classify every
+  finding as exactly one of:
+  1. introduced by the current diff and required for this acceptance slice;
+  2. a pre-existing or adjacent bug that gets its own focused Issue;
+  3. unrelated debt that is recorded without changing the current branch.
+- Severity alone does not expand scope. If a severe problem is outside the
+  current acceptance slice, stop and open/route a focused Issue. If the current
+  change introduces the problem, prefer removing or narrowing that change over
+  importing a new subsystem into the PR.
+- A cross-module or multi-surface Issue that cannot fit the timebox is a tracker,
+  not an implementation unit. Give each child Issue its own acceptance criteria,
+  tests, non-goals, branch, worktree, and PR; do not attach one monolithic branch
+  to the parent tracker.
+- Reviewers and implementation agents must report scope expansion as soon as it
+  appears. Do not continue polishing a monolithic WIP because time has already
+  been invested; preserve it as reference material and extract only focused,
+  independently verifiable changes.
+
 ### 3. Branch Naming
 
 ```
