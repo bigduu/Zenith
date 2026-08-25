@@ -22,3 +22,6 @@
 [submodule "magpie"]
 	path = magpie
 	url = git@github.com:bigduu/Magpie.git
+[submodule "jiandu"]
+	path = jiandu
+	url = https://github.com/bigduu/Jiandu.git
