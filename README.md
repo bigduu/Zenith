@@ -5,8 +5,8 @@
 ### Bodhi AI — the local-first desktop agent that does the work, not just chats.
 
 **It uses tools, keeps memory, and shows you every step — not just a final answer.**
-Zenith is its home base: the desktop product, UIs, Rust runtime, Go backend, shared
-memory, computer use, IM integration, and docs in one recursive clone.
+Zenith is its home base: the desktop product, UIs, Rust runtime, optional hosted
+services, shared memory, computer use, IM integration, and docs in one recursive clone.
 
 [![Submodule Guard](https://img.shields.io/github/actions/workflow/status/bigduu/Zenith/submodule-guard.yml?branch=main&label=submodule%20guard&logo=github)](https://github.com/bigduu/Zenith/actions/workflows/submodule-guard.yml)
 [![Release Train](https://img.shields.io/badge/release%20train-Lotus%20→%20Bamboo%20→%20Bodhi-1f6feb)](https://github.com/bigduu/Zenith/actions/workflows/release-train.yml)
@@ -17,7 +17,7 @@ memory, computer use, IM integration, and docs in one recursive clone.
 
 </div>
 
-> Bodhi AI turns AI from a chat box into a desktop workbench that actually does the work: you hand it a task, it uses tools, keeps memory, and produces results — and you can watch the whole thing happen. **Zenith** ties the product, the UI, the execution engine, the backend, and the docs together — and keeps their releases in sync.
+> Bodhi AI turns AI from a chat box into a desktop workbench that actually does the work: you hand it a task, it uses tools, keeps memory, and produces results — and you can watch the whole thing happen. **Zenith** ties the product, the UI, the execution engine, optional hosted services, and the docs together — and keeps their releases in sync.
 
 ---
 
@@ -29,7 +29,7 @@ memory, computer use, IM integration, and docs in one recursive clone.
 | **Nine submodules, one clone** | Pull the full product stack and companion services in a single recursive clone |
 | **Coordinated release train** | Lotus → Bamboo → Bodhi published in dependency order, all driven by one config file |
 | **Daily nightly versioning** | Calendar-versioned (`YYYY.M.N`) auto-bump and nightly release |
-| **Submodule guard** | CI validates submodule pointers on every push and PR |
+| **Submodule guard** | CI validates submodule pointers on pushes to and pull requests targeting `main` |
 | **Clear "start here" routing** | Whether you want the product, the frontend, or the runtime, there is a clear door in |
 
 ---
@@ -45,33 +45,35 @@ graph TD
   Z --> B["Bodhi AI<br/>desktop product surface (Tauri shell)"]
   Z --> L["Lotus<br/>React + Vite UI layer"]
   Z --> R["Bamboo<br/>local-first Rust agent runtime"]
-  Z --> S["Bodhi Server<br/>Go backend"]
+  Z --> S["Bodhi Server<br/>optional hosted service"]
   Z --> P["Pavilion<br/>website & docs"]
-  Z --> J["Jiandu<br/>shared-memory MCP service"]
+  Z --> J["Jiandu<br/>Rust memory crate + stdio MCP"]
   Z --> N["Nova<br/>computer-use MCP server"]
-  Z --> LN["Lotus Next<br/>responsive frontend rebuild"]
+  Z --> LN["Lotus Next<br/>experimental frontend track"]
   Z --> M["Magpie<br/>IM connector for Bamboo"]
 
-  B -. embeds .-> L
-  L -. HTTP / SSE .-> R
-  R -. auth · quota · LLM proxy .-> S
+  B -. starts / reuses / health-checks .-> R
+  R -. packaged builds serve embedded frontend .-> L
+  L -->|HTTP APIs + shared /v2/stream WebSocket| R
+  L -. legacy SSE fallback .-> R
+  R -. optional /proxy/* when configured .-> S
   P -. explains .-> B
 ```
 
-> **Note** —— The Bodhi shell hosts the UI and native integration; Lotus is the actual UI; Lotus talks to the Bamboo runtime over **HTTP / SSE** (not Tauri IPC); Bamboo defers account, quota, billing, and LLM-proxy concerns to the Go backend, Bodhi Server.
+> **Note** —— Bodhi owns the native desktop shell and the Bamboo sidecar lifecycle: it starts or reuses `bamboo serve` and waits for it to become healthy. Packaged builds load the Lotus UI served by Bamboo; development keeps Lotus on its Vite dev server while Bamboo runs alongside it. Lotus sends requests over HTTP and receives live events through the shared `/v2/stream` WebSocket by default, with legacy SSE only when WebSocket is disabled or its initial connection cannot be established. Bodhi Server is optional for local operation and is used, when configured, for accounts/authentication, credential storage, quota/billing, model routing, and provider proxying.
 
 ### What each module does
 
 | Module | Path | Role | Start here |
 |---|---|---|---|
-| **Bodhi AI** | `bodhi/` | Product surface: Tauri desktop shell hosting the UI, native integration, packaging | [Bodhi AI](https://github.com/bigduu/Bodhi-AI) |
-| **Lotus** | `lotus/` | UI layer: React + Vite frontend, live event stream, view state, settings | [Lotus](https://github.com/bigduu/Lotus) |
-| **Bamboo** | `bamboo/` | Execution engine: local-first Rust agent runtime — tasks, tools, memory, HTTP/SSE API | [Bamboo Agent](https://github.com/bigduu/Bamboo-agent) |
-| **Bodhi Server** | `bodhi-server/` | Backend: Go server — auth, persistence, quota/billing, LLM proxy | [Bodhi Server](https://github.com/bigduu/bodhi-server) |
+| **Bodhi AI** | `bodhi/` | Product surface: Tauri shell, native integration, packaging, and managed Bamboo sidecar lifecycle | [Bodhi AI](https://github.com/bigduu/Bodhi-AI) |
+| **Lotus** | `lotus/` | UI layer: React + Vite, HTTP requests, shared WebSocket live events, legacy SSE fallback, view state, settings | [Lotus](https://github.com/bigduu/Lotus) |
+| **Bamboo** | `bamboo/` | Execution engine and production Lotus host: local-first Rust runtime with HTTP, WebSocket, and legacy SSE APIs | [Bamboo Agent](https://github.com/bigduu/Bamboo-agent) |
+| **Bodhi Server** | `bodhi-server/` | Optional hosted Go service: accounts/auth, API keys, encrypted provider credentials, model routing, billing/quota, provider proxy | [Bodhi Server](https://github.com/bigduu/bodhi-server) |
 | **Pavilion** | `pavilion/` | Website & docs: download page, doc center, public narrative | [Pavilion](https://github.com/bigduu/Pavilion) |
-| **Jiandu** | `jiandu/` | Shared memory: agent-independent filesystem-backed MCP service | [Jiandu](https://github.com/bigduu/Jiandu) · [agent guidance](./AGENTS.md#shared-memory-via-jiandu-mcp) |
+| **Jiandu** | `jiandu/` | Shared memory: runtime-independent filesystem-backed Rust library plus stdio MCP server with one `memory` tool | [Jiandu](https://github.com/bigduu/Jiandu) · [agent guidance](./AGENTS.md#shared-memory-via-jiandu-mcp) |
 | **Nova** | `nova/` | Computer use: native desktop interaction exposed through MCP | [Nova](https://github.com/bigduu/Nova) |
-| **Lotus Next** | `lotus-next/` | Next UI track: responsive React + Vite frontend developed alongside Lotus | [Lotus Next](https://github.com/bigduu/lotus-next) |
+| **Lotus Next** | `lotus-next/` | Experimental parallel UI track: responsive React + Vite rebuild without current feature-parity or production-readiness claims | [Lotus Next](https://github.com/bigduu/lotus-next) |
 | **Magpie** | `magpie/` | IM integration: standalone connector and Bamboo service plugin | [Magpie](https://github.com/bigduu/Magpie) |
 | **Zenith (root)** | `.` | Coordinator: submodule pointers, root docs, release train | You are here |
 
@@ -92,22 +94,28 @@ Zenith's biggest job is getting any person to the right door fast.
 - Desktop product / Tauri shell → `bodhi/`
 - Frontend interaction / React UI → `lotus/`
 - Agent runtime / Rust backend → `bamboo/`
-- Backend / Go backend → `bodhi-server/`
+- Optional hosted accounts / credentials / routing / billing → `bodhi-server/`
 - Website / docs / public content → `pavilion/`
+- Shared-memory MCP → `jiandu/`
+- Computer-use MCP → `nova/`
+- Experimental next-generation UI → `lotus-next/`
+- IM connector / Bamboo service plugin → `magpie/`
 
 ### The stack, organized on purpose
 
 The core product path is split so each layer can evolve on its own yet converge into one product at release time:
 
-- **UI & experience** live in Lotus (React/Vite) and iterate and test independently.
-- **Execution** lives in Bamboo (Rust), local-first, runnable as a standalone HTTP service.
-- **Account, quota, billing, LLM proxy** live in Bodhi Server (Go) — the server-trusted concerns, visible as real modules under `bodhi-server/internal/` (`auth`, `quota`, `pricing`, `proxy`, `database`).
-- **The desktop shell** lives in Bodhi and only wraps the UI into an installable desktop app.
+- **UI & experience** live in Lotus (React/Vite); requests use HTTP and live events use one shared WebSocket by default, with legacy SSE fallback.
+- **Execution and production UI hosting** live in Bamboo (Rust), local-first and runnable as a standalone service.
+- **Optional hosted accounts, credentials, model routing, quota/billing, and provider proxying** live in Bodhi Server (Go) when configured. The local Bodhi + Bamboo path does not require it.
+- **The desktop shell** lives in Bodhi: it owns native integration, packaging, and the managed Bamboo sidecar lifecycle, while Bamboo serves the embedded Lotus frontend in release builds.
 - **Public narrative** lives in Pavilion, decoupled from code.
 
-Four companion submodules keep separate boundaries: Jiandu provides shared memory
-over MCP, Nova provides computer use over MCP, Lotus Next is the responsive UI
-successor track, and Magpie connects IM platforms to Bamboo.
+Four companion submodules keep separate boundaries: Jiandu is a standalone stdio
+MCP server and Rust library for runtime-independent shared memory; Nova provides
+computer use over MCP; Lotus Next is an experimental frontend track developed
+alongside Lotus and is not the current Bodhi default; Magpie connects IM platforms
+to Bamboo.
 
 ### Coordinated release train
 
@@ -133,7 +141,7 @@ Related workflows (under `.github/workflows/`):
 |---|---|
 | `release-train.yml` | Coordinated release (full or partial via `targets`): Lotus → Bamboo → Bodhi |
 | `nightly-release.yml` | Daily nightly auto-bump (`YYYY.M.N`) at 04:00 UTC |
-| `submodule-guard.yml` | Validates submodule pointers on push & PR |
+| `submodule-guard.yml` | Validates submodule pointers on pushes to and pull requests targeting `main` |
 
 > **Default policy** —— Normal releases go through Zenith's release train; per-repo standalone flows are for recovery or special cases only.
 
@@ -157,12 +165,14 @@ git submodule update --init --recursive
 ### Run the desktop app
 
 ```bash
-cd bodhi
+cd lotus
+npm install
+cd ../bodhi
 npm install
 npm run tauri:dev
 ```
 
-> Bodhi's `web:dev` / `tauri:dev` drive the Vite frontend in `../lotus`; see `bodhi/package.json`.
+> `tauri:dev` builds `../bamboo` as the managed debug sidecar, starts `../lotus` with Vite HMR, and launches Bodhi. Bodhi starts or reuses Bamboo and waits for its health endpoint, while the development UI remains on Vite; packaged builds load the Lotus frontend served by Bamboo. See `bodhi/package.json` and the [Bodhi README](https://github.com/bigduu/Bodhi-AI).
 
 ### Run the UI on its own
 
@@ -171,6 +181,8 @@ cd lotus
 npm install
 npm run dev
 ```
+
+> The Vite UI can start on its own; live agent data requires a separately running Bamboo service.
 
 ### Run the agent runtime
 
@@ -207,11 +219,11 @@ git push
 | Bodhi AI — desktop product surface | https://github.com/bigduu/Bodhi-AI |
 | Lotus — React UI layer | https://github.com/bigduu/Lotus |
 | Bamboo — Rust agent runtime | https://github.com/bigduu/Bamboo-agent |
-| Bodhi Server — Go backend | https://github.com/bigduu/bodhi-server |
+| Bodhi Server — optional hosted accounts, credentials, routing, billing/quota, and provider proxy | https://github.com/bigduu/bodhi-server |
 | Pavilion — website & docs | https://github.com/bigduu/Pavilion |
-| Jiandu — shared-memory MCP service | https://github.com/bigduu/Jiandu |
+| Jiandu — filesystem-backed Rust memory library + stdio MCP server | https://github.com/bigduu/Jiandu |
 | Nova — computer-use MCP server | https://github.com/bigduu/Nova |
-| Lotus Next — responsive frontend successor track | https://github.com/bigduu/lotus-next |
+| Lotus Next — experimental parallel frontend track, not the current Bodhi default | https://github.com/bigduu/lotus-next |
 | Magpie — IM connector for Bamboo | https://github.com/bigduu/Magpie |
 
 **Key docs**
