@@ -48,9 +48,12 @@ other agents should use the same store only through Jiandu MCP.
 - Treat memory as supporting evidence: an empty query does not prove a fact is
   false, and recalled memory must be checked against current files and tools.
   Correct an evident argument or context error, but do not loop or claim recall or
-  persistence unless the MCP call succeeds. If Jiandu is unavailable, continue
-  from current evidence, disclose the gap when it materially affects the answer,
-  and do not write a fallback memory file into the repository.
+  persistence unless the MCP call succeeds. A mutation error or interrupted
+  response has an unknown outcome: run `inspect` first, run `rebuild` if only
+  derived artifacts are stale, then verify with `query` or `get`; never blindly
+  retry. If Jiandu is unavailable, continue from current evidence, disclose the
+  gap when it materially affects the answer, and do not write a fallback memory
+  file into the repository.
 
 ## Build, Test, and Development Commands
 From repository root:
