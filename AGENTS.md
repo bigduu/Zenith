@@ -53,11 +53,13 @@ other agents should use the same store only through Jiandu MCP.
   false, and recalled memory must be checked against current files and tools.
   Correct an evident argument or context error, but do not loop or claim recall or
   persistence unless the MCP call succeeds. A mutation error or interrupted
-  response has an unknown outcome: run `inspect` first, run `rebuild` if only
-  derived artifacts are stale, then verify with `query` or `get`; never blindly
-  retry. If Jiandu is unavailable, continue from current evidence, disclose the
-  gap when it materially affects the answer, and do not write a fallback memory
-  file into the repository.
+  response has an unknown outcome. For a Session mutation, verify the same topic
+  with `session_read` (and use `session_list_topics` only when the topic itself is
+  uncertain). For a durable Project/Global mutation, run `inspect` for that scope,
+  run `rebuild` only if derived artifacts are stale, then verify with `query` or
+  `get`. Never blindly retry. If Jiandu is unavailable, continue from current
+  evidence, disclose the gap when it materially affects the answer, and do not
+  write a fallback memory file into the repository.
 
 ## Build, Test, and Development Commands
 From repository root:
