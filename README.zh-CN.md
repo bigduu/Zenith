@@ -5,8 +5,8 @@
 ### Bodhi AI —— 本地优先的桌面 agent，真正动手干活，而不只是聊天。
 
 **它会用工具、有记忆、每一步都看得见 —— 给你的不只是一个最终答案。**
-Zenith 是它的大本营：桌面产品、UI、Rust 运行时、Go 后端与文档，
-一次 `--recursive` clone 全到位，并同步发布。
+Zenith 是它的大本营：桌面产品、前端、Rust 运行时、Go 后端、共享记忆、
+电脑操作、IM 集成与文档，一次 `--recursive` clone 全到位。
 
 [![Submodule Guard](https://img.shields.io/github/actions/workflow/status/bigduu/Zenith/submodule-guard.yml?branch=main&label=submodule%20guard&logo=github)](https://github.com/bigduu/Zenith/actions/workflows/submodule-guard.yml)
 [![Release Train](https://img.shields.io/badge/release%20train-Lotus%20→%20Bamboo%20→%20Bodhi-1f6feb)](https://github.com/bigduu/Zenith/actions/workflows/release-train.yml)
@@ -30,7 +30,7 @@ Zenith 是它的大本营：桌面产品、UI、Rust 运行时、Go 后端与文
 | 能力 | 说明 |
 |---|---|
 | **整套系统的地图** | 一个仓库就能看清产品、UI、runtime、backend、文档如何分工与协作 |
-| **5 个 submodule 一键拉取** | `--recursive` 一次拉全栈，不用手动跑五个仓库 |
+| **9 个 submodule 一键拉取** | `--recursive` 一次拉取产品栈与配套服务 |
 | **协调发布列车** | Lotus → Bamboo → Bodhi 按依赖顺序发布，版本号从一份配置统一驱动 |
 | **每日 Nightly 自动版本** | 按 `YYYY.M.N` 日历版本自动递增并触发发布 |
 | **指针守护** | CI 在每次 push / PR 校验 submodule 指针的健康 |
@@ -40,7 +40,7 @@ Zenith 是它的大本营：桌面产品、UI、Rust 运行时、Go 后端与文
 
 ## 架构地图
 
-Zenith 本身几乎不放业务代码，它是一个“薄壳”monorepo：维护 5 个 Git submodule 的指针、根级说明文档，以及跨仓库的发布编排。真正的功能都活在子模块里。
+Zenith 本身几乎不放业务代码，它是一个“薄壳”monorepo：维护 9 个 Git submodule 的指针、根级说明文档，以及跨仓库的发布编排。真正的功能都活在子模块里。
 
 ```mermaid
 graph TD
@@ -51,6 +51,10 @@ graph TD
   Z --> R["Bamboo<br/>local-first Rust agent runtime"]
   Z --> S["Bodhi Server<br/>Go backend"]
   Z --> P["Pavilion<br/>website & docs"]
+  Z --> J["Jiandu<br/>shared-memory MCP service"]
+  Z --> N["Nova<br/>computer-use MCP server"]
+  Z --> LN["Lotus Next<br/>responsive frontend rebuild"]
+  Z --> M["Magpie<br/>IM connector for Bamboo"]
 
   B -. embeds .-> L
   L -. HTTP / SSE .-> R
@@ -69,6 +73,10 @@ graph TD
 | **Bamboo** | `bamboo/` | 执行引擎：本地优先的 Rust agent runtime，任务、工具、记忆与 HTTP/SSE API | [Bamboo Agent](https://github.com/bigduu/Bamboo-agent) |
 | **Bodhi Server** | `bodhi-server/` | 服务端能力：Go 后端，认证、持久化、配额/计费与 LLM 代理 | [Bodhi Server](https://github.com/bigduu/bodhi-server) |
 | **Pavilion** | `pavilion/` | 官网与文档：下载入口、文档中心与对外叙事 | [Pavilion](https://github.com/bigduu/Pavilion) |
+| **Jiandu** | `jiandu/` | 共享记忆：agent 无关、文件系统持久化的 MCP 服务 | [Jiandu](https://github.com/bigduu/Jiandu) · [agent 使用指南](./AGENTS.md#shared-memory-via-jiandu-mcp) |
+| **Nova** | `nova/` | 电脑操作：通过 MCP 暴露原生桌面交互能力 | [Nova](https://github.com/bigduu/Nova) |
+| **Lotus Next** | `lotus-next/` | 下一代界面：与 Lotus 并行开发的响应式 React + Vite 前端 | [Lotus Next](https://github.com/bigduu/lotus-next) |
+| **Magpie** | `magpie/` | IM 集成：独立连接器与 Bamboo service plugin | [Magpie](https://github.com/bigduu/Magpie) |
 | **Zenith (root)** | `.` | 协调仓库：submodule 指针、根级文档、release train | 你在这里 |
 
 ---
@@ -93,13 +101,17 @@ Zenith 最大的价值，是让任何一个人都能快速找到正确的入口�
 
 ### 2. 这套栈为什么这样分
 
-拆成五块不是为了好看，而是为了让每一层都能独立演进，又能在发布时收敛成一个产品：
+核心产品链路按层拆分，让每一层都能独立演进，又能在发布时收敛成一个产品：
 
 - **界面与体验** 放在 Lotus（React/Vite），可以独立迭代、独立测试。
 - **执行逻辑** 放在 Bamboo（Rust），本地优先、可单独跑成 HTTP 服务。
 - **账号、配额、计费、LLM 代理** 放在 Bodhi Server（Go），把需要服务端信任的能力集中起来。`bodhi-server/internal/` 下能看到 `auth`、`quota`、`pricing`、`proxy`、`database` 等真实模块。
 - **桌面壳** 放在 Bodhi，只负责“把界面装进一个可安装的桌面 App”。
 - **对外叙事** 放在 Pavilion，与代码解耦。
+
+另外四个 submodule 保持独立边界：Jiandu 通过 MCP 提供共享记忆，Nova
+通过 MCP 提供电脑操作，Lotus Next 是响应式前端的后继路线，Magpie
+负责把 IM 平台连接到 Bamboo。
 
 ### 3. 协调发布列车
 
@@ -189,7 +201,7 @@ git submodule status
 git submodule update --remote --recursive
 
 # 子模块改动后，回到根仓库提交指针
-git add .gitmodules bamboo bodhi lotus pavilion bodhi-server
+git add .gitmodules bamboo bodhi bodhi-server jiandu lotus lotus-next magpie nova pavilion
 git commit -m "chore: bump submodule pointers"
 git push
 ```
@@ -207,6 +219,10 @@ git push
 | Bamboo — Rust agent runtime | https://github.com/bigduu/Bamboo-agent |
 | Bodhi Server — Go backend | https://github.com/bigduu/bodhi-server |
 | Pavilion — 官网与文档 | https://github.com/bigduu/Pavilion |
+| Jiandu — 共享记忆 MCP 服务 | https://github.com/bigduu/Jiandu |
+| Nova — 电脑操作 MCP 服务 | https://github.com/bigduu/Nova |
+| Lotus Next — 响应式前端后继路线 | https://github.com/bigduu/lotus-next |
+| Magpie — Bamboo 的 IM 连接器 | https://github.com/bigduu/Magpie |
 
 **关键文档**
 - [Zenith 架构总览](https://github.com/bigduu/Pavilion/blob/main/articles/zenith-architecture-overview.md) — 整套系统为什么这样组织

@@ -5,8 +5,8 @@
 ### Bodhi AI — the local-first desktop agent that does the work, not just chats.
 
 **It uses tools, keeps memory, and shows you every step — not just a final answer.**
-Zenith is its home base: the desktop product, UI, Rust runtime, Go backend, and docs
-in one recursive clone, released in lockstep.
+Zenith is its home base: the desktop product, UIs, Rust runtime, Go backend, shared
+memory, computer use, IM integration, and docs in one recursive clone.
 
 [![Submodule Guard](https://img.shields.io/github/actions/workflow/status/bigduu/Zenith/submodule-guard.yml?branch=main&label=submodule%20guard&logo=github)](https://github.com/bigduu/Zenith/actions/workflows/submodule-guard.yml)
 [![Release Train](https://img.shields.io/badge/release%20train-Lotus%20→%20Bamboo%20→%20Bodhi-1f6feb)](https://github.com/bigduu/Zenith/actions/workflows/release-train.yml)
@@ -30,7 +30,7 @@ in one recursive clone, released in lockstep.
 | Capability | What it means |
 |---|---|
 | **A map of the whole system** | One repo shows how product, UI, runtime, backend, and docs divide the work and fit together |
-| **Five submodules, one clone** | Pull the full stack in a single recursive clone |
+| **Nine submodules, one clone** | Pull the full product stack and companion services in a single recursive clone |
 | **Coordinated release train** | Lotus → Bamboo → Bodhi published in dependency order, all driven by one config file |
 | **Daily nightly versioning** | Calendar-versioned (`YYYY.M.N`) auto-bump and nightly release |
 | **Submodule guard** | CI validates submodule pointers on every push and PR |
@@ -40,7 +40,7 @@ in one recursive clone, released in lockstep.
 
 ## Architecture
 
-Zenith holds almost no business logic itself. It is a thin-shell monorepo: it pins five Git submodules, owns the root-level documentation, and orchestrates releases across repos. The real features live inside the submodules.
+Zenith holds almost no business logic itself. It is a thin-shell monorepo: it pins nine Git submodules, owns the root-level documentation, and orchestrates releases across repos. The real features live inside the submodules.
 
 ```mermaid
 graph TD
@@ -51,6 +51,10 @@ graph TD
   Z --> R["Bamboo<br/>local-first Rust agent runtime"]
   Z --> S["Bodhi Server<br/>Go backend"]
   Z --> P["Pavilion<br/>website & docs"]
+  Z --> J["Jiandu<br/>shared-memory MCP service"]
+  Z --> N["Nova<br/>computer-use MCP server"]
+  Z --> LN["Lotus Next<br/>responsive frontend rebuild"]
+  Z --> M["Magpie<br/>IM connector for Bamboo"]
 
   B -. embeds .-> L
   L -. HTTP / SSE .-> R
@@ -69,6 +73,10 @@ graph TD
 | **Bamboo** | `bamboo/` | Execution engine: local-first Rust agent runtime — tasks, tools, memory, HTTP/SSE API | [Bamboo Agent](https://github.com/bigduu/Bamboo-agent) |
 | **Bodhi Server** | `bodhi-server/` | Backend: Go server — auth, persistence, quota/billing, LLM proxy | [Bodhi Server](https://github.com/bigduu/bodhi-server) |
 | **Pavilion** | `pavilion/` | Website & docs: download page, doc center, public narrative | [Pavilion](https://github.com/bigduu/Pavilion) |
+| **Jiandu** | `jiandu/` | Shared memory: agent-independent filesystem-backed MCP service | [Jiandu](https://github.com/bigduu/Jiandu) · [agent guidance](./AGENTS.md#shared-memory-via-jiandu-mcp) |
+| **Nova** | `nova/` | Computer use: native desktop interaction exposed through MCP | [Nova](https://github.com/bigduu/Nova) |
+| **Lotus Next** | `lotus-next/` | Next UI track: responsive React + Vite frontend developed alongside Lotus | [Lotus Next](https://github.com/bigduu/lotus-next) |
+| **Magpie** | `magpie/` | IM integration: standalone connector and Bamboo service plugin | [Magpie](https://github.com/bigduu/Magpie) |
 | **Zenith (root)** | `.` | Coordinator: submodule pointers, root docs, release train | You are here |
 
 ---
@@ -93,13 +101,17 @@ Zenith's biggest job is getting any person to the right door fast.
 
 ### The stack, organized on purpose
 
-The five-way split exists so each layer can evolve on its own yet converge into one product at release time:
+The core product path is split so each layer can evolve on its own yet converge into one product at release time:
 
 - **UI & experience** live in Lotus (React/Vite) and iterate and test independently.
 - **Execution** lives in Bamboo (Rust), local-first, runnable as a standalone HTTP service.
 - **Account, quota, billing, LLM proxy** live in Bodhi Server (Go) — the server-trusted concerns, visible as real modules under `bodhi-server/internal/` (`auth`, `quota`, `pricing`, `proxy`, `database`).
 - **The desktop shell** lives in Bodhi and only wraps the UI into an installable desktop app.
 - **Public narrative** lives in Pavilion, decoupled from code.
+
+Four companion submodules keep separate boundaries: Jiandu provides shared memory
+over MCP, Nova provides computer use over MCP, Lotus Next is the responsive UI
+successor track, and Magpie connects IM platforms to Bamboo.
 
 ### Coordinated release train
 
@@ -189,7 +201,7 @@ git submodule status
 git submodule update --remote --recursive
 
 # after submodule work, bump pointers from root
-git add .gitmodules bamboo bodhi lotus pavilion bodhi-server
+git add .gitmodules bamboo bodhi bodhi-server jiandu lotus lotus-next magpie nova pavilion
 git commit -m "chore: bump submodule pointers"
 git push
 ```
@@ -207,6 +219,10 @@ git push
 | Bamboo — Rust agent runtime | https://github.com/bigduu/Bamboo-agent |
 | Bodhi Server — Go backend | https://github.com/bigduu/bodhi-server |
 | Pavilion — website & docs | https://github.com/bigduu/Pavilion |
+| Jiandu — shared-memory MCP service | https://github.com/bigduu/Jiandu |
+| Nova — computer-use MCP server | https://github.com/bigduu/Nova |
+| Lotus Next — responsive frontend successor track | https://github.com/bigduu/lotus-next |
+| Magpie — IM connector for Bamboo | https://github.com/bigduu/Magpie |
 
 **Key docs**
 - [Zenith Architecture Overview](https://github.com/bigduu/Pavilion/blob/main/articles/zenith-architecture-overview.md) — why the system is organized this way

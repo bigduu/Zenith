@@ -1,12 +1,16 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Zenith is a thin monorepo wrapper around five Git submodules:
+Zenith is a thin monorepo wrapper around nine Git submodules:
 - `bamboo/`: Rust AI-agent backend framework (`src/`, `tests/`, `docs/`).
 - `lotus/`: React + Vite web app (`src/`, `e2e/`, `public/`).
 - `bodhi/`: Tauri desktop shell (`src-tauri/`) that coordinates with `lotus`.
 - `pavilion/`: React + Vite official website and docs (`src/`, `public/`).
 - `bodhi-server/`: Go backend API server (`api/`, `internal/`, `cmd/`).
+- `nova/`: Rust computer-use MCP server for native desktop interaction.
+- `lotus-next/`: responsive next-generation React + Vite frontend.
+- `magpie/`: standalone IM connector and Bamboo service plugin.
+- `jiandu/`: agent-independent, filesystem-backed shared-memory MCP service.
 
 Root files (`README.md`, `.gitmodules`) manage submodule pointers; most feature work happens inside submodules.
 
