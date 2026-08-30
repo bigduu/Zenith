@@ -15,6 +15,43 @@ Key architecture docs (in `bamboo/docs/`):
 - `remote-mailbox-broker-design.md` — the standalone message broker + `ask_agent`/`deploy_agent` design (SHIPPED status).
 - `remote-actor-plan.md` — remote-actor seams (P0/P1/P2): launcher / discovery / placement abstractions.
 
+## Shared Memory via Jiandu MCP
+
+Use the Jiandu server's single `memory` tool; an MCP host may expose it under a
+namespace such as `mcp__jiandu__memory`. Select behavior with its `action`.
+Never edit Jiandu data files directly or create repository files as a memory
+fallback. Bamboo may optimize recalled memory while assembling agent context;
+other agents should use the same store only through Jiandu MCP.
+
+- Recall before guessing: use `query` when prior user preferences, confirmed
+  decisions, or project history may affect the task. Use `get` for an ID returned
+  by `query` when the exact or full item is needed. Use `session_read` for current
+  host-session or workstream continuity, such as after resuming or compaction;
+  session memory is not cross-session durable recall.
+- Record at the right layer: use `session_append` for temporary progress,
+  blockers, hypotheses, and next steps. Keep the note concise and use
+  `session_replace` when it needs compression. Use `write` only for a confirmed,
+  durable, non-derivable fact that will help future sessions. Query first, then
+  store one atomic fact with a specific, searchable title. Never store secrets,
+  credentials, or tokens.
+- Respect scope and authority: Project/global durable memory is the cross-agent
+  surface for agents connected to the same Jiandu data store; session memory is
+  tied to the host `session_id`. Use Project scope for project-specific decisions
+  and references, and Global only for truly cross-project preferences or stable
+  references. Project access comes only from the MCP host context. Normally omit
+  `project_key`; if supplied, it may only match the host Project. Never invent or
+  copy a `project_key`, and never move a Project fact to Global because Project
+  access is unavailable.
+- Keep scratch out of durable memory: do not persist logs, tentative conclusions,
+  derivable code facts, current file or runtime state, or routine task completion
+  with `write`.
+- Treat memory as supporting evidence: an empty query does not prove a fact is
+  false, and recalled memory must be checked against current files and tools.
+  Correct an evident argument or context error, but do not loop or claim recall or
+  persistence unless the MCP call succeeds. If Jiandu is unavailable, continue
+  from current evidence, disclose the gap when it materially affects the answer,
+  and do not write a fallback memory file into the repository.
+
 ## Build, Test, and Development Commands
 From repository root:
 - `git submodule update --init --recursive` - initialize all module checkouts.
