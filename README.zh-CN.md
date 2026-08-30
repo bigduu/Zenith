@@ -17,10 +17,6 @@ Zenith 是它的大本营：桌面产品、前端、Rust 运行时、Go 后端�
 
 </div>
 
-<!-- TODO(readme): 这里放一张 Bodhi AI 的产品演示 GIF/截图，是最大的点击/star 驱动（参考 aider 的录屏）。
-     素材就绪后从 Pavilion/Bodhi 借用：
-     <p align="center"><img src="./docs/assets/bodhi-demo.gif" alt="Bodhi AI 实际运行" width="100%"></p> -->
-
 > Bodhi AI 想把 AI 从一个只会聊天的窗口，变成一个真正能推进工作的桌面工作台：你交代任务，它使用工具、留下记忆、把结果做出来，整个过程你都看得见。**Zenith** 把产品、界面、执行引擎、服务端和文档组织在一起，并统一它们的发布节奏。
 
 ---
@@ -127,15 +123,9 @@ Zenith 最大的价值，是让任何一个人都能快速找到正确的入口�
 
 列车也支持**部分发车**：手动触发时传 `targets`（如 `bamboo,bodhi`）只发布子集——未选中的仓库固定使用配置中记录的最近已发布版本；预检会拒绝复用已发布过的版本号（重跑半途失败的列车请传 `resume=true`）。列车成功后会把实际发布的版本写回配置，nightly 定版时还会扫描 registry 取当月最大序号，保证计数器不会与临时发布撞号。
 
-当前配置 (`.github/release-train.config.json`):
-
-```json
-{
-  "refs":     { "bamboo": "main", "lotus": "main", "bodhi": "main" },
-  "versions": { "release": "2026.6.2", "bamboo": "2026.6.2", "lotus": "2026.6.2", "bodhi": "2026.6.2" },
-  "options":  { "lotus_skip_tests": false }
-}
-```
+当前使用的 ref、发布版本与选项统一维护在
+[`.github/release-train.config.json`](./.github/release-train.config.json)；
+README 不再复制一份会过期的版本快照。
 
 相关 workflow (位于 `.github/workflows/`):
 
@@ -189,7 +179,7 @@ cd bamboo
 cargo run -- serve --port 9562
 ```
 
-> `bamboo serve` 接受 `--port` / `--bind` / `--data-dir` / `--static-dir` / `--workers` 等可选参数覆盖配置文件；定义见 `bamboo/src/bin/bamboo.rs`。不传 `--port` 时使用配置文件中的端口。（其余子命令见 `bamboo --help`：`config`、`-p` headless、`actor`、`broker`、`broker-agent`。）
+> `bamboo serve` 接受 `--port` / `--bind` / `--data-dir` / `--static-dir` / `--workers` 等可选参数覆盖配置文件；不传 `--port` 时使用配置文件中的端口。当前完整命令以 `bamboo --help` 和 [Bamboo README](https://github.com/bigduu/Bamboo-agent#quick-start--development) 为准。
 
 ### 维护 submodule 指针
 

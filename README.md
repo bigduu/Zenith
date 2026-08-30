@@ -17,10 +17,6 @@ memory, computer use, IM integration, and docs in one recursive clone.
 
 </div>
 
-<!-- TODO(readme): a product demo GIF/screenshot of Bodhi AI right here is the single biggest
-     click/star driver (cf. aider's screencast). Borrow one from Pavilion/Bodhi when ready:
-     <p align="center"><img src="./docs/assets/bodhi-demo.gif" alt="Bodhi AI in action" width="100%"></p> -->
-
 > Bodhi AI turns AI from a chat box into a desktop workbench that actually does the work: you hand it a task, it uses tools, keeps memory, and produces results — and you can watch the whole thing happen. **Zenith** ties the product, the UI, the execution engine, the backend, and the docs together — and keeps their releases in sync.
 
 ---
@@ -127,15 +123,9 @@ Between steps, the train **waits until the artifact is actually visible on crate
 
 The train also supports **partial releases**: dispatch with `targets` (e.g. `bamboo,bodhi`) to release a subset — excluded repos are pinned to the last published versions recorded in the config, and a pre-flight check refuses to reuse an already-published version (pass `resume=true` to resume a partially completed train instead). After a successful run, the train writes the published versions back to the config, and the nightly bump additionally scans the registries for the month's highest published number — so the counter never collides with an ad-hoc release.
 
-Current config (`.github/release-train.config.json`):
-
-```json
-{
-  "refs":     { "bamboo": "main", "lotus": "main", "bodhi": "main" },
-  "versions": { "release": "2026.6.2", "bamboo": "2026.6.2", "lotus": "2026.6.2", "bodhi": "2026.6.2" },
-  "options":  { "lotus_skip_tests": false }
-}
-```
+The live refs, release versions, and options are maintained in
+[`.github/release-train.config.json`](./.github/release-train.config.json); the
+README intentionally does not copy a version snapshot that will go stale.
 
 Related workflows (under `.github/workflows/`):
 
@@ -189,7 +179,7 @@ cd bamboo
 cargo run -- serve --port 9562
 ```
 
-> `bamboo serve` accepts optional `--port` / `--bind` / `--data-dir` / `--static-dir` / `--workers` overrides; defined in `bamboo/src/bin/bamboo.rs`. Without `--port` it uses the configured port. (Run `bamboo --help` for the other subcommands: `config`, `-p` headless, `actor`, `broker`, `broker-agent`.)
+> `bamboo serve` accepts optional `--port` / `--bind` / `--data-dir` / `--static-dir` / `--workers` overrides. Without `--port` it uses the configured port. Run `bamboo --help` for the current command surface and see the [Bamboo README](https://github.com/bigduu/Bamboo-agent#quick-start--development) for authoritative usage.
 
 ### Manage submodule pointers
 
