@@ -1,12 +1,16 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Zenith is a thin monorepo wrapper around five Git submodules:
+Zenith is a thin monorepo wrapper around nine Git submodules:
 - `bamboo/`: Rust AI-agent backend framework (`src/`, `tests/`, `docs/`).
 - `lotus/`: React + Vite web app (`src/`, `e2e/`, `public/`).
 - `bodhi/`: Tauri desktop shell (`src-tauri/`) that coordinates with `lotus`.
 - `pavilion/`: React + Vite official website and docs (`src/`, `public/`).
 - `bodhi-server/`: Go backend API server (`api/`, `internal/`, `cmd/`).
+- `nova/`: Rust computer-use MCP server for native desktop interaction.
+- `lotus-next/`: responsive next-generation React + Vite frontend.
+- `magpie/`: standalone IM connector and Bamboo service plugin.
+- `jiandu/`: agent-independent, filesystem-backed shared-memory MCP service.
 
 Root files (`README.md`, `.gitmodules`) manage submodule pointers; most feature work happens inside submodules.
 
@@ -14,6 +18,48 @@ Key architecture docs (in `bamboo/docs/`):
 - `architecture-overview.md` — start here: how the broker-mediated sub-agent system deploys (broker / orchestrator / worker), how the crates are organized, and how the deployment capability works.
 - `remote-mailbox-broker-design.md` — the standalone message broker + `ask_agent`/`deploy_agent` design (SHIPPED status).
 - `remote-actor-plan.md` — remote-actor seams (P0/P1/P2): launcher / discovery / placement abstractions.
+
+## Shared Memory via Jiandu MCP
+
+Use the Jiandu server's single `memory` tool; an MCP host may expose it under a
+namespace such as `mcp__jiandu__memory`. Select behavior with its `action`.
+Never edit Jiandu data files directly or create repository files as a memory
+fallback. Bamboo may optimize recalled memory while assembling agent context;
+other agents should use the same store only through Jiandu MCP.
+
+- Recall before guessing: use `query` when prior user preferences, confirmed
+  decisions, or project history may affect the task. Use `get` for an ID returned
+  by `query` when the exact or full item is needed. Use `session_read` for current
+  host-session or workstream continuity, such as after resuming or compaction;
+  session memory is not cross-session durable recall.
+- Record at the right layer: use `session_append` for temporary progress,
+  blockers, hypotheses, and next steps. Keep the note concise and use
+  `session_replace` when it needs compression. Use `write` only for a confirmed,
+  durable, non-derivable fact that will help future sessions. Query first, then
+  store one atomic fact with a specific, searchable title. Never store secrets,
+  credentials, or tokens.
+- Respect scope and authority: Project/global durable memory is the cross-agent
+  surface for agents connected to the same Jiandu data store; session memory is
+  tied to the host `session_id`. Use Project scope for project-specific decisions
+  and references, and Global only for truly cross-project preferences or stable
+  references. Project access comes only from the MCP host context. Normally omit
+  `project_key`; if supplied, it may only match the host Project. Never invent or
+  copy a `project_key`, and never move a Project fact to Global because Project
+  access is unavailable.
+- Keep scratch out of durable memory: do not persist logs, tentative conclusions,
+  derivable code facts, current file or runtime state, or routine task completion
+  with `write`.
+- Treat memory as supporting evidence: an empty query does not prove a fact is
+  false, and recalled memory must be checked against current files and tools.
+  Correct an evident argument or context error, but do not loop or claim recall or
+  persistence unless the MCP call succeeds. A mutation error or interrupted
+  response has an unknown outcome. For a Session mutation, verify the same topic
+  with `session_read` (and use `session_list_topics` only when the topic itself is
+  uncertain). For a durable Project/Global mutation, run `inspect` for that scope,
+  run `rebuild` only if derived artifacts are stale, then verify with `query` or
+  `get`. Never blindly retry. If Jiandu is unavailable, continue from current
+  evidence, disclose the gap when it materially affects the answer, and do not
+  write a fallback memory file into the repository.
 
 ## Build, Test, and Development Commands
 From repository root:
