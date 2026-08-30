@@ -14,10 +14,10 @@ Zenith is a thin monorepo wrapper around nine Git submodules:
 
 Root files (`README.md`, `.gitmodules`) manage submodule pointers; most feature work happens inside submodules.
 
-Key architecture docs (in `bamboo/docs/`):
-- `architecture-overview.md` — start here: how the broker-mediated sub-agent system deploys (broker / orchestrator / worker), how the crates are organized, and how the deployment capability works.
-- `remote-mailbox-broker-design.md` — the standalone message broker + `ask_agent`/`deploy_agent` design (SHIPPED status).
-- `remote-actor-plan.md` — remote-actor seams (P0/P1/P2): launcher / discovery / placement abstractions.
+Key architecture docs:
+- `bamboo/docs/design/architecture-overview.md` — start here: how the broker-mediated sub-agent system deploys (broker / orchestrator / worker), how the crates are organized, and how the deployment capability works.
+- `bamboo/docs/design/remote-mailbox-broker-design.md` — the standalone message broker + `ask_agent`/`deploy_agent` design (SHIPPED status).
+- `bamboo/docs/design/remote-actor-plan.md` — remote-actor seams (P0/P1/P2): launcher / discovery / placement abstractions.
 
 ## Shared Memory via Jiandu MCP
 
@@ -27,39 +27,22 @@ Never edit Jiandu data files directly or create repository files as a memory
 fallback. Bamboo may optimize recalled memory while assembling agent context;
 other agents should use the same store only through Jiandu MCP.
 
-- Recall before guessing: use `query` when prior user preferences, confirmed
-  decisions, or project history may affect the task. Use `get` for an ID returned
-  by `query` when the exact or full item is needed. Use `session_read` for current
-  host-session or workstream continuity, such as after resuming or compaction;
-  session memory is not cross-session durable recall.
-- Record at the right layer: use `session_append` for temporary progress,
-  blockers, hypotheses, and next steps. Keep the note concise and use
-  `session_replace` when it needs compression. Use `write` only for a confirmed,
-  durable, non-derivable fact that will help future sessions. Query first, then
-  store one atomic fact with a specific, searchable title. Never store secrets,
-  credentials, or tokens.
-- Respect scope and authority: Project/global durable memory is the cross-agent
-  surface for agents connected to the same Jiandu data store; session memory is
-  tied to the host `session_id`. Use Project scope for project-specific decisions
-  and references, and Global only for truly cross-project preferences or stable
-  references. Project access comes only from the MCP host context. Normally omit
-  `project_key`; if supplied, it may only match the host Project. Never invent or
-  copy a `project_key`, and never move a Project fact to Global because Project
-  access is unavailable.
-- Keep scratch out of durable memory: do not persist logs, tentative conclusions,
-  derivable code facts, current file or runtime state, or routine task completion
-  with `write`.
-- Treat memory as supporting evidence: an empty query does not prove a fact is
-  false, and recalled memory must be checked against current files and tools.
-  Correct an evident argument or context error, but do not loop or claim recall or
-  persistence unless the MCP call succeeds. A mutation error or interrupted
-  response has an unknown outcome. For a Session mutation, verify the same topic
-  with `session_read` (and use `session_list_topics` only when the topic itself is
-  uncertain). For a durable Project/Global mutation, run `inspect` for that scope,
-  run `rebuild` only if derived artifacts are stale, then verify with `query` or
-  `get`. Never blindly retry. If Jiandu is unavailable, continue from current
-  evidence, disclose the gap when it materially affects the answer, and do not
-  write a fallback memory file into the repository.
+- Recall before guessing. Use `query` for relevant durable history, `get` for a
+  returned item's full contents, and `session_read` only for continuity within
+  the current host session or workstream.
+- Write at the right layer. Use Session notes for concise temporary progress; use
+  durable `write` only for a confirmed, non-derivable fact that will help a future
+  session. Do not store secrets, raw logs, tentative conclusions, or routine task
+  completion.
+- Respect scope and authority. Project memory is for project-specific facts,
+  Global memory is only for truly cross-project facts, and Session memory stays
+  tied to the host `session_id`. Project access comes from the MCP host; do not
+  invent a `project_key` or move a Project fact to Global when access is absent.
+- Treat recalled memory as supporting evidence and verify it against current
+  files and tools. If a mutation result is uncertain, verify the targeted topic
+  or item before retrying. Run `rebuild` only when Jiandu explicitly reports stale
+  derived artifacts. If Jiandu is unavailable, continue from current evidence,
+  disclose a material gap, and do not create a fallback memory file.
 
 ## Build, Test, and Development Commands
 From repository root:
@@ -225,57 +208,41 @@ Examples: `[lotus] feat: add conversation export`, `[bamboo] fix: streaming time
 ## Release Playbook
 Use this checklist for every release train. The only normal release entrypoint is `Zenith -> release-train.yml`.
 
-1. Collect and commit local work by feature in each changed submodule:
-   - Check status first: `git status -sb` and `git submodule status`.
-   - Commit related changes in small logical groups (Conventional Commits), then push submodule branches.
-   - Typical commands:
-     - `cd bamboo && git add -A && git commit -m "<message>" && git push origin main`
-     - `cd lotus && git add -A && git commit -m "<message>" && git push origin main`
-     - `cd bodhi && git add -A && git commit -m "<message>" && git push origin main`
-     - If website changed: `cd pavilion && git add -A && git commit -m "<message>" && git push origin main`
+1. Land release changes through each repository's protected pull-request flow:
+   - Use isolated branches/worktrees and Conventional Commits; never push feature or release-preparation commits directly to `main`.
+   - Bamboo feature PRs target `dev`. Release only commits that have reached the canonical ref selected in `.github/release-train.config.json`.
+   - If Zenith submodule pointers or release configuration change, update them in a focused Zenith PR after the submodule commits are merged.
 
-2. Run release gates (must pass before version bump):
+2. Run release gates against the exact candidate refs:
    - `cd bamboo && cargo fmt --check && cargo clippy && cargo test`
    - `cd lotus && npm run type-check && npm run test:run && npm run lint`
    - `cd bodhi && npm run web:verify:migration && npm run web:verify:docs-boundary`
    - If website changed: `cd pavilion && npm run lint && npm run build`
    - For cross-page UI or workflow changes, also run `cd lotus && npm run test:e2e`.
 
-3. Bump release version in manifests:
-   - `bamboo/Cargo.toml`
-   - `lotus/package.json` and `lotus/package-lock.json`
-   - `bodhi/package.json`, `bodhi/package-lock.json`, `bodhi/src-tauri/Cargo.toml`, `bodhi/src-tauri/tauri.conf.json`, `bodhi/Cargo.lock`
-   - `.github/release-train.config.json` (`versions.release`, `versions.bamboo`, `versions.lotus`, `versions.bodhi`)
-   - Helpful commands:
-     - `cd lotus && npm version <version> --no-git-tag-version`
-     - `cd bodhi && npm version <version> --no-git-tag-version`
+3. Resolve the release version without editing package manifests:
+   - Bamboo, Lotus, and Bodhi source manifests intentionally keep `0.0.0` placeholders. Their publish workflows stamp the requested release version in the temporary publishing checkout.
+   - For a config-driven release, update `.github/release-train.config.json` through a focused Zenith PR or let the nightly workflow advance it.
+   - For an ad-hoc release, pass an unused `release_version` to the release train; do not commit version bumps in submodules.
 
-4. Commit and push version bumps in each released submodule:
-   - `cd bamboo && git add Cargo.toml && git commit -m "chore: bump version to <version>" && git push origin main`
-   - `cd lotus && git add package.json package-lock.json && git commit -m "chore: bump version to <version>" && git push origin main`
-   - `cd bodhi && git add package.json package-lock.json src-tauri/Cargo.toml src-tauri/tauri.conf.json Cargo.lock && git commit -m "chore: bump version to <version>" && git push origin main`
+4. Trigger the release train:
+   - Config-driven full train: `gh workflow run release-train.yml -R bigduu/Zenith --ref main`.
+   - Ad-hoc full train: `gh workflow run release-train.yml -R bigduu/Zenith --ref main -f release_version=<version>`.
+   - Add `-f targets=lotus,bamboo` (or another dependency-ordered subset) for a partial release.
 
-5. Commit and push root pointer/config updates:
-   - `git add .github/release-train.config.json bamboo lotus bodhi pavilion`
-   - `git commit -m "chore: prepare <version> release train"`
-   - `git push origin main`
-
-6. Trigger release train:
-   - `gh workflow run release-train.yml -R bigduu/Zenith --ref main -f release_version=<version> -f bamboo_version=<version> -f lotus_version=<version> -f bodhi_version=<version> -f bamboo_ref=main -f lotus_ref=main -f bodhi_ref=main`
-
-7. Watch and verify release chain:
+5. Watch and verify the release chain:
    - `gh run watch <root_run_id> -R bigduu/Zenith --exit-status`
    - `gh run list -R bigduu/Bamboo-agent --workflow publish-crate.yml --limit 1`
    - `gh run list -R bigduu/Lotus --workflow publish-npm.yml --limit 1`
    - `gh run list -R bigduu/Bodhi --workflow release.yml --limit 1`
 
-8. Failure handling:
+6. Handle failures without changing the release order:
    - If Bodhi Linux fails with npm `ETARGET` for Lotus:
      - Wait until `npm view @bigduu/lotus@<version> version` succeeds.
      - Rerun failed jobs only: `gh run rerun <bodhi_run_id> -R bigduu/Bodhi --failed`.
    - If root release train fails due transient GitHub API issues, resume the chain manually in the same Bamboo -> Lotus -> Bodhi order.
 
-9. Post-release checks:
+7. Run post-release checks:
    - `git status -sb` at root and inside all submodules (must be clean).
    - `npm view @bigduu/lotus@<version> version`
    - `cargo search bamboo-agent --limit 1` (confirm expected version is published)
