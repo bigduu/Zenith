@@ -71,7 +71,7 @@ graph TD
 | **Bamboo** | `bamboo/` | 执行引擎与生产 Lotus host：本地优先 Rust runtime，提供 HTTP、WebSocket 与 legacy SSE API | [Bamboo Agent](https://github.com/bigduu/Bamboo-agent) |
 | **Bodhi Server** | `bodhi-server/` | 可选托管 Go 服务：账号/认证、API key、加密 provider 凭据、模型路由、配额/计费与 provider proxy | [Bodhi Server](https://github.com/bigduu/bodhi-server) |
 | **Pavilion** | `pavilion/` | 官网与文档：下载入口、文档中心与对外叙事 | [Pavilion](https://github.com/bigduu/Pavilion) |
-| **Jiandu** | `jiandu/` | 共享记忆：runtime 无关、文件系统持久化的 Rust 库与 stdio MCP server，只暴露一个 `memory` tool | [Jiandu](https://github.com/bigduu/Jiandu) · [agent 使用指南](./AGENTS.md#shared-memory-via-jiandu-mcp) |
+| **Jiandu** | `jiandu/` | 权威共享记忆：独立文件系统 Rust store、无 embedding 的词法检索、宿主生成的 Dream 快照持久化，以及单 `memory` tool 的 stdio MCP | [Jiandu](https://github.com/bigduu/Jiandu) · [agent 使用指南](./AGENTS.md#shared-memory-via-jiandu-mcp) · [便携 Skill](https://github.com/bigduu/Jiandu/blob/v0.2.0/skills/jiandu-memory/SKILL.md) |
 | **Nova** | `nova/` | 电脑操作：通过 MCP 暴露原生桌面交互能力 | [Nova](https://github.com/bigduu/Nova) |
 | **Lotus Next** | `lotus-next/` | 实验性并行界面：响应式 React + Vite 重构，当前不声明功能等价或生产就绪 | [Lotus Next](https://github.com/bigduu/lotus-next) |
 | **Magpie** | `magpie/` | IM 集成：独立连接器与 Bamboo service plugin | [Magpie](https://github.com/bigduu/Magpie) |
@@ -111,10 +111,12 @@ Zenith 最大的价值，是让任何一个人都能快速找到正确的入口�
 - **桌面壳** 放在 Bodhi：负责原生集成、打包发布与受管 Bamboo sidecar 生命周期；release 构建中的 Lotus 由 Bamboo 提供。
 - **对外叙事** 放在 Pavilion，与代码解耦。
 
-另外四个 submodule 保持独立边界：Jiandu 是 runtime 无关共享记忆的 Rust
-库与独立 stdio MCP server；Nova 通过 MCP 提供电脑操作；Lotus Next 是与
-Lotus 并行的实验性前端路线，并非当前 Bodhi 默认界面；Magpie 负责把 IM
-平台连接到 Bamboo。
+另外四个 submodule 保持独立边界：Jiandu 拥有唯一权威的文件系统记忆根、
+确定性的无 embedding 词法检索、宿主生成的 Dream 快照字节，以及单工具
+stdio MCP server。宿主负责选择 query terms、可选 rerank、prompt 位置与预算，
+以及 Dream 的生成和节奏；可选便携 Skill 只教授这份契约，并由宿主显式启用。
+Nova 通过 MCP 提供电脑操作；Lotus Next 是与 Lotus 并行的实验性前端路线，
+并非当前 Bodhi 默认界面；Magpie 负责把 IM 平台连接到 Bamboo。
 
 ### 3. 协调发布列车
 
