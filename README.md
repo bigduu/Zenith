@@ -71,7 +71,7 @@ graph TD
 | **Bamboo** | `bamboo/` | Execution engine and production Lotus host: local-first Rust runtime with HTTP, WebSocket, and legacy SSE APIs | [Bamboo Agent](https://github.com/bigduu/Bamboo-agent) |
 | **Bodhi Server** | `bodhi-server/` | Optional hosted Go service: accounts/auth, API keys, encrypted provider credentials, model routing, billing/quota, provider proxy | [Bodhi Server](https://github.com/bigduu/bodhi-server) |
 | **Pavilion** | `pavilion/` | Website & docs: download page, doc center, public narrative | [Pavilion](https://github.com/bigduu/Pavilion) |
-| **Jiandu** | `jiandu/` | Shared memory: runtime-independent filesystem-backed Rust library plus stdio MCP server with one `memory` tool | [Jiandu](https://github.com/bigduu/Jiandu) · [agent guidance](./AGENTS.md#shared-memory-via-jiandu-mcp) |
+| **Jiandu** | `jiandu/` | Authoritative shared memory: independent filesystem-backed Rust store, embedding-free lexical recall, host-generated Dream snapshot persistence, and one-tool stdio MCP | [Jiandu](https://github.com/bigduu/Jiandu) · [agent guidance](./AGENTS.md#shared-memory-via-jiandu-mcp) · [portable Skill](./jiandu/skills/jiandu-memory/SKILL.md) |
 | **Nova** | `nova/` | Computer use: native desktop interaction exposed through MCP | [Nova](https://github.com/bigduu/Nova) |
 | **Lotus Next** | `lotus-next/` | Experimental parallel UI track: responsive React + Vite rebuild without current feature-parity or production-readiness claims | [Lotus Next](https://github.com/bigduu/lotus-next) |
 | **Magpie** | `magpie/` | IM integration: standalone connector and Bamboo service plugin | [Magpie](https://github.com/bigduu/Magpie) |
@@ -111,11 +111,14 @@ The core product path is split so each layer can evolve on its own yet converge 
 - **The desktop shell** lives in Bodhi: it owns native integration, packaging, and the managed Bamboo sidecar lifecycle, while Bamboo serves the embedded Lotus frontend in release builds.
 - **Public narrative** lives in Pavilion, decoupled from code.
 
-Four companion submodules keep separate boundaries: Jiandu is a standalone stdio
-MCP server and Rust library for runtime-independent shared memory; Nova provides
-computer use over MCP; Lotus Next is an experimental frontend track developed
-alongside Lotus and is not the current Bodhi default; Magpie connects IM platforms
-to Bamboo.
+Four companion submodules keep separate boundaries: Jiandu owns the authoritative
+filesystem memory root, deterministic embedding-free lexical recall, host-generated
+Dream snapshot bytes, and the one-tool stdio MCP server. Hosts choose query terms,
+optional reranking, prompt placement and budgets, and Dream generation and cadence;
+the optional portable Skill teaches this contract but must be explicitly enabled by
+its host. Nova provides computer use over MCP; Lotus Next is an experimental frontend
+track developed alongside Lotus and is not the current Bodhi default; Magpie connects
+IM platforms to Bamboo.
 
 ### Coordinated release train
 

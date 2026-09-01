@@ -10,7 +10,7 @@ Zenith is a thin monorepo wrapper around nine Git submodules:
 - `nova/`: Rust computer-use MCP server for native desktop interaction.
 - `lotus-next/`: responsive next-generation React + Vite frontend.
 - `magpie/`: standalone IM connector and Bamboo service plugin.
-- `jiandu/`: agent-independent, filesystem-backed shared-memory MCP service.
+- `jiandu/`: agent-independent filesystem memory store and one-tool stdio MCP server.
 
 Root files (`README.md`, `.gitmodules`) manage submodule pointers; most feature work happens inside submodules.
 
@@ -27,17 +27,25 @@ Never edit Jiandu data files directly or create repository files as a memory
 fallback. Bamboo may optimize recalled memory while assembling agent context;
 other agents should use the same store only through Jiandu MCP.
 
-- Recall before guessing. Use `query` for relevant durable history, `get` for a
-  returned item's full contents, and `session_read` only for continuity within
-  the current host session or workstream.
+- Recall before guessing. Build a short lexical `query` from the useful keywords
+  and entities; a non-empty query defaults to three compact IDs and summaries.
+  Use `get` only for a selected item, and use `session_read` only for continuity
+  within the current host session or workstream. Do not request embeddings.
 - Write at the right layer. Use Session notes for concise temporary progress; use
   durable `write` only for a confirmed, non-derivable fact that will help a future
   session. Do not store secrets, raw logs, tentative conclusions, or routine task
   completion.
+- Treat Jiandu's independent data root as the only canonical durable store.
+  Migration may seed it once; hosts must not keep a dual writer, second index, or
+  repository-file fallback.
 - Respect scope and authority. Project memory is for project-specific facts,
   Global memory is only for truly cross-project facts, and Session memory stays
   tied to the host `session_id`. Project access comes from the MCP host; do not
   invent a `project_key` or move a Project fact to Global when access is absent.
+- Jiandu persists host-generated Dream snapshots and maintains the optional
+  portable usage Skill. The host still owns Dream model choice, prompting,
+  cadence, retries, and scheduling, and must explicitly install or enable the
+  Skill; the memory tool never executes or stores a complete Skill.
 - Treat recalled memory as supporting evidence and verify it against current
   files and tools. If a mutation result is uncertain, verify the targeted topic
   or item before retrying. Run `rebuild` only when Jiandu explicitly reports stale
