@@ -161,7 +161,8 @@ jobs:
 
           gh workflow run release-train.yml \
             --ref main \
-            -f targets=bamboo,bodhi
+            -f targets=bamboo,bodhi \
+            -f release_version="${new_version}"
 
           echo "Release train dispatched. Monitor at:"
           echo "https://github.com/${{ github.repository }}/actions/workflows/release-train.yml"

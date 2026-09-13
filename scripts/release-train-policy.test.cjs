@@ -265,6 +265,7 @@ test("wires the release and nightly workflows to the immutable frontend", () => 
   assert.match(nightlyWorkflow, /\.versions\.bamboo = \$v/)
   assert.match(nightlyWorkflow, /\.versions\.bodhi = \$v/)
   assert.match(nightlyWorkflow, /-f targets=bamboo,bodhi/)
+  assert.match(nightlyWorkflow, /-f release_version="\$\{new_version\}"/)
   assert.doesNotMatch(nightlyWorkflow, /\.versions\.lotus\s*=/)
   assert.doesNotMatch(
     nightlyWorkflow,
