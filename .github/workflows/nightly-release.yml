@@ -5,12 +5,6 @@ on:
     # UTC 04:00 = 北京时间 12:00 (每天)
     - cron: "0 4 * * *"
   workflow_dispatch:
-    inputs:
-      force:
-        description: "Force release even if already released today"
-        required: false
-        default: false
-        type: boolean
 
 permissions:
   contents: write
@@ -21,7 +15,7 @@ env:
 
 jobs:
   auto-version:
-    name: Calculate next version
+    name: Calculate next downstream version
     runs-on: ubuntu-latest
     outputs:
       new_version: ${{ steps.version.outputs.new_version }}
@@ -31,135 +25,144 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          # Pushes in this job target the current Zenith repository only.
-          # Use the workflow-scoped GitHub token with contents:write instead of the
-          # cross-repo release orchestrator token, which may not have write access here.
           token: ${{ github.token }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Validate committed release authority
+        run: node scripts/release-train-policy.cjs validate --config "${CONFIG_FILE}"
 
       - name: Calculate next version
         id: version
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
-          CURRENT="$(jq -r '.versions.release' "${CONFIG_FILE}")"
-          echo "Current version (Zenith config): ${CURRENT}"
+          current="$(jq -r '.versions.release' "${CONFIG_FILE}")"
+          if ! [[ "${current}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::versions.release must use the numeric YYYY.M.N release sequence."
+            exit 1
+          fi
+          echo "Current downstream release floor: ${current}"
 
-          # Parse current version: YYYY.M.N
-          IFS='.' read -r OLD_YEAR OLD_MONTH OLD_N <<< "${CURRENT}"
-
-          # Current date (UTC)
-          YEAR="$(date -u +%Y)"
-          MONTH="$(date -u +%-m)"
-
-          MAX_N=0
-          if [ "${YEAR}" = "${OLD_YEAR}" ] && [ "${MONTH}" = "${OLD_MONTH}" ]; then
-            MAX_N="${OLD_N}"
+          IFS='.' read -r old_year old_month old_n <<< "${current}"
+          if [ "${#old_n}" -gt 9 ]; then
+            echo "::error::versions.release counter is too large for exact shell arithmetic."
+            exit 1
+          fi
+          year="$(date -u +%Y)"
+          month="$(date -u +%-m)"
+          max_n=0
+          if [ "${year}" = "${old_year}" ] && [ "${month}" = "${old_month}" ]; then
+            max_n="${old_n}"
           fi
 
-          # Ad-hoc or partial releases can publish versions the config never
-          # recorded (and a failed write-back leaves it behind), so also scan
-          # what the registries actually hold for this year.month and advance
-          # past the highest. A registry query failure only logs — the config
-          # floor still applies, and the release train's collision pre-flight
-          # refuses to reuse an occupied version loudly rather than silently.
-          USER_AGENT="zenith-nightly-release/1.0 (+https://github.com/${{ github.repository }})"
-          PATTERN="^${YEAR}\.${MONTH}\.[0-9]+$"
-
-          REMOTE_VERSIONS="$(
+          # A separately staged Lotus Next publication can consume a date-based
+          # version before its downstream lock refresh lands. Scan the canonical
+          # frontend registry along with Bamboo and Bodhi so this train never
+          # reuses any occupied YYYY.M.N number. This does not alter the locked
+          # frontend identity in config.
+          user_agent="zenith-nightly-release/2.0 (+https://github.com/${{ github.repository }})"
+          pattern="^${year}\.${month}\.[0-9]+$"
+          remote_versions="$(
             {
-              curl -sS -H "User-Agent: ${USER_AGENT}" "https://crates.io/api/v1/crates/bamboo-agent" \
+              curl -sS -H "User-Agent: ${user_agent}" \
+                "https://crates.io/api/v1/crates/bamboo-agent" \
                 | jq -r '.versions[].num' || true
-              curl -sS -H "User-Agent: ${USER_AGENT}" "https://registry.npmjs.org/@bigduu%2flotus" \
+              curl -sS -H "User-Agent: ${user_agent}" \
+                "https://registry.npmjs.org/@bigduu%2flotus-next" \
                 | jq -r '.versions | keys[]' || true
               gh release list -R bigduu/Bodhi-AI --limit 100 --json tagName \
                 --jq '.[].tagName | sub("^app-v"; "")' || true
-            } 2>/dev/null | { grep -E "${PATTERN}" || true; } | sort -u
+            } 2>/dev/null | { grep -E "${pattern}" || true; } | sort -u
           )"
 
-          for version in ${REMOTE_VERSIONS}; do
+          for version in ${remote_versions}; do
             n="${version##*.}"
-            if [ "${n}" -gt "${MAX_N}" ]; then
-              echo "Registry already has ${version}; advancing the counter past it"
-              MAX_N="${n}"
+            if [ "${#n}" -gt 9 ]; then
+              echo "::error::Published version ${version} has an unsupported counter size."
+              exit 1
+            fi
+            if [ "${n}" -gt "${max_n}" ]; then
+              echo "Published artifacts already use ${version}; advancing past it."
+              max_n="${n}"
             fi
           done
 
-          NEW_N=$((MAX_N + 1))
-          NEW_VERSION="${YEAR}.${MONTH}.${NEW_N}"
-          echo "New version: ${NEW_VERSION}"
-          echo "new_version=${NEW_VERSION}" >> "${GITHUB_OUTPUT}"
-          echo "should_release=true" >> "${GITHUB_OUTPUT}"
+          new_version="${year}.${month}.$((max_n + 1))"
+          echo "New downstream version: ${new_version}"
+          {
+            echo "new_version=${new_version}"
+            echo "should_release=true"
+          } >> "${GITHUB_OUTPUT}"
 
-      - name: Update release-train.config.json
+      - name: Update downstream version fields
         if: steps.version.outputs.should_release == 'true'
+        shell: bash
         run: |
           set -euo pipefail
-          NEW_VERSION="${{ steps.version.outputs.new_version }}"
+          new_version="${{ steps.version.outputs.new_version }}"
 
-          # Update all version fields in config
-          jq --arg v "${NEW_VERSION}" '
+          jq --arg v "${new_version}" '
             .versions.release = $v |
             .versions.bamboo = $v |
-            .versions.lotus = $v |
             .versions.bodhi = $v
           ' "${CONFIG_FILE}" > "${CONFIG_FILE}.tmp"
           mv "${CONFIG_FILE}.tmp" "${CONFIG_FILE}"
 
-          echo "Updated ${CONFIG_FILE}:"
-          cat "${CONFIG_FILE}"
+          # The frontend object is immutable in this job; schema validation
+          # catches accidental key drift before any commit or dispatch.
+          node scripts/release-train-policy.cjs validate --config "${CONFIG_FILE}"
+          git diff --check
 
-      - name: Commit and push version bump
+      - name: Commit and push downstream version bump
         if: steps.version.outputs.should_release == 'true'
+        shell: bash
         run: |
           set -euo pipefail
-          NEW_VERSION="${{ steps.version.outputs.new_version }}"
+          new_version="${{ steps.version.outputs.new_version }}"
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
           git add "${CONFIG_FILE}"
-          git diff --cached --quiet && {
-            echo "No changes to commit (version already up-to-date)."
+          if git diff --cached --quiet; then
+            echo "No downstream version change to commit."
             exit 0
-          }
-
-          git commit -m "chore: bump release version to ${NEW_VERSION} [nightly]"
+          fi
+          git commit -m "chore: bump downstream release version to ${new_version} [nightly]"
           git push
 
   trigger-release-train:
-    name: Trigger Release Train
+    name: Trigger locked-frontend release train
     needs: auto-version
     if: needs.auto-version.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout current main
         uses: actions/checkout@v6
         with:
           ref: main
 
-      - name: Dispatch Release Train
+      - name: Dispatch Bamboo then Bodhi
         env:
-          # This dispatch targets a workflow in the current Zenith repository.
-          # Use the workflow-scoped GitHub token, which now has actions:write.
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          NEW_VERSION="${{ needs.auto-version.outputs.new_version }}"
+          new_version="${{ needs.auto-version.outputs.new_version }}"
+          frontend="$(jq -r '.frontend.defaultPackage + "@" + .frontend.lotusNext.packageVersion' "${CONFIG_FILE}")"
+          echo "Dispatching downstream release ${new_version} with locked frontend ${frontend}."
+          echo "Release order: Bamboo -> Bodhi"
 
-          echo "Dispatching release-train with version ${NEW_VERSION}"
-          echo "Release order: Lotus → Bamboo → Bodhi"
-
-          # The release-train.yml workflow reads from config.json by default
-          # (all inputs default to "from_manifest"), so we just need to trigger it.
-          # The config was already updated in the previous job.
-          #
-          # Override lotus_skip_tests=true for nightly to avoid blocking on tests.
           gh workflow run release-train.yml \
             --ref main \
-            -f release_version="${NEW_VERSION}" \
-            -f lotus_skip_tests=true
+            -f targets=bamboo,bodhi \
+            -f release_version="${new_version}"
 
           echo "Release train dispatched. Monitor at:"
           echo "https://github.com/${{ github.repository }}/actions/workflows/release-train.yml"

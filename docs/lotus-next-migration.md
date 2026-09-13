@@ -1,6 +1,8 @@
-# Lotus → Lotus-Next 迁移体检与落地计划
+# Lotus → Lotus Next 迁移体检与落地计划
 
-> 状态:**功能补齐大批次已落地** · 最后更新:2026-07-07
+> 状态:**生产默认消费与锁定发布链已落地；运行验收与 legacy 退役仍在推进** · 最后更新:2026-09-13
+>
+> **2026-09-13 生产/发布里程碑:**`@bigduu/lotus-next@2026.9.14` 已由受保护源码提交发布；Bamboo 和 Bodhi 已锁定并默认消费同一份 universal artifact；Zenith 已固定对应源码指针。根 release train 不再生产 legacy Lotus，也不自动发布 Lotus Next，而是在任何跨仓库 dispatch 前校验被接受的源码 ref、根 gitlink、npm tarball SHA-1/integrity，以及 Lotus Next manifest 中每个资源的 size/hash。legacy `@bigduu/lotus@2026.8.28` 仅保留为显式固定回滚。本阶段没有实际触发新的 Bamboo/Bodhi release。
 >
 > **2026-07-07 大批次(用户拍板:除 i18n 全部同步;传输只要 WSS 不要 SSE):**
 > 1. **传输 WSS-only 完成**:删除两条 legacy SSE 路径 + WS→SSE 回退机制 + `bodhi_api_v2_ws` 开关(净 −541 行);v2Stream 即唯一传输,初连失败与断线同走有界退避重连;msgpack 保持 opt-in。§2.2 的 "v2 WebSocket 传输 🟡" 行已过时 → ✅ 且比 lotus 更进一步(lotus 还保留回退)。
@@ -8,13 +10,13 @@
 > 3. **流式韧性完成**:被动观察引擎(他端/定时任务驱动的 run 自动订阅)、搁浅终态回收、visibilitychange 回收、WS 重连即时 reconcile(WSS-only 后这些是必需品,不再有 SSE 兜底)。
 > 4. **Settings 深度(9 路并行实现)**:定时任务全触发类型+策略+run-now+历史(修复 P0:cron 字段 `expression`→`expr`,创建从未生效)、Providers 深度(enabled 开关/类型变更/defaults.*/overrides/OAuth 打磨)、MCP 深度(编辑/env/cwd/headers/工具列表)、技能启停+搜索、通知后端偏好、系统面板(代理/记忆/子代理/工具/访问密码/模型限额/会话维护)、集群 tab + MachineTag(#33/#34 数据层已逐字移植)、指标仪表盘(纯 SVG)、提示词 + 工作流 tab + CommandService、导出 PDF 改渲染管线(CJK 安全)。
 > 5. **聊天集成**:enhance_prompt 管线恢复(此前静默缺失)、新会话系统提示词预设 chip、SlashMenu 合并工作流(/v1/commands + 发送展开)、键盘导航(↑↓/Enter/Tab/Esc)、每会话草稿、待答问题会话打开恢复、AI 生成标题、主题跟随系统、Root 启动顺序修复(密码门先于 setup 探测)+ 有界重试、preloadError 自动重载、根 ErrorBoundary。
-> **仍未做**:FileChangeViewer/Diffs 区、HomeDashboard + 模板启动器、单 pane 多会话并发流式(useChat per-session buffer Map)、侧栏过滤/内容搜索/批量删除、命令面板深度、mermaid 缩放/主题、消息上下文操作、输入历史、Run Project Dream、引导 tour、传输测试套件;生产切换(选项 B)仍按 dev-first 分期推迟。
+> **仍未做**:FileChangeViewer/Diffs 区、HomeDashboard + 模板启动器、单 pane 多会话并发流式(useChat per-session buffer Map)、侧栏过滤/内容搜索/批量删除、命令面板深度、mermaid 缩放/主题、消息上下文操作、输入历史、Run Project Dream、引导 tour、传输测试套件；以及迁移 tracker 中的本地/远程响应式验收、两次启动 Jiandu 连续性、legacy 工作对账、回滚窗口移除与仓库归档。
 >
 > **已拍板的方向决策:**
 > 1. **产品定位 = next 渐进取代 lotus**(最终走选项 B:打包脚本改服 lotus-next;lotus 在 next 达到功能水位后退役)。
 > 2. **优先抽取 `@bigduu/lotus-core` 共享层**(两端共享后端/服务/状态层)。
 >
-> **修订后的分期(2026-06-28):先不并入 bamboo。** 当前阶段 = **dev-first**:bamboo 继续只服务 lotus(embed 管线一行不改),next 用 vite dev(`:9563` proxy → `:9562`)迭代开发,等功能达到水位后再做选项 B 的生产切换。选项 B / `--static-dir` 部署 = 已验证可行但**推迟**。
+> **历史分期(2026-06-28，已被 2026-09-13 里程碑取代):先不并入 bamboo。** 当时采用 **dev-first**：bamboo 继续只服务 lotus，next 用 vite dev(`:9563` proxy → `:9562`)迭代；该生产切换现已通过受保护 Bamboo/Bodhi consumer 变更完成。
 >
 > **终局定调(2026-06-28):next = 桌面+移动统一的单一 UI,antd 整体退役。** 真正驱动力是 antd 定制化能力低(改 UI 处处受制),不只是移动。所以 next 要长成**响应式**(窄屏单栏 ↔ 宽屏多栏)以最终接管桌面,lotus 退役。**当前最高杠杆 = 补 next 的组件地基**(见 §9),否则 next 会从"antd 改不动"换成"内联 Tailwind 散落、改 10 处"的新泥潭。i18n 暂缓(工作量大、非核心)。
 
@@ -176,24 +178,26 @@ next 已 browser-first(`isTauriEnvironment` 全守卫,tauri plugin 懒加载,HTT
 
 ---
 
-## 7. 发布链路缺口清单(lotus-next 当一等公民)
+## 7. 发布链路现状(Lotus Next 已是一等制品)
 
-1. `release-train.config.json` + `nightly-release.yml` 的 jq 加 `versions.lotus_next`(package.json 留 `0.0.0`,发布时打日期版本)。
-2. 建 publish workflow(镜像 lotus 的 `publish-npm.yml` 发 `@bigduu/lotus-next`)**或**走静态 artifact。
-3. `release-train.yml` 加 dispatch + wait 步骤。
-4. 按选项 B 接 bamboo 打包(改 `frontend-package.cjs` 消费 `@bigduu/lotus-next` + `frontend_name`,bodhi `release.yml` 传 `lotus_next_version`)。
-5. submodule 指针机制已被 `submodule-guard.yml` 覆盖(next 已在 `.gitmodules`);推 zenith main 注意 nightly auto-commit 冲突,fetch + rebase 即可。
+1. **Producer 独立:**Lotus Next 的 `publish-npm.yml` 从 clean 默认分支构建、跑 Node/浏览器/真实 Bamboo 验证，再发布精确 npm 版本；根 release train 不重复这一 producer。
+2. **Consumer 一致:**Bamboo 与 Bodhi 的 committed lock 对 package/version、source revision、entrypoint、manifest SHA-256 与 resource digest 完全一致，且默认都选择 Lotus Next。
+3. **根权威:**`release-train.config.json` 同时固定被接受的 Bamboo/Bodhi workflow ref + revision、Lotus Next 源码/gitlink 关系、完整 manifest 身份、npm shasum/integrity，以及唯一 legacy rollback。
+4. **Fail closed:**`release-train.yml` 默认只跑 Bamboo → Bodhi。它先从公共 registry 下载所选精确 tarball 并逐字节验证，再检查 Bamboo/Bodhi 的 live accepted ref、所有相关 root pointer 与 Next manifest source；没有 `latest`、skip-tests、legacy producer 或自动 Next publication。Next 后续开发提交不会让已验收制品失效。
+5. **Nightly 下游化:**`nightly-release.yml` 扫描 Lotus Next、Bamboo 与 Bodhi 已占用的 `YYYY.M.N`，但只更新/release Bamboo 与 Bodhi 版本，绝不改写 frontend identity。
+6. **仍待验收:**实际运行一趟受控下游 release、完成本地/远程响应式和两次启动 Jiandu 证据后，才能移除 rollback、对账遗留工作并归档 legacy Lotus。
 
 ---
 
-## 8. 分阶段迁移路线(总,2026-06-28 修订:dev-first)
+## 8. 分阶段迁移路线(2026-09-13 修订)
 
-> 修订要点:**不急着并入 bamboo**。当前停留在 dev 开发,把功能做齐 + 共享层去重,部署切换后移。
+> 当前阶段已从 dev-first 进入**生产默认消费后的验收/退役窗口**。默认包与 release authority 已切到 Lotus Next，但 legacy 删除仍必须等待真实运行证据。
 
-- **当前阶段 = dev-first 开发**:bamboo 只服务 lotus(不动);next 用 vite dev(`:9563` proxy → `:9562`)迭代。手机调试走局域网(`host:true` 已开,`http://<Mac-LAN-IP>:9563`)或为 :9563 单开一条 tunnel。
+- **已完成 — producer/consumer/根指针/发布策略:**Lotus Next artifact、Bamboo、Bodhi 与 Zenith 的受保护交付链已对齐；默认发布消费 Next，legacy 只能显式回滚。
+- **当前阶段 — 真实验收:**分别收集本地与远程宽/窄屏关键路径、桌面壳启动、两次启动 Jiandu 连续性和受控 release 证据；失败车道独立记录，不以绿色 CI 替代行为验收。
 - **P1 去重固本(可立即并行)**:抽 `@bigduu/lotus-core`,统一 4 个漂移,搬测试进 core;清掉第 3 节死代码(死代码已于 2026-06-28 清理:openAiStreamingRunner / compat/ / dist.lotus-bak)。dev 模式下双份同步痛持续,此项价值不降反升。
 - **P2 功能补全**(按移动价值排序):i18n UI 多语 + 切换器(最大退化)→ 远程 Setup 流 → System Prompt / Workflows / Plan 按需 → 主题跟随系统 → Provider 多实例深度核对。
-- **P3 部署切换(达到功能水位后再做)**:选项 B 正式让 bamboo/bodhi 服务 next;接 CI/release(第 7 节)。**已验证**:`bamboo serve --static-dir lotus-next/dist` 可作为生产 SPA+API 单 origin 服务(6 项 curl 验证通过),随时可切。
+- **P3 部署与发布切换(已完成默认路径)**:Bamboo/Bodhi 已默认消费锁定的 `@bigduu/lotus-next`；Zenith release train 已接管精确制品验证与 Bamboo → Bodhi 编排。真实 release 与最终 rollback 删除仍是独立门禁。
 - **P4 容器化**:新 mobile Tauri 壳,连远程 bamboo。
 
 > **P0 临时点亮(已验证、暂不启用)**:`bamboo serve --port 9562 --bind 127.0.0.1 --data-dir ~/.bamboo --static-dir <lotus-next/dist>` + 现有 :9562 tunnel,即可让手机看到带真实 provider/会话的 lotus-next。需先停 bodhi/常规 :9562;回退 = 杀进程重启 bodhi。按修订分期暂缓。
