@@ -218,39 +218,46 @@ Use this checklist for every release train. The only normal release entrypoint i
 
 1. Land release changes through each repository's protected pull-request flow:
    - Use isolated branches/worktrees and Conventional Commits; never push feature or release-preparation commits directly to `main`.
-   - Bamboo feature PRs target `dev`. Release only commits that have reached the canonical ref selected in `.github/release-train.config.json`.
+   - Lotus Next publication is a separate protected producer step. Accept its exact npm identity in Bamboo and Bodhi first, then pin the resulting source commits and artifact identity in a focused Zenith PR.
+   - Bamboo feature PRs target `dev`. Release only the exact Bamboo and Bodhi revisions recorded in `.github/release-train.config.json` and pinned by the matching Zenith gitlinks.
    - If Zenith submodule pointers or release configuration change, update them in a focused Zenith PR after the submodule commits are merged.
 
 2. Run release gates against the exact candidate refs:
    - `cd bamboo && cargo fmt --check && cargo clippy && cargo test`
-   - `cd lotus && npm run type-check && npm run test:run && npm run lint`
+   - `cd lotus-next && npm run verify && npm run test:e2e:built` for a new frontend artifact; its own publish workflow also performs a real Bamboo round trip.
    - `cd bodhi && npm run web:verify:migration && npm run web:verify:docs-boundary`
+   - For release-policy changes: `node --test scripts/release-train-policy.test.cjs` and `actionlint .github/workflows/release-policy.yml .github/workflows/release-train.yml .github/workflows/nightly-release.yml`.
    - If website changed: `cd pavilion && npm run lint && npm run build`
-   - For cross-page UI or workflow changes, also run `cd lotus && npm run test:e2e`.
+   - For cross-page UI changes, run the affected Lotus Next browser suite.
 
 3. Resolve the release version without editing package manifests:
-   - Bamboo, Lotus, and Bodhi source manifests intentionally keep `0.0.0` placeholders. Their publish workflows stamp the requested release version in the temporary publishing checkout.
+   - Bamboo and Bodhi source manifests intentionally keep `0.0.0` placeholders. Their publish workflows stamp the requested downstream release version in temporary publishing checkouts.
+   - The frontend version is not derived from the downstream release number. The train downloads the exact committed npm package/version and verifies its tarball plus, for Lotus Next, its full universal manifest before dispatch.
    - For a config-driven release, update `.github/release-train.config.json` through a focused Zenith PR or let the nightly workflow advance it.
-   - For an ad-hoc release, pass an unused `release_version` to the release train; do not commit version bumps in submodules.
+   - For an ad-hoc release, pass an unused `release_version`; do not edit submodule manifests or the committed frontend identity.
 
 4. Trigger the release train:
    - Config-driven full train: `gh workflow run release-train.yml -R bigduu/Zenith --ref main`.
    - Ad-hoc full train: `gh workflow run release-train.yml -R bigduu/Zenith --ref main -f release_version=<version>`.
-   - Add `-f targets=lotus,bamboo` (or another dependency-ordered subset) for a partial release.
+   - Add `-f targets=bamboo` or `-f targets=bodhi` for a partial release.
+   - The default frontend is the locked Lotus Next artifact. The only rollback selector is `-f frontend_package=@bigduu/lotus`, which still resolves to the one fixed legacy version in config.
 
 5. Watch and verify the release chain:
    - `gh run watch <root_run_id> -R bigduu/Zenith --exit-status`
    - `gh run list -R bigduu/Bamboo-agent --workflow publish-crate.yml --limit 1`
-   - `gh run list -R bigduu/Lotus --workflow publish-npm.yml --limit 1`
-   - `gh run list -R bigduu/Bodhi --workflow release.yml --limit 1`
+   - `gh run list -R bigduu/Bodhi-AI --workflow release.yml --limit 1`
+   - Confirm the downstream runs' `headSha` values equal the accepted revisions in config.
 
 6. Handle failures without changing the release order:
-   - If Bodhi Linux fails with npm `ETARGET` for Lotus:
-     - Wait until `npm view @bigduu/lotus@<version> version` succeeds.
-     - Rerun failed jobs only: `gh run rerun <bodhi_run_id> -R bigduu/Bodhi --failed`.
-   - If root release train fails due transient GitHub API issues, resume the chain manually in the same Bamboo -> Lotus -> Bodhi order.
+   - If locked frontend verification fails, stop. Do not edit a digest to fit registry bytes; publish and accept a new Lotus Next artifact through the staged producer → consumer → Zenith-pointer sequence.
+   - If Bodhi fails with npm `ETARGET`:
+     - Wait until `npm view <configured-package>@<configured-version> version` succeeds.
+     - Rerun failed jobs only: `gh run rerun <bodhi_run_id> -R bigduu/Bodhi-AI --failed`.
+   - If a partial train fails after publishing one downstream artifact, rerun the same versions with `resume=true`. Never substitute a moving `latest`.
+   - If the root train fails due a transient GitHub API issue, resume in the same Bamboo → Bodhi order and retain the exact accepted refs.
 
 7. Run post-release checks:
    - `git status -sb` at root and inside all submodules (must be clean).
-   - `npm view @bigduu/lotus@<version> version`
+   - Verify the configured frontend package/version still reports the committed npm shasum and integrity.
    - `cargo search bamboo-agent --limit 1` (confirm expected version is published)
+   - `gh release view app-v<version> -R bigduu/Bodhi-AI`

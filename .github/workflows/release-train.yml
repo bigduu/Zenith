@@ -1,58 +1,49 @@
 name: Release Train
 
-# Orchestrates publishing across the three repos in dependency order:
+# Publishes downstream consumers in dependency order:
 #
-#   Lotus (npm @bigduu/lotus)  ->  Bamboo (crates.io + embeds that Lotus)  ->  Bodhi (app release consuming both)
+#   locked npm frontend -> Bamboo (crates.io) -> Bodhi (desktop release)
 #
-# Gating is event-driven, not time-based: each leg waits for the upstream
-# workflow to finish AND for the artifact to be visible on its registry before
-# the next leg dispatches. The `targets` input releases a subset (a "partial
-# train"), with excluded targets pinned to the last published versions recorded
-# in .github/release-train.config.json.
+# Lotus Next is published and accepted in its own protected producer/consumer
+# sequence. This workflow never publishes a frontend. It verifies one committed
+# npm artifact identity before dispatching Bamboo and Bodhi.
 
 on:
   workflow_dispatch:
     inputs:
       targets:
-        description: "Comma-separated subset of lotus,bamboo,bodhi to release (dependency order is fixed: Lotus -> Bamboo -> Bodhi)"
+        description: "Comma-separated subset of bamboo,bodhi to release (dependency order is fixed: Bamboo -> Bodhi)"
         required: false
-        default: "lotus,bamboo,bodhi"
-      bamboo_ref:
-        description: "Ref for Bamboo release workflow (use 'from_manifest' to read Zenith config)"
-        required: false
-        default: "from_manifest"
-      lotus_ref:
-        description: "Ref for Lotus publish workflow (use 'from_manifest' to read Zenith config)"
-        required: false
-        default: "from_manifest"
-      bodhi_ref:
-        description: "Ref for Bodhi release workflow (use 'from_manifest' to read Zenith config)"
-        required: false
-        default: "from_manifest"
+        default: "bamboo,bodhi"
+        type: string
+      frontend_package:
+        description: "Locked frontend artifact; legacy Lotus is an explicit fixed rollback only"
+        required: true
+        default: "@bigduu/lotus-next"
+        type: choice
+        options:
+          - "@bigduu/lotus-next"
+          - "@bigduu/lotus"
       release_version:
-        description: "Unified version for the included targets (use 'from_manifest' to read .versions.release)"
+        description: "Unified version for included targets (from_manifest reads .versions.release)"
         required: false
         default: "from_manifest"
+        type: string
       bamboo_version:
-        description: "bamboo-agent crate version (use 'from_manifest' to read Zenith config; excluded targets pin to the last recorded published version)"
+        description: "Bamboo crate version (from_manifest uses the unified version when included, otherwise the recorded published version)"
         required: false
         default: "from_manifest"
-      lotus_version:
-        description: "Lotus npm version (use 'from_manifest' to read Zenith config; excluded targets pin to the last recorded published version)"
-        required: false
-        default: "from_manifest"
+        type: string
       bodhi_version:
-        description: "Bodhi app version used for release tag/assets (use 'from_manifest' to read Zenith config)"
+        description: "Bodhi app version (from_manifest uses the unified version when included, otherwise the recorded published version)"
         required: false
         default: "from_manifest"
-      lotus_skip_tests:
-        description: "Pass true to skip Lotus publish workflow tests (use 'from_manifest' to read Zenith config)"
-        required: false
-        default: "from_manifest"
+        type: string
       resume:
-        description: "Pass true to resume a partially completed train at the same versions: already-published targets are skipped instead of failing the collision pre-flight"
+        description: "Resume these exact versions by skipping included artifacts that already exist"
         required: false
-        default: "false"
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -61,205 +52,182 @@ jobs:
   orchestrate:
     runs-on: ubuntu-latest
     outputs:
-      include_lotus: ${{ steps.resolve.outputs.include_lotus }}
       include_bamboo: ${{ steps.resolve.outputs.include_bamboo }}
       include_bodhi: ${{ steps.resolve.outputs.include_bodhi }}
-      lotus_version: ${{ steps.resolve.outputs.lotus_version }}
       bamboo_version: ${{ steps.resolve.outputs.bamboo_version }}
       bodhi_version: ${{ steps.resolve.outputs.bodhi_version }}
     steps:
-      - name: Checkout repository
+      - name: Checkout exact Zenith source
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - name: Resolve release inputs from Zenith config
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Resolve the committed release policy
         id: resolve
+        shell: bash
+        env:
+          TARGETS_INPUT: ${{ inputs.targets }}
+          FRONTEND_PACKAGE_INPUT: ${{ inputs.frontend_package }}
+          RELEASE_VERSION_INPUT: ${{ inputs.release_version }}
+          BAMBOO_VERSION_INPUT: ${{ inputs.bamboo_version }}
+          BODHI_VERSION_INPUT: ${{ inputs.bodhi_version }}
+          RESUME_INPUT: ${{ inputs.resume }}
         run: |
           set -euo pipefail
-          CONFIG_FILE=".github/release-train.config.json"
+          node scripts/release-train-policy.cjs resolve \
+            --config .github/release-train.config.json \
+            --targets "${TARGETS_INPUT}" \
+            --frontend-package "${FRONTEND_PACKAGE_INPUT}" \
+            --release-version "${RELEASE_VERSION_INPUT}" \
+            --bamboo-version "${BAMBOO_VERSION_INPUT}" \
+            --bodhi-version "${BODHI_VERSION_INPUT}" \
+            --resume "${RESUME_INPUT}" \
+            --github-output "${GITHUB_OUTPUT}"
 
-          if [ ! -f "${CONFIG_FILE}" ]; then
-            echo "Missing ${CONFIG_FILE}"
+      - name: Verify exact root pointers and accepted source refs
+        shell: bash
+        env:
+          BAMBOO_REPOSITORY: ${{ steps.resolve.outputs.bamboo_repository }}
+          BAMBOO_REF: ${{ steps.resolve.outputs.bamboo_ref }}
+          BAMBOO_REVISION: ${{ steps.resolve.outputs.bamboo_revision }}
+          BAMBOO_ROOT_PATH: ${{ steps.resolve.outputs.bamboo_root_path }}
+          BODHI_REPOSITORY: ${{ steps.resolve.outputs.bodhi_repository }}
+          BODHI_REF: ${{ steps.resolve.outputs.bodhi_ref }}
+          BODHI_REVISION: ${{ steps.resolve.outputs.bodhi_revision }}
+          BODHI_ROOT_PATH: ${{ steps.resolve.outputs.bodhi_root_path }}
+          LOTUS_NEXT_REPOSITORY: ${{ steps.resolve.outputs.lotus_next_repository }}
+          LOTUS_NEXT_REF: ${{ steps.resolve.outputs.lotus_next_ref }}
+          LOTUS_NEXT_REVISION: ${{ steps.resolve.outputs.lotus_next_revision }}
+          LOTUS_NEXT_ROOT_PATH: ${{ steps.resolve.outputs.lotus_next_root_path }}
+        run: |
+          set -euo pipefail
+
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "::error::Release Train must run from Zenith main, got ${GITHUB_REF}."
+            exit 1
+          fi
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+
+          verify_root_pointer() {
+            local label="$1"
+            local revision="$2"
+            local root_path="$3"
+            local row mode pointer
+
+            row="$(git ls-tree HEAD -- "${root_path}")"
+            mode="$(printf '%s\n' "${row}" | awk '{print $1}')"
+            pointer="$(printf '%s\n' "${row}" | awk '{print $3}')"
+            if [ "${mode}" != "160000" ] || [ "${pointer}" != "${revision}" ]; then
+              echo "::error::${label} root pointer ${pointer:-missing} does not match accepted revision ${revision}."
+              exit 1
+            fi
+            echo "Verified ${label} root path ${root_path} at ${revision}."
+          }
+
+          verify_dispatch_source() {
+            local label="$1"
+            local repository="$2"
+            local ref="$3"
+            local revision="$4"
+            local root_path="$5"
+            local remote
+
+            verify_root_pointer "${label}" "${revision}" "${root_path}"
+
+            remote="$(git ls-remote --exit-code \
+              "https://github.com/${repository}.git" \
+              "refs/heads/${ref}" | awk 'NR == 1 { print $1 }')"
+            if [ "${remote}" != "${revision}" ]; then
+              echo "::error::${repository}@${ref} moved from accepted revision ${revision} to ${remote:-missing}."
+              exit 1
+            fi
+            echo "Verified dispatch source ${repository}@${ref} = ${revision}."
+          }
+
+          verify_dispatch_source Bamboo "${BAMBOO_REPOSITORY}" "${BAMBOO_REF}" "${BAMBOO_REVISION}" "${BAMBOO_ROOT_PATH}"
+          verify_dispatch_source Bodhi "${BODHI_REPOSITORY}" "${BODHI_REF}" "${BODHI_REVISION}" "${BODHI_ROOT_PATH}"
+          verify_root_pointer "Lotus Next artifact source" "${LOTUS_NEXT_REVISION}" "${LOTUS_NEXT_ROOT_PATH}"
+          echo "Verified Lotus Next provenance: ${LOTUS_NEXT_REPOSITORY}@${LOTUS_NEXT_REVISION} was accepted from ${LOTUS_NEXT_REF}; the locked artifact remains stable if that branch advances."
+
+      - name: Download and verify the selected frontend artifact
+        shell: bash
+        env:
+          FRONTEND_PACKAGE: ${{ steps.resolve.outputs.frontend_package }}
+          FRONTEND_VERSION: ${{ steps.resolve.outputs.frontend_version }}
+          NPM_CONFIG_AUDIT: "false"
+          NPM_CONFIG_FUND: "false"
+          NPM_CONFIG_PROGRESS: "false"
+          NPM_CONFIG_PREFER_OFFLINE: "false"
+          NPM_CONFIG_CACHE: ${{ runner.temp }}/zenith-release-npm-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          artifact_dir="$(mktemp -d "${RUNNER_TEMP}/frontend-artifact.XXXXXX")"
+          cd "${artifact_dir}"
+
+          npm pack "${FRONTEND_PACKAGE}@${FRONTEND_VERSION}" \
+            --ignore-scripts \
+            --prefer-online \
+            --json > pack.json
+          test "$(jq 'length' pack.json)" = "1"
+          archive="$(jq -r '.[0].filename' pack.json)"
+          if [ -z "${archive}" ] || [ "$(basename "${archive}")" != "${archive}" ]; then
+            echo "::error::npm returned an unsafe tarball filename."
             exit 1
           fi
 
-          jq -e . "${CONFIG_FILE}" >/dev/null
+          node "${GITHUB_WORKSPACE}/scripts/release-train-policy.cjs" verify-tarball \
+            --config "${GITHUB_WORKSPACE}/.github/release-train.config.json" \
+            --frontend-package "${FRONTEND_PACKAGE}" \
+            --tarball "${archive}"
 
-          resolve_value() {
-            local input_value="$1"
-            local jq_path="$2"
-            local resolved
+          mkdir unpacked
+          tar --extract --gzip --file "${archive}" --directory unpacked --no-same-owner
+          test -d unpacked/package
+          test "$(find unpacked -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" = "1"
+          node "${GITHUB_WORKSPACE}/scripts/release-train-policy.cjs" verify-package \
+            --config "${GITHUB_WORKSPACE}/.github/release-train.config.json" \
+            --frontend-package "${FRONTEND_PACKAGE}" \
+            --package-dir unpacked/package
 
-            if [ -z "${input_value}" ] || [ "${input_value}" = "from_manifest" ]; then
-              resolved="$(jq -r "${jq_path} | if . == null then empty else . end" "${CONFIG_FILE}")"
-            else
-              resolved="${input_value}"
-            fi
-
-            if [ -z "${resolved}" ] || [ "${resolved}" = "null" ]; then
-              echo "Missing value for ${jq_path} in ${CONFIG_FILE}"
-              exit 1
-            fi
-
-            printf '%s' "${resolved}"
-          }
-
-          TARGETS_INPUT="${{ github.event.inputs.targets }}"
-          if [ -z "${TARGETS_INPUT}" ]; then
-            TARGETS_INPUT="lotus,bamboo,bodhi"
-          fi
-
-          INCLUDE_LOTUS=false
-          INCLUDE_BAMBOO=false
-          INCLUDE_BODHI=false
-          IFS=',' read -ra TARGET_LIST <<< "${TARGETS_INPUT}"
-          for target in "${TARGET_LIST[@]}"; do
-            target="$(printf '%s' "${target}" | tr -d '[:space:]')"
-            case "${target}" in
-              lotus) INCLUDE_LOTUS=true ;;
-              bamboo) INCLUDE_BAMBOO=true ;;
-              bodhi) INCLUDE_BODHI=true ;;
-              "") ;;
-              *)
-                echo "Unknown release target '${target}' (expected a comma-separated subset of: lotus, bamboo, bodhi)"
-                exit 1
-                ;;
-            esac
-          done
-
-          if [ "${INCLUDE_LOTUS}" = "false" ] && [ "${INCLUDE_BAMBOO}" = "false" ] && [ "${INCLUDE_BODHI}" = "false" ]; then
-            echo "targets='${TARGETS_INPUT}' selected nothing to release"
-            exit 1
-          fi
-
-          RESUME="$(printf '%s' "${{ github.event.inputs.resume }}" | tr '[:upper:]' '[:lower:]')"
-          if [ -z "${RESUME}" ]; then
-            RESUME=false
-          fi
-          case "${RESUME}" in
-            true|false) ;;
-            *)
-              echo "resume must be true or false, got: ${RESUME}"
-              exit 1
-              ;;
-          esac
-
-          BAMBOO_REF="$(resolve_value "${{ github.event.inputs.bamboo_ref }}" '.refs.bamboo')"
-          LOTUS_REF="$(resolve_value "${{ github.event.inputs.lotus_ref }}" '.refs.lotus')"
-          BODHI_REF="$(resolve_value "${{ github.event.inputs.bodhi_ref }}" '.refs.bodhi')"
-
-          RELEASE_VERSION_INPUT="${{ github.event.inputs.release_version }}"
-          if [ -z "${RELEASE_VERSION_INPUT}" ] || [ "${RELEASE_VERSION_INPUT}" = "from_manifest" ]; then
-            RELEASE_VERSION="$(jq -r '.versions.release // empty' "${CONFIG_FILE}")"
-          else
-            RELEASE_VERSION="${RELEASE_VERSION_INPUT}"
-          fi
-
-          # Included targets publish at the unified release version; excluded
-          # targets pin to the last recorded published version so partial
-          # trains consume real artifacts instead of the new (unpublished)
-          # release number. An explicit per-repo input always wins.
-          resolve_component_version() {
-            local input_value="$1"
-            local included="$2"
-            local jq_path="$3"
-
-            if [ -n "${input_value}" ] && [ "${input_value}" != "from_manifest" ]; then
-              printf '%s' "${input_value}"
-              return
-            fi
-
-            if [ "${included}" = "true" ] && [ -n "${RELEASE_VERSION}" ] && [ "${RELEASE_VERSION}" != "null" ]; then
-              printf '%s' "${RELEASE_VERSION}"
-              return
-            fi
-
-            resolve_value "" "${jq_path}"
-          }
-
-          BAMBOO_VERSION="$(resolve_component_version "${{ github.event.inputs.bamboo_version }}" "${INCLUDE_BAMBOO}" '.versions.bamboo')"
-          LOTUS_VERSION="$(resolve_component_version "${{ github.event.inputs.lotus_version }}" "${INCLUDE_LOTUS}" '.versions.lotus')"
-          BODHI_VERSION="$(resolve_component_version "${{ github.event.inputs.bodhi_version }}" "${INCLUDE_BODHI}" '.versions.bodhi')"
-
-          LOTUS_SKIP_TESTS="$(resolve_value "${{ github.event.inputs.lotus_skip_tests }}" '.options.lotus_skip_tests')"
-
-          case "${LOTUS_SKIP_TESTS}" in
-            true|false) ;;
-            *)
-              echo "lotus_skip_tests must be true or false, got: ${LOTUS_SKIP_TESTS}"
-              exit 1
-              ;;
-          esac
-
-          {
-            echo "include_lotus=${INCLUDE_LOTUS}"
-            echo "include_bamboo=${INCLUDE_BAMBOO}"
-            echo "include_bodhi=${INCLUDE_BODHI}"
-            echo "resume=${RESUME}"
-            echo "bamboo_ref=${BAMBOO_REF}"
-            echo "lotus_ref=${LOTUS_REF}"
-            echo "bodhi_ref=${BODHI_REF}"
-            echo "release_version=${RELEASE_VERSION}"
-            echo "bamboo_version=${BAMBOO_VERSION}"
-            echo "lotus_version=${LOTUS_VERSION}"
-            echo "bodhi_version=${BODHI_VERSION}"
-            echo "lotus_skip_tests=${LOTUS_SKIP_TESTS}"
-          } >> "${GITHUB_OUTPUT}"
-
-          cat <<EOF
-          Resolved release inputs:
-          - targets: lotus=${INCLUDE_LOTUS} bamboo=${INCLUDE_BAMBOO} bodhi=${INCLUDE_BODHI} (resume=${RESUME})
-          - bamboo_ref=${BAMBOO_REF}
-          - lotus_ref=${LOTUS_REF}
-          - bodhi_ref=${BODHI_REF}
-          - release_version=${RELEASE_VERSION}
-          - bamboo_version=${BAMBOO_VERSION}
-          - lotus_version=${LOTUS_VERSION}
-          - bodhi_version=${BODHI_VERSION}
-          - lotus_skip_tests=${LOTUS_SKIP_TESTS}
-          EOF
-
-      - name: Validate release token
+      - name: Validate cross-repository release token
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.RELEASE_ORCHESTRATOR_TOKEN }}
         run: |
-          if [ -z "${GH_TOKEN}" ]; then
-            echo "Missing RELEASE_ORCHESTRATOR_TOKEN secret."
-            echo "Create a token with permissions to run and read workflows in:"
-            echo "- bigduu/Bamboo-agent"
-            echo "- bigduu/Lotus"
-            echo "- bigduu/Bodhi-AI"
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::Missing RELEASE_ORCHESTRATOR_TOKEN secret."
+            echo "It must be able to dispatch and read workflows in the accepted Bamboo and Bodhi repositories."
             exit 1
           fi
 
-      - name: Pre-flight version checks
+      - name: Check downstream version collisions
         id: preflight
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.RELEASE_ORCHESTRATOR_TOKEN }}
-          INCLUDE_LOTUS: ${{ steps.resolve.outputs.include_lotus }}
           INCLUDE_BAMBOO: ${{ steps.resolve.outputs.include_bamboo }}
           INCLUDE_BODHI: ${{ steps.resolve.outputs.include_bodhi }}
           RESUME: ${{ steps.resolve.outputs.resume }}
-          LOTUS_VERSION: ${{ steps.resolve.outputs.lotus_version }}
           BAMBOO_VERSION: ${{ steps.resolve.outputs.bamboo_version }}
           BODHI_VERSION: ${{ steps.resolve.outputs.bodhi_version }}
         run: |
           set -euo pipefail
-
-          USER_AGENT="zenith-release-train/1.0 (+https://github.com/${{ github.repository }})"
+          user_agent="zenith-release-train/2.0 (+https://github.com/${{ github.repository }})"
 
           crates_version_exists() {
             local status
             status="$(curl -sS -o /dev/null -w "%{http_code}" \
-              -H "User-Agent: ${USER_AGENT}" \
+              -H "User-Agent: ${user_agent}" \
               "https://crates.io/api/v1/crates/bamboo-agent/$1" || true)"
-            [ "${status}" = "200" ]
-          }
-
-          npm_version_exists() {
-            local status
-            status="$(curl -sS -o /dev/null -w "%{http_code}" \
-              -H "User-Agent: ${USER_AGENT}" \
-              "https://registry.npmjs.org/@bigduu%2flotus/$1" || true)"
             [ "${status}" = "200" ]
           }
 
@@ -267,133 +235,142 @@ jobs:
             gh release view "app-v$1" -R bigduu/Bodhi-AI >/dev/null 2>&1
           }
 
-          SKIP_LOTUS=false
-          SKIP_BAMBOO=false
-          SKIP_BODHI=false
+          skip_bamboo=false
+          skip_bodhi=false
 
-          # Included targets must not collide with an already-published
-          # version. Both downstream publish workflows treat "already exists"
-          # as success (for retries), so without this check a collision would
-          # silently keep the stale artifact and report a green train.
           check_collision() {
-            local name="$1" version="$2" exists_fn="$3" skip_var="$4"
-            if [ "${version}" = "latest" ]; then
-              return 0
-            fi
+            local name="$1"
+            local version="$2"
+            local exists_fn="$3"
+            local skip_var="$4"
             if "${exists_fn}" "${version}"; then
               if [ "${RESUME}" = "true" ]; then
-                echo "${name}@${version} already published; resume=true -> skipping this leg."
-                eval "${skip_var}=true"
+                echo "${name}@${version} already exists; resume=true skips this leg."
+                printf -v "${skip_var}" '%s' true
               else
-                echo "::error::${name}@${version} is already published. An ad-hoc release may have consumed this number; pick an unused version, or pass resume=true to resume a partial train at these exact versions."
+                echo "::error::${name}@${version} already exists. Choose an unused version or resume this exact partial train."
                 exit 1
               fi
             fi
           }
 
-          if [ "${INCLUDE_LOTUS}" = "true" ]; then
-            check_collision "@bigduu/lotus" "${LOTUS_VERSION}" npm_version_exists SKIP_LOTUS
-          fi
-          if [ "${INCLUDE_BAMBOO}" = "true" ]; then
-            check_collision "bamboo-agent" "${BAMBOO_VERSION}" crates_version_exists SKIP_BAMBOO
-          fi
-          if [ "${INCLUDE_BODHI}" = "true" ]; then
-            check_collision "Bodhi app release" "${BODHI_VERSION}" bodhi_release_exists SKIP_BODHI
-          fi
-
-          # Versions consumed from excluded targets must actually exist —
-          # a partial train must never point a release at a phantom artifact.
           require_exists() {
-            local desc="$1" version="$2" exists_fn="$3"
-            if [ "${version}" = "latest" ]; then
-              return 0
-            fi
+            local name="$1"
+            local version="$2"
+            local exists_fn="$3"
             if ! "${exists_fn}" "${version}"; then
-              echo "::error::${desc}@${version} is not published, but an included target depends on it and its producer is not in targets. Release it first or fix the version."
+              echo "::error::${name}@${version} is required by an included target but is not published."
               exit 1
             fi
           }
 
-          if [ "${INCLUDE_BAMBOO}" = "true" ] && [ "${INCLUDE_LOTUS}" != "true" ]; then
-            require_exists "@bigduu/lotus" "${LOTUS_VERSION}" npm_version_exists
+          if [ "${INCLUDE_BAMBOO}" = "true" ]; then
+            check_collision bamboo-agent "${BAMBOO_VERSION}" crates_version_exists skip_bamboo
           fi
           if [ "${INCLUDE_BODHI}" = "true" ]; then
-            if [ "${INCLUDE_LOTUS}" != "true" ]; then
-              require_exists "@bigduu/lotus" "${LOTUS_VERSION}" npm_version_exists
-            fi
+            check_collision "Bodhi app release" "${BODHI_VERSION}" bodhi_release_exists skip_bodhi
             if [ "${INCLUDE_BAMBOO}" != "true" ]; then
-              require_exists "bamboo-agent" "${BAMBOO_VERSION}" crates_version_exists
+              require_exists bamboo-agent "${BAMBOO_VERSION}" crates_version_exists
             fi
           fi
 
           {
-            echo "skip_lotus=${SKIP_LOTUS}"
-            echo "skip_bamboo=${SKIP_BAMBOO}"
-            echo "skip_bodhi=${SKIP_BODHI}"
+            echo "skip_bamboo=${skip_bamboo}"
+            echo "skip_bodhi=${skip_bodhi}"
           } >> "${GITHUB_OUTPUT}"
+          echo "Downstream preflight passed (skip: bamboo=${skip_bamboo} bodhi=${skip_bodhi})."
 
-          echo "Pre-flight passed (skip: lotus=${SKIP_LOTUS} bamboo=${SKIP_BAMBOO} bodhi=${SKIP_BODHI})"
-
-      - name: Run Lotus -> Bamboo -> Bodhi
+      - name: Run Bamboo then Bodhi
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.RELEASE_ORCHESTRATOR_TOKEN }}
-          INCLUDE_LOTUS: ${{ steps.resolve.outputs.include_lotus }}
           INCLUDE_BAMBOO: ${{ steps.resolve.outputs.include_bamboo }}
           INCLUDE_BODHI: ${{ steps.resolve.outputs.include_bodhi }}
-          SKIP_LOTUS: ${{ steps.preflight.outputs.skip_lotus }}
           SKIP_BAMBOO: ${{ steps.preflight.outputs.skip_bamboo }}
           SKIP_BODHI: ${{ steps.preflight.outputs.skip_bodhi }}
+          BAMBOO_REPOSITORY: ${{ steps.resolve.outputs.bamboo_repository }}
+          BAMBOO_WORKFLOW: ${{ steps.resolve.outputs.bamboo_workflow }}
           BAMBOO_REF: ${{ steps.resolve.outputs.bamboo_ref }}
-          LOTUS_REF: ${{ steps.resolve.outputs.lotus_ref }}
+          BAMBOO_REVISION: ${{ steps.resolve.outputs.bamboo_revision }}
+          BODHI_REPOSITORY: ${{ steps.resolve.outputs.bodhi_repository }}
+          BODHI_WORKFLOW: ${{ steps.resolve.outputs.bodhi_workflow }}
           BODHI_REF: ${{ steps.resolve.outputs.bodhi_ref }}
+          BODHI_REVISION: ${{ steps.resolve.outputs.bodhi_revision }}
           BAMBOO_VERSION: ${{ steps.resolve.outputs.bamboo_version }}
-          LOTUS_VERSION: ${{ steps.resolve.outputs.lotus_version }}
           BODHI_VERSION: ${{ steps.resolve.outputs.bodhi_version }}
-          LOTUS_SKIP_TESTS: ${{ steps.resolve.outputs.lotus_skip_tests }}
+          FRONTEND_PACKAGE: ${{ steps.resolve.outputs.frontend_package }}
+          FRONTEND_VERSION: ${{ steps.resolve.outputs.frontend_version }}
         run: |
           set -euo pipefail
 
+          assert_remote_ref() {
+            local repository="$1"
+            local ref="$2"
+            local revision="$3"
+            local remote
+            remote="$(git ls-remote --exit-code \
+              "https://github.com/${repository}.git" \
+              "refs/heads/${ref}" | awk 'NR == 1 { print $1 }')"
+            if [ "${remote}" != "${revision}" ]; then
+              echo "::error::${repository}@${ref} moved from accepted revision ${revision} to ${remote:-missing} before dispatch."
+              exit 1
+            fi
+          }
+
           dispatch_and_wait() {
-            local repo="$1"
+            local repository="$1"
             local workflow="$2"
             local ref="$3"
-            shift 3
+            local revision="$4"
+            shift 4
 
+            assert_remote_ref "${repository}" "${ref}" "${revision}"
             local start_epoch
             start_epoch="$(date -u +%s)"
 
-            echo "Dispatching ${workflow} on ${repo}@${ref}"
-            local cmd=(gh workflow run "${workflow}" -R "${repo}" --ref "${ref}")
+            echo "Dispatching ${repository}:${workflow} at accepted ${ref}=${revision}"
+            local command=(gh workflow run "${workflow}" -R "${repository}" --ref "${ref}")
             for input in "$@"; do
-              cmd+=(-f "${input}")
+              command+=(-f "${input}")
             done
-            "${cmd[@]}"
+            "${command[@]}"
 
             local run_id=""
+            local recent_runs=""
+            local wrong_head=""
             for _ in $(seq 1 90); do
-              run_id="$(gh run list \
-                -R "${repo}" \
+              recent_runs="$(gh run list \
+                -R "${repository}" \
                 --workflow "${workflow}" \
                 --event workflow_dispatch \
                 --branch "${ref}" \
                 --limit 20 \
-                --json databaseId,createdAt \
-                --jq "[.[] | select((.createdAt | fromdateiso8601) >= ${start_epoch})] | first | .databaseId // empty")"
-
+                --json databaseId,createdAt,headSha)"
+              run_id="$(printf '%s' "${recent_runs}" | jq -r \
+                --arg revision "${revision}" \
+                --argjson start "${start_epoch}" \
+                '[.[] | select((.createdAt | fromdateiso8601) >= $start and .headSha == $revision)] | first | .databaseId // empty')"
               if [ -n "${run_id}" ]; then
                 break
+              fi
+              wrong_head="$(printf '%s' "${recent_runs}" | jq -r \
+                --arg revision "${revision}" \
+                --argjson start "${start_epoch}" \
+                '[.[] | select((.createdAt | fromdateiso8601) >= $start and .headSha != $revision)] | first | .headSha // empty')"
+              if [ -n "${wrong_head}" ]; then
+                echo "::error::Dispatched ${repository}:${workflow} resolved to unexpected head ${wrong_head}, not ${revision}."
+                exit 1
               fi
               sleep 5
             done
 
             if [ -z "${run_id}" ]; then
-              echo "Unable to find workflow run for ${repo}:${workflow}"
+              echo "::error::Unable to find the exact dispatched run for ${repository}:${workflow}@${revision}."
               exit 1
             fi
-
-            echo "Watching run ${run_id} for ${repo}:${workflow}"
-            gh run watch "${run_id}" -R "${repo}" --interval 20 --exit-status
-            echo "Completed ${repo}:${workflow}"
+            test "$(gh run view "${run_id}" -R "${repository}" --json headSha --jq .headSha)" = "${revision}"
+            echo "Watching exact run ${run_id} for ${repository}:${workflow}@${revision}"
+            gh run watch "${run_id}" -R "${repository}" --interval 20 --exit-status
           }
 
           wait_for_crates_version() {
@@ -401,179 +378,137 @@ jobs:
             local version="$2"
             local max_attempts=30
             local attempt=1
-            local url
-            local http_status
+            local url="https://crates.io/api/v1/crates/${crate_name}/${version}"
+            local status
 
-            if [ "${version}" = "latest" ]; then
-              return 0
-            fi
-
-            url="https://crates.io/api/v1/crates/${crate_name}/${version}"
-            echo "Validating crates.io availability: ${crate_name}@${version}"
+            echo "Waiting for ${crate_name}@${version} on crates.io."
             while [ "${attempt}" -le "${max_attempts}" ]; do
-              http_status="$(curl -sS -o /dev/null -w "%{http_code}" \
-                -H "User-Agent: zenith-release-train/1.0 (+https://github.com/bigduu/Zenith)" \
+              status="$(curl -sS -o /dev/null -w "%{http_code}" \
+                -H "User-Agent: zenith-release-train/2.0 (+https://github.com/bigduu/Zenith)" \
                 "${url}" || true)"
-              if [ "${http_status}" = "200" ]; then
-                echo "Found ${crate_name}@${version} on crates.io"
+              if [ "${status}" = "200" ]; then
+                echo "Found ${crate_name}@${version} on crates.io."
                 return 0
               fi
-              echo "Attempt ${attempt}/${max_attempts}: ${crate_name}@${version} not visible on crates.io yet (status=${http_status}); retrying in 10s..."
+              echo "Attempt ${attempt}/${max_attempts}: status=${status}; retrying in 10 seconds."
               attempt=$((attempt + 1))
               sleep 10
             done
-
-            echo "Unable to find ${crate_name}@${version} on crates.io."
-            echo "Bamboo publish workflow publishes the requested workflow input version."
-            echo "Set release_version/bamboo_version to an unused semantic version and retry."
+            echo "::error::Unable to find ${crate_name}@${version} on crates.io."
             exit 1
           }
-
-          wait_for_npm_version() {
-            local package_path_escaped="$1"
-            local version="$2"
-            local max_attempts=30
-            local attempt=1
-            local url
-            local http_status
-
-            if [ "${version}" = "latest" ]; then
-              return 0
-            fi
-
-            url="https://registry.npmjs.org/${package_path_escaped}/${version}"
-            echo "Validating npm availability: ${package_path_escaped/@/%40}@${version}"
-            while [ "${attempt}" -le "${max_attempts}" ]; do
-              http_status="$(curl -sS -o /dev/null -w "%{http_code}" \
-                -H "User-Agent: zenith-release-train/1.0 (+https://github.com/bigduu/Zenith)" \
-                "${url}" || true)"
-              if [ "${http_status}" = "200" ]; then
-                echo "Found ${package_path_escaped/@/%40}@${version} on npm"
-                return 0
-              fi
-              echo "Attempt ${attempt}/${max_attempts}: ${package_path_escaped/@/%40}@${version} not visible on npm yet (status=${http_status}); retrying in 10s..."
-              attempt=$((attempt + 1))
-              sleep 10
-            done
-
-            echo "Unable to find ${package_path_escaped/@/%40}@${version} on npm."
-            echo "Lotus publish workflow publishes the requested workflow input version."
-            echo "Set release_version/lotus_version to an unused semantic version and retry."
-            exit 1
-          }
-
-          # Lotus goes first so Bamboo can embed the exact same-day frontend
-          # (publish-crate.yml installs @bigduu/lotus@<lotus_version> from npm).
-          if [ "${INCLUDE_LOTUS}" = "true" ]; then
-            if [ "${SKIP_LOTUS}" = "true" ]; then
-              echo "Skipping Lotus leg (resume: @bigduu/lotus@${LOTUS_VERSION} is already on npm)."
-            else
-              dispatch_and_wait "bigduu/Lotus" "publish-npm.yml" "${LOTUS_REF}" "version=${LOTUS_VERSION}" "skip_tests=${LOTUS_SKIP_TESTS}"
-              wait_for_npm_version "@bigduu%2flotus" "${LOTUS_VERSION}"
-            fi
-          fi
 
           if [ "${INCLUDE_BAMBOO}" = "true" ]; then
             if [ "${SKIP_BAMBOO}" = "true" ]; then
-              echo "Skipping Bamboo leg (resume: bamboo-agent@${BAMBOO_VERSION} is already on crates.io)."
+              echo "Skipping Bamboo leg because this exact version already exists and resume=true."
             else
-              dispatch_and_wait "bigduu/Bamboo-agent" "publish-crate.yml" "${BAMBOO_REF}" "version=${BAMBOO_VERSION}" "lotus_version=${LOTUS_VERSION}"
-              wait_for_crates_version "bamboo-agent" "${BAMBOO_VERSION}"
+              dispatch_and_wait \
+                "${BAMBOO_REPOSITORY}" \
+                "${BAMBOO_WORKFLOW}" \
+                "${BAMBOO_REF}" \
+                "${BAMBOO_REVISION}" \
+                "version=${BAMBOO_VERSION}" \
+                "frontend_package=${FRONTEND_PACKAGE}" \
+                "lotus_version=${FRONTEND_VERSION}"
+              wait_for_crates_version bamboo-agent "${BAMBOO_VERSION}"
             fi
           fi
 
           if [ "${INCLUDE_BODHI}" = "true" ]; then
             if [ "${SKIP_BODHI}" = "true" ]; then
-              echo "Skipping Bodhi leg (resume: release app-v${BODHI_VERSION} already exists)."
+              echo "Skipping Bodhi leg because this exact release already exists and resume=true."
             else
-              dispatch_and_wait "bigduu/Bodhi-AI" "release.yml" "${BODHI_REF}" "bodhi_version=${BODHI_VERSION}" "bamboo_version=${BAMBOO_VERSION}" "lotus_version=${LOTUS_VERSION}"
+              dispatch_and_wait \
+                "${BODHI_REPOSITORY}" \
+                "${BODHI_WORKFLOW}" \
+                "${BODHI_REF}" \
+                "${BODHI_REVISION}" \
+                "bodhi_version=${BODHI_VERSION}" \
+                "bamboo_version=${BAMBOO_VERSION}" \
+                "bamboo_ref=${BAMBOO_REVISION}" \
+                "frontend_package=${FRONTEND_PACKAGE}" \
+                "lotus_version=${FRONTEND_VERSION}"
             fi
           fi
 
-          echo "Release train completed successfully."
+          echo "Bamboo -> Bodhi release train completed successfully."
 
   record:
-    name: Record published versions
+    name: Record published downstream versions
     needs: orchestrate
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Checkout repository
+      - name: Checkout current Zenith main
         uses: actions/checkout@v6
         with:
           ref: main
           fetch-depth: 0
           token: ${{ github.token }}
 
-      - name: Write published versions back to Zenith config
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Record only Bamboo and Bodhi versions
+        shell: bash
         env:
-          INCLUDE_LOTUS: ${{ needs.orchestrate.outputs.include_lotus }}
           INCLUDE_BAMBOO: ${{ needs.orchestrate.outputs.include_bamboo }}
           INCLUDE_BODHI: ${{ needs.orchestrate.outputs.include_bodhi }}
-          LOTUS_VERSION: ${{ needs.orchestrate.outputs.lotus_version }}
           BAMBOO_VERSION: ${{ needs.orchestrate.outputs.bamboo_version }}
           BODHI_VERSION: ${{ needs.orchestrate.outputs.bodhi_version }}
         run: |
           set -euo pipefail
-          CONFIG_FILE=".github/release-train.config.json"
+          config_file=".github/release-train.config.json"
 
-          # Ad-hoc and partial trains would otherwise leave the config behind
-          # reality: the next nightly would recompute an already-consumed
-          # version and the collision pre-flight would stop it. Recording what
-          # was actually published keeps the counter monotonic.
           jq \
-            --arg lotus "${LOTUS_VERSION}" \
             --arg bamboo "${BAMBOO_VERSION}" \
             --arg bodhi "${BODHI_VERSION}" \
-            --argjson inc_lotus "${INCLUDE_LOTUS}" \
-            --argjson inc_bamboo "${INCLUDE_BAMBOO}" \
-            --argjson inc_bodhi "${INCLUDE_BODHI}" \
-            '(if $inc_lotus and $lotus != "latest" then .versions.lotus = $lotus else . end)
-             | (if $inc_bamboo and $bamboo != "latest" then .versions.bamboo = $bamboo else . end)
-             | (if $inc_bodhi and $bodhi != "latest" then .versions.bodhi = $bodhi else . end)' \
-            "${CONFIG_FILE}" > "${CONFIG_FILE}.tmp"
-          mv "${CONFIG_FILE}.tmp" "${CONFIG_FILE}"
+            --argjson include_bamboo "${INCLUDE_BAMBOO}" \
+            --argjson include_bodhi "${INCLUDE_BODHI}" \
+            '(if $include_bamboo then .versions.bamboo = $bamboo else . end)
+             | (if $include_bodhi then .versions.bodhi = $bodhi else . end)' \
+            "${config_file}" > "${config_file}.tmp"
+          mv "${config_file}.tmp" "${config_file}"
 
-          # Advance the unified release counter past every version this train
-          # published so the nightly bump never reuses one of them.
-          CANDIDATES="$(jq -r '.versions.release' "${CONFIG_FILE}")"
-          for entry in "${INCLUDE_LOTUS}:${LOTUS_VERSION}" "${INCLUDE_BAMBOO}:${BAMBOO_VERSION}" "${INCLUDE_BODHI}:${BODHI_VERSION}"; do
+          candidates="$(jq -r '.versions.release' "${config_file}")"
+          for entry in \
+            "${INCLUDE_BAMBOO}:${BAMBOO_VERSION}" \
+            "${INCLUDE_BODHI}:${BODHI_VERSION}"; do
             included="${entry%%:*}"
             version="${entry#*:}"
-            if [ "${included}" = "true" ] && [ "${version}" != "latest" ]; then
-              CANDIDATES="${CANDIDATES}
+            if [ "${included}" = "true" ]; then
+              candidates="${candidates}
           ${version}"
             fi
           done
-          NEW_RELEASE="$(printf '%s\n' "${CANDIDATES}" | tr -d ' ' | sort -V | tail -1)"
-          jq --arg release "${NEW_RELEASE}" '.versions.release = $release' "${CONFIG_FILE}" > "${CONFIG_FILE}.tmp"
-          mv "${CONFIG_FILE}.tmp" "${CONFIG_FILE}"
+          new_release="$(printf '%s\n' "${candidates}" | tr -d ' ' | sort -V | tail -1)"
+          jq --arg release "${new_release}" '.versions.release = $release' \
+            "${config_file}" > "${config_file}.tmp"
+          mv "${config_file}.tmp" "${config_file}"
 
-          echo "Updated ${CONFIG_FILE}:"
-          cat "${CONFIG_FILE}"
+          node scripts/release-train-policy.cjs validate --config "${config_file}"
+          git diff --check
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          git add "${CONFIG_FILE}"
+          git add "${config_file}"
           if git diff --cached --quiet; then
-            echo "Config already records these versions; nothing to write back."
+            echo "Config already records these downstream versions."
             exit 0
           fi
-
           git commit -m "chore: record published versions (release train run ${{ github.run_id }})"
 
-          # main receives concurrent automation commits (nightly bump, pointer
-          # bumps) — rebase and retry instead of failing on the first reject.
           for attempt in 1 2 3 4 5; do
             if git push origin HEAD:main; then
               exit 0
             fi
-            echo "Push rejected (attempt ${attempt}/5); rebasing onto latest main and retrying..."
+            echo "Push rejected (attempt ${attempt}/5); rebasing onto current main."
             git pull --rebase origin main
             sleep 5
           done
-
-          echo "Failed to push the version write-back after 5 attempts."
+          echo "::error::Failed to record versions after five push attempts."
           exit 1

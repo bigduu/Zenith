@@ -1,0 +1,185 @@
+name: Release Policy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/release-train.config.json"
+      - ".github/workflows/release-policy.yml"
+      - ".github/workflows/release-train.yml"
+      - ".github/workflows/nightly-release.yml"
+      - "scripts/release-train-policy.cjs"
+      - "scripts/release-train-policy.test.cjs"
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/release-train.config.json"
+      - ".github/workflows/release-policy.yml"
+      - ".github/workflows/release-train.yml"
+      - ".github/workflows/nightly-release.yml"
+      - "scripts/release-train-policy.cjs"
+      - "scripts/release-train-policy.test.cjs"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Release Policy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact tested source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Run focused policy tests
+        run: node --test scripts/release-train-policy.test.cjs
+
+      - name: Validate workflow syntax
+        shell: bash
+        env:
+          ACTIONLINT_VERSION: "1.7.12"
+          ACTIONLINT_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+        run: |
+          set -euo pipefail
+          archive="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          download="${RUNNER_TEMP}/${archive}"
+          curl --fail --silent --show-error --location \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${archive}" \
+            --output "${download}"
+          echo "${ACTIONLINT_SHA256}  ${download}" | sha256sum --check -
+          tar --extract --gzip --file "${download}" --directory "${RUNNER_TEMP}" actionlint
+          "${RUNNER_TEMP}/actionlint" -color \
+            .github/workflows/release-policy.yml \
+            .github/workflows/release-train.yml \
+            .github/workflows/nightly-release.yml \
+            .github/workflows/submodule-guard.yml
+
+      - name: Verify accepted root and downstream source revisions
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          config="${GITHUB_WORKSPACE}/.github/release-train.config.json"
+          resolved="${RUNNER_TEMP}/release-policy.json"
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
+
+          node scripts/release-train-policy.cjs resolve \
+            --config "${config}" \
+            --targets bamboo,bodhi \
+            --frontend-package from_manifest \
+            --release-version from_manifest \
+            --bamboo-version from_manifest \
+            --bodhi-version from_manifest \
+            --resume false > "${resolved}"
+
+          verify_root_pointer() {
+            local label="$1"
+            local revision="$2"
+            local root_path="$3"
+            local row mode pointer
+            row="$(git ls-tree HEAD -- "${root_path}")"
+            mode="$(printf '%s\n' "${row}" | awk '{print $1}')"
+            pointer="$(printf '%s\n' "${row}" | awk '{print $3}')"
+            if [ "${mode}" != "160000" ] || [ "${pointer}" != "${revision}" ]; then
+              echo "::error::${label} root pointer ${pointer:-missing} does not match ${revision}."
+              exit 1
+            fi
+          }
+
+          verify_dispatch_source() {
+            local label="$1"
+            local repository="$2"
+            local ref="$3"
+            local revision="$4"
+            local root_path="$5"
+            local remote
+            verify_root_pointer "${label}" "${revision}" "${root_path}"
+            remote="$(git ls-remote --exit-code \
+              "https://github.com/${repository}.git" \
+              "refs/heads/${ref}" | awk 'NR == 1 { print $1 }')"
+            if [ "${remote}" != "${revision}" ]; then
+              echo "::error::${repository}@${ref} is ${remote:-missing}, expected ${revision}."
+              exit 1
+            fi
+          }
+
+          verify_dispatch_source \
+            Bamboo \
+            "$(jq -r .bamboo_repository "${resolved}")" \
+            "$(jq -r .bamboo_ref "${resolved}")" \
+            "$(jq -r .bamboo_revision "${resolved}")" \
+            "$(jq -r .bamboo_root_path "${resolved}")"
+          verify_dispatch_source \
+            Bodhi \
+            "$(jq -r .bodhi_repository "${resolved}")" \
+            "$(jq -r .bodhi_ref "${resolved}")" \
+            "$(jq -r .bodhi_revision "${resolved}")" \
+            "$(jq -r .bodhi_root_path "${resolved}")"
+          verify_root_pointer \
+            "Lotus Next artifact source" \
+            "$(jq -r .lotus_next_revision "${resolved}")" \
+            "$(jq -r .lotus_next_root_path "${resolved}")"
+
+      - name: Round-trip both committed npm artifacts
+        shell: bash
+        env:
+          NPM_CONFIG_AUDIT: "false"
+          NPM_CONFIG_FUND: "false"
+          NPM_CONFIG_PROGRESS: "false"
+          NPM_CONFIG_PREFER_OFFLINE: "false"
+          NPM_CONFIG_CACHE: ${{ runner.temp }}/zenith-release-policy-npm-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          config="${GITHUB_WORKSPACE}/.github/release-train.config.json"
+
+          verify_registry_package() {
+            local package_name="$1"
+            local package_version="$2"
+            local slug="$3"
+            local artifact_dir archive
+            artifact_dir="$(mktemp -d "${RUNNER_TEMP}/${slug}.XXXXXX")"
+            cd "${artifact_dir}"
+
+            npm pack "${package_name}@${package_version}" \
+              --ignore-scripts \
+              --prefer-online \
+              --json > pack.json
+            test "$(jq length pack.json)" = "1"
+            archive="$(jq -r '.[0].filename' pack.json)"
+            test -n "${archive}"
+            test "$(basename "${archive}")" = "${archive}"
+
+            node "${GITHUB_WORKSPACE}/scripts/release-train-policy.cjs" verify-tarball \
+              --config "${config}" \
+              --frontend-package "${package_name}" \
+              --tarball "${archive}"
+            mkdir unpacked
+            tar --extract --gzip --file "${archive}" --directory unpacked --no-same-owner
+            test -d unpacked/package
+            test "$(find unpacked -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" = "1"
+            node "${GITHUB_WORKSPACE}/scripts/release-train-policy.cjs" verify-package \
+              --config "${config}" \
+              --frontend-package "${package_name}" \
+              --package-dir unpacked/package
+          }
+
+          verify_registry_package \
+            "$(jq -r .frontend.lotusNext.packageName "${config}")" \
+            "$(jq -r .frontend.lotusNext.packageVersion "${config}")" \
+            lotus-next
+          verify_registry_package \
+            "$(jq -r .frontend.legacyRollback.packageName "${config}")" \
+            "$(jq -r .frontend.legacyRollback.packageVersion "${config}")" \
+            legacy-lotus
