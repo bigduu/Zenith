@@ -9,8 +9,8 @@
 ## Submodule Updates
 
 <!--
-Required when .gitmodules or submodule pointers (bamboo/bodhi/lotus) change.
-State exactly what pointer changed and why.
+Required when `.gitmodules` or any submodule path changes.
+State exactly what pointer changed or was removed and why.
 Example:
-- lotus: 8e84908 -> 9cbd242 (web CI split + npm publish workflow)
+- `<submodule>`: `<old SHA>` -> `<new SHA or removed>` (`<reason>`)
 -->

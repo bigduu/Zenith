@@ -4,6 +4,8 @@
 - **Date:** 2026-06-29
 - **Scope:** `bamboo` (backend deploy engine + config + HTTP API + agent tools) and `lotus` (the antd production frontend, NOT lotus-next)
 
+> **Repository-layout note (2026-09-15):** This draft preserves its original legacy Lotus scope and terminology. Zenith no longer pins or checks out that source as a submodule; every `lotus/...` reference below refers to the external source used when this RFC was written, not to a directory in the current Zenith checkout.
+
 ---
 
 ## 0. What changed from v1 (read this first)

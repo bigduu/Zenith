@@ -26,7 +26,7 @@ services, shared memory, computer use, IM integration, and docs in one recursive
 | Capability | What it means |
 |---|---|
 | **A map of the whole system** | One repo shows how product, UI, runtime, backend, and docs divide the work and fit together |
-| **Nine submodules, one clone** | Pull the full product stack and companion services in a single recursive clone |
+| **Eight submodules, one clone** | Pull the full product stack and companion services in a single recursive clone |
 | **Coordinated release train** | One verified Lotus Next artifact feeds Bamboo → Bodhi in dependency order, all driven by one fail-closed config |
 | **Daily nightly versioning** | Calendar-versioned (`YYYY.M.N`) auto-bump and nightly release |
 | **Submodule guard** | CI validates submodule pointers on pushes to and pull requests targeting `main` |
@@ -36,14 +36,13 @@ services, shared memory, computer use, IM integration, and docs in one recursive
 
 ## Architecture
 
-Zenith holds almost no business logic itself. It is a thin-shell monorepo: it pins nine Git submodules, owns the root-level documentation, and orchestrates releases across repos. The real features live inside the submodules.
+Zenith holds almost no business logic itself. It is a thin-shell monorepo: it pins eight Git submodules, owns the root-level documentation, and orchestrates releases across repos. The real features live inside the submodules.
 
 ```mermaid
 graph TD
   Z["Zenith (this repo)<br/>submodule pointers + release train"]
 
   Z --> B["Bodhi AI<br/>desktop product surface (Tauri shell)"]
-  Z --> L["Lotus<br/>fixed legacy rollback"]
   Z --> R["Bamboo<br/>local-first Rust agent runtime"]
   Z --> S["Bodhi Server<br/>optional hosted service"]
   Z --> P["Pavilion<br/>website & docs"]
@@ -52,22 +51,20 @@ graph TD
   Z --> LN["Lotus Next<br/>canonical responsive UI"]
   Z --> M["Magpie<br/>IM connector for Bamboo"]
 
-  B -. starts / reuses / health-checks .-> R
+  B -. starts / owns / health-checks .-> R
   R -. packaged builds serve locked frontend .-> LN
   LN -->|HTTP APIs + shared /v2/stream WebSocket| R
-  L -. explicit rollback only .-> R
   R -. optional /proxy/* when configured .-> S
   P -. explains .-> B
 ```
 
-> **Note** —— Bodhi owns the native desktop shell and the Bamboo sidecar lifecycle: it starts or reuses `bamboo serve` and waits for it to become healthy. Packaged builds use the exact Lotus Next npm artifact locked by Bamboo, Bodhi, and the Zenith release policy; legacy Lotus remains only an explicit fixed-version rollback. Lotus Next sends requests over HTTP and receives live events through the shared `/v2/stream` WebSocket. Bodhi Server is optional for local operation and is used, when configured, for accounts/authentication, credential storage, quota/billing, model routing, and provider proxying.
+> **Note** —— Bodhi owns the native desktop shell and the Bamboo sidecar lifecycle: it starts and owns `bamboo serve` and waits for it to become healthy. Packaged builds use the exact Lotus Next npm artifact locked by Bamboo, Bodhi, and the Zenith release policy; legacy Lotus remains only an explicit fixed-version registry rollback and is no longer a Zenith source submodule. Lotus Next sends requests over HTTP and receives live events through the shared `/v2/stream` WebSocket. Bodhi Server is optional for local operation and is used, when configured, for accounts/authentication, credential storage, quota/billing, model routing, and provider proxying.
 
 ### What each module does
 
 | Module | Path | Role | Start here |
 |---|---|---|---|
 | **Bodhi AI** | `bodhi/` | Product surface: Tauri shell, native integration, packaging, and managed Bamboo sidecar lifecycle | [Bodhi AI](https://github.com/bigduu/Bodhi-AI) |
-| **Lotus** | `lotus/` | Frozen legacy React + Vite UI retained only as the fixed rollback package while retirement acceptance remains open | [Lotus](https://github.com/bigduu/Lotus) |
 | **Bamboo** | `bamboo/` | Execution engine and production Lotus Next host: local-first Rust runtime with HTTP, WebSocket, and legacy SSE APIs | [Bamboo Agent](https://github.com/bigduu/Bamboo-agent) |
 | **Bodhi Server** | `bodhi-server/` | Optional hosted Go service: accounts/auth, API keys, encrypted provider credentials, model routing, billing/quota, provider proxy | [Bodhi Server](https://github.com/bigduu/bodhi-server) |
 | **Pavilion** | `pavilion/` | Website & docs: download page, doc center, public narrative | [Pavilion](https://github.com/bigduu/Pavilion) |
@@ -93,7 +90,7 @@ Zenith's biggest job is getting any person to the right door fast.
 **If you want to build**
 - Desktop product / Tauri shell → `bodhi/`
 - Canonical frontend interaction / React UI → `lotus-next/`
-- Fixed legacy rollback only → `lotus/`
+- Fixed legacy rollback artifact → `@bigduu/lotus` in the release config (no source checkout in Zenith)
 - Agent runtime / Rust backend → `bamboo/`
 - Optional hosted accounts / credentials / routing / billing → `bodhi-server/`
 - Website / docs / public content → `pavilion/`
@@ -117,8 +114,8 @@ Dream snapshot bytes, and the one-tool stdio MCP server. Hosts choose query term
 optional reranking, prompt placement and budgets, and Dream generation and cadence;
 the optional portable Skill teaches this contract but must be explicitly enabled by
 its host. Nova provides computer use over MCP, and Magpie connects IM platforms to
-Bamboo. Legacy Lotus stays frozen as a bounded rollback until the remaining migration
-acceptance and retirement gates are complete.
+Bamboo. Legacy Lotus source is no longer a Zenith submodule; only its fixed registry
+artifact remains as a bounded rollback until the separate retirement gates are complete.
 
 ### Coordinated release train
 
@@ -168,20 +165,20 @@ git submodule update --init --recursive
 ### Run the desktop app
 
 ```bash
-cd lotus
-npm install
+cd lotus-next
+npm ci
 cd ../bodhi
-npm install
+npm ci
 npm run tauri:dev
 ```
 
-> `tauri:dev` builds `../bamboo` as the managed debug sidecar, starts `../lotus` with Vite HMR, and launches Bodhi. Bodhi starts or reuses Bamboo and waits for its health endpoint, while the development UI remains on Vite; packaged builds load the Lotus frontend served by Bamboo. See `bodhi/package.json` and the [Bodhi README](https://github.com/bigduu/Bodhi-AI).
+> `tauri:dev` builds `../bamboo` as the managed debug sidecar, starts `../lotus-next` with Vite HMR, and launches Bodhi. Bodhi owns the Bamboo process and waits for its startup and health signals, while the development UI remains on Vite; packaged builds load the verified Lotus Next frontend served by Bamboo. See `bodhi/package.json` and the [Bodhi README](https://github.com/bigduu/Bodhi-AI).
 
 ### Run the UI on its own
 
 ```bash
-cd lotus
-npm install
+cd lotus-next
+npm ci
 npm run dev
 ```
 
@@ -206,7 +203,7 @@ git submodule status
 git submodule update --remote --recursive
 
 # after submodule work, bump pointers from root
-git add .gitmodules bamboo bodhi bodhi-server jiandu lotus lotus-next magpie nova pavilion
+git add .gitmodules bamboo bodhi bodhi-server jiandu lotus-next magpie nova pavilion
 git commit -m "chore: bump submodule pointers"
 git push
 ```
@@ -220,7 +217,6 @@ git push
 | Module | Repository |
 |---|---|
 | Bodhi AI — desktop product surface | https://github.com/bigduu/Bodhi-AI |
-| Lotus — frozen fixed-version legacy rollback | https://github.com/bigduu/Lotus |
 | Bamboo — Rust agent runtime | https://github.com/bigduu/Bamboo-agent |
 | Bodhi Server — optional hosted accounts, credentials, routing, billing/quota, and provider proxy | https://github.com/bigduu/bodhi-server |
 | Pavilion — website & docs | https://github.com/bigduu/Pavilion |

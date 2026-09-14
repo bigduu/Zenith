@@ -1,10 +1,9 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Zenith is a thin monorepo wrapper around nine Git submodules:
+Zenith is a thin monorepo wrapper around eight Git submodules:
 - `bamboo/`: Rust AI-agent backend framework (`src/`, `tests/`, `docs/`).
-- `lotus/`: React + Vite web app (`src/`, `e2e/`, `public/`).
-- `bodhi/`: Tauri desktop shell (`src-tauri/`) that coordinates with `lotus`.
+- `bodhi/`: Tauri desktop shell (`src-tauri/`) that coordinates with `lotus-next`.
 - `pavilion/`: React + Vite official website and docs (`src/`, `public/`).
 - `bodhi-server/`: Go backend API server (`api/`, `internal/`, `cmd/`).
 - `nova/`: Rust computer-use MCP server for native desktop interaction.
@@ -61,22 +60,22 @@ From repository root:
 Common per-module commands:
 - `cd bamboo && cargo build && cargo test` - build and test backend.
 - `cd bamboo && cargo fmt --check && cargo clippy` - Rust formatting/lint checks.
-- `cd lotus && npm run dev` - run web app locally.
-- `cd lotus && npm run type-check && npm run test:run` - TS + Vitest validation.
-- `cd lotus && npm run test:e2e` - Playwright browser tests.
+- `cd lotus-next && npm run dev` - run the canonical web app locally.
+- `cd lotus-next && npm run type-check && npm run test:run` - TS + Vitest validation.
+- `cd lotus-next && npm run test:e2e` - Playwright browser tests.
 - `cd bodhi && npm run tauri:dev` - run desktop app in development mode.
 - `cd pavilion && npm run dev` - run website/docs locally.
 
 ## Coding Style & Naming Conventions
 - Rust (`bamboo`): enforce `cargo fmt` and `cargo clippy`; use `snake_case` for functions/modules, `PascalCase` for types.
-- TypeScript/React (`lotus`, `bodhi`): run `npm run format` (Prettier); use `PascalCase` for components/classes, `camelCase` for functions/variables, and `use*` for hooks.
+- TypeScript/React (`lotus-next`, `bodhi`): follow each module's formatter/linter; use `PascalCase` for components/classes, `camelCase` for functions/variables, and `use*` for hooks.
 - Keep tests near code when possible (`*.test.ts`, `*.test.tsx`) and use explicit, behavior-focused names.
 
 ## Testing Guidelines
 Run the smallest meaningful suite while iterating, then run full affected suites before opening a PR. Minimum expectation:
 - Backend changes: `cargo test` in `bamboo`.
-- Frontend changes: `npm run test:run` in `lotus`.
-- UI/workflow changes: include `lotus/e2e` coverage when behavior crosses pages or services.
+- Frontend changes: `npm run test:run` in `lotus-next`.
+- UI/workflow changes: include `lotus-next/e2e` coverage when behavior crosses pages or services.
 
 ## Commit & Pull Request Guidelines
 Follow Conventional Commit style already used in history (for example, `chore: bump bamboo and bodhi submodule pointers`, `docs: add submodule usage guide`).
@@ -148,7 +147,7 @@ Backlog → Triaged → Ready → In Progress → In Review → Done
 ```
 
 Examples:
-- `lotus/feat/142-conversation-export`
+- `lotus-next/feat/142-conversation-export`
 - `bamboo/fix/88-streaming-timeout`
 - `bodhi/refactor/55-window-mgmt`
 
@@ -211,7 +210,7 @@ See `.github/labels.tsv` for the full label taxonomy. Key labels:
 [module] type: short description
 ```
 
-Examples: `[lotus] feat: add conversation export`, `[bamboo] fix: streaming timeout`
+Examples: `[lotus-next] feat: add conversation export`, `[bamboo] fix: streaming timeout`
 
 ## Release Playbook
 Use this checklist for every release train. The only normal release entrypoint is `Zenith -> release-train.yml`.
