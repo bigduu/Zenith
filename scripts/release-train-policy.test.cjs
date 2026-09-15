@@ -34,30 +34,34 @@ const clone = (value) => JSON.parse(JSON.stringify(value))
 const digest = (algorithm, value, encoding) =>
   createHash(algorithm).update(value).digest(encoding)
 
-test("accepts the committed release authority", () => {
+test("accepts the committed release authority and fixed identities", () => {
   const config = readConfig(configPath)
   assert.equal(config.schemaVersion, 2)
   assert.equal(config.sources.bamboo.ref, "dev")
   assert.equal(
     config.sources.bamboo.revision,
-    "a8b5385dc4318ab02ba35c0692bdf48914275f6c",
+    "39d40c2e4d014ac3fd0b5fe2164f59412ca706cd",
   )
+  assert.equal(config.sources.bodhi.ref, "main")
   assert.equal(
     config.sources.bodhi.revision,
-    "d6b3353577ece7587ca3c71aafada076032f2478",
+    "46fad2074adc2ce465553fd9a207731ce55b4fde",
   )
-  assert.deepEqual(config.versions, {
-    release: "2026.9.14",
-    bamboo: "2026.9.12",
-    bodhi: "2026.9.12",
-  })
   assert.equal(config.frontend.defaultPackage, "@bigduu/lotus-next")
-  assert.equal(config.frontend.lotusNext.packageVersion, "2026.9.14")
+  assert.equal(config.frontend.lotusNext.ref, "main")
+  assert.equal(config.frontend.lotusNext.packageVersion, "2026.9.16")
   assert.equal(
     config.frontend.lotusNext.sourceRevision,
-    "ae17b50574ccd86395cbc226b50c9fb2f0f51e0f",
+    "0495772ecab37402c3915c10a6c945cf286a132b",
   )
   assert.equal(config.frontend.lotusNext.sourceDirty, false)
+  assert.deepEqual(config.frontend.legacyRollback, {
+    packageName: "@bigduu/lotus",
+    packageVersion: "2026.8.28",
+    npmShasum: "33b44396bba7f6ad81ab4c23631ff1f6bd8191e2",
+    npmIntegrity:
+      "sha512-XHsTmskpprHNSr7w+qwBICZvYsqowdgtQ7H5OcWwjXlzl17M7K91eMGQEMN/LLzD+XGnaWuGlVmiawRknJ2yrg==",
+  })
 })
 
 test("defaults to a Bamboo then Bodhi train with the locked Lotus Next artifact", () => {
@@ -65,25 +69,34 @@ test("defaults to a Bamboo then Bodhi train with the locked Lotus Next artifact"
   const resolved = resolvePolicy(config)
   assert.equal(resolved.include_bamboo, "true")
   assert.equal(resolved.include_bodhi, "true")
-  assert.equal(resolved.release_version, "2026.9.14")
-  assert.equal(resolved.bamboo_version, "2026.9.14")
-  assert.equal(resolved.bodhi_version, "2026.9.14")
+  assert.equal(resolved.release_version, config.versions.release)
+  assert.equal(resolved.bamboo_version, config.versions.release)
+  assert.equal(resolved.bodhi_version, config.versions.release)
   assert.equal(resolved.frontend_selection, "lotus-next")
   assert.equal(resolved.frontend_package, "@bigduu/lotus-next")
-  assert.equal(resolved.frontend_version, "2026.9.14")
+  assert.equal(
+    resolved.frontend_version,
+    config.frontend.lotusNext.packageVersion,
+  )
 })
 
 test("preserves partial-train version pinning", () => {
-  const config = readConfig(configPath)
+  const config = clone(readConfig(configPath))
+  config.versions = {
+    release: "2030.1.3",
+    bamboo: "2030.1.1",
+    bodhi: "2030.1.2",
+  }
   const resolved = resolvePolicy(config, { targets: "bodhi" })
   assert.equal(resolved.include_bamboo, "false")
   assert.equal(resolved.include_bodhi, "true")
-  assert.equal(resolved.bamboo_version, "2026.9.12")
-  assert.equal(resolved.bodhi_version, "2026.9.14")
+  assert.equal(resolved.bamboo_version, config.versions.bamboo)
+  assert.equal(resolved.bodhi_version, config.versions.release)
 })
 
 test("resolves only the fixed legacy rollback when explicitly selected", () => {
-  const config = readConfig(configPath)
+  const config = clone(readConfig(configPath))
+  config.versions.bodhi = "2030.1.2"
   const resolved = resolvePolicy(config, {
     targets: "bamboo",
     frontendPackage: "@bigduu/lotus",
@@ -93,7 +106,7 @@ test("resolves only the fixed legacy rollback when explicitly selected", () => {
   assert.equal(resolved.frontend_package, "@bigduu/lotus")
   assert.equal(resolved.frontend_version, "2026.8.28")
   assert.equal(resolved.bamboo_version, "2026.9.15")
-  assert.equal(resolved.bodhi_version, "2026.9.12")
+  assert.equal(resolved.bodhi_version, config.versions.bodhi)
 })
 
 test("rejects malformed or mismatched release authority", () => {
@@ -183,11 +196,15 @@ test("verifies every Lotus Next manifest resource and rejects byte drift", (t) =
   t.after(() => rmSync(directory, { recursive: true, force: true }))
   const packageDirectory = path.join(directory, "package")
   const distDirectory = path.join(packageDirectory, "dist")
+  const config = clone(readConfig(configPath))
   mkdirSync(path.join(distDirectory, "assets"), { recursive: true })
   writeFileSync(
     path.join(packageDirectory, "package.json"),
     JSON.stringify(
-      { name: "@bigduu/lotus-next", version: "2026.9.14" },
+      {
+        name: "@bigduu/lotus-next",
+        version: config.frontend.lotusNext.packageVersion,
+      },
       null,
       2,
     ) + "\n",
@@ -199,7 +216,6 @@ test("verifies every Lotus Next manifest resource and rejects byte drift", (t) =
     resourceRecord(distDirectory, resourcePath),
   )
   const resourcesSha256 = calculateResourcesSha256(resources)
-  const config = clone(readConfig(configPath))
   config.frontend.lotusNext.resourcesSha256 = resourcesSha256
   const manifest = {
     schemaVersion: 1,
