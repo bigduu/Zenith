@@ -40,7 +40,7 @@ test("accepts the committed release authority and fixed identities", () => {
   assert.equal(config.sources.bamboo.ref, "dev")
   assert.equal(
     config.sources.bamboo.revision,
-    "39d40c2e4d014ac3fd0b5fe2164f59412ca706cd",
+    "3ef331e413108dedef6ca676d5b6dbf4c589472f",
   )
   assert.equal(config.sources.bodhi.ref, "main")
   assert.equal(
