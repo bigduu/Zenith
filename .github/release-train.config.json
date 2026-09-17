@@ -5,7 +5,7 @@
       "repository": "bigduu/Bamboo-agent",
       "workflow": "publish-crate.yml",
       "ref": "dev",
-      "revision": "3ef331e413108dedef6ca676d5b6dbf4c589472f",
+      "revision": "284cfd06ddc34b1ef7f9a6839b0692cc872a8123",
       "rootPath": "bamboo"
     },
     "bodhi": {
