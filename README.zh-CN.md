@@ -26,7 +26,7 @@ Zenith 是它的大本营：桌面产品、前端、Rust 运行时、可选托�
 | 能力 | 说明 |
 |---|---|
 | **整套系统的地图** | 一个仓库就能看清产品、UI、runtime、backend、文档如何分工与协作 |
-| **9 个 submodule 一键拉取** | `--recursive` 一次拉取产品栈与配套服务 |
+| **8 个 submodule 一键拉取** | `--recursive` 一次拉取产品栈与配套服务 |
 | **协调发布列车** | 一个已验证的 Lotus Next 制品按依赖顺序供给 Bamboo → Bodhi，由一份 fail-closed 配置统一驱动 |
 | **每日 Nightly 自动版本** | 按 `YYYY.M.N` 日历版本自动递增并触发发布 |
 | **指针守护** | CI 在 push 到 `main` 及目标为 `main` 的 PR 中校验 submodule 指针 |
@@ -36,14 +36,13 @@ Zenith 是它的大本营：桌面产品、前端、Rust 运行时、可选托�
 
 ## 架构地图
 
-Zenith 本身几乎不放业务代码，它是一个“薄壳”monorepo：维护 9 个 Git submodule 的指针、根级说明文档，以及跨仓库的发布编排。真正的功能都活在子模块里。
+Zenith 本身几乎不放业务代码，它是一个“薄壳”monorepo：维护 8 个 Git submodule 的指针、根级说明文档，以及跨仓库的发布编排。真正的功能都活在子模块里。
 
 ```mermaid
 graph TD
   Z["Zenith (this repo)<br/>submodule pointers + release train"]
 
   Z --> B["Bodhi AI<br/>desktop product surface (Tauri shell)"]
-  Z --> L["Lotus<br/>固定 legacy 回滚"]
   Z --> R["Bamboo<br/>local-first Rust agent runtime"]
   Z --> S["Bodhi Server<br/>可选托管服务"]
   Z --> P["Pavilion<br/>website & docs"]
@@ -52,22 +51,20 @@ graph TD
   Z --> LN["Lotus Next<br/>权威响应式 UI"]
   Z --> M["Magpie<br/>IM connector for Bamboo"]
 
-  B -. 启动 / 复用 / 健康检查 .-> R
+  B -. 启动 / 拥有 / 健康检查 .-> R
   R -. 打包构建提供锁定前端 .-> LN
   LN -->|HTTP API + 共享 /v2/stream WebSocket| R
-  L -. 仅显式回滚 .-> R
   R -. 配置后可选使用 /proxy/* .-> S
   P -. explains .-> B
 ```
 
-> **重要** —— Bodhi 负责原生桌面壳和 Bamboo sidecar 生命周期：启动或复用 `bamboo serve`，并等待健康检查通过。打包构建默认使用 Bamboo、Bodhi 与 Zenith 发布策略共同锁定的同一份 Lotus Next npm 制品；legacy Lotus 只保留一个固定版本的显式回滚入口。Lotus Next 通过 HTTP 发请求，实时事件走共享 `/v2/stream` WebSocket。Bodhi Server 对本地运行不是必需依赖；配置使用时，它提供账号/认证、凭据存储、配额/计费、模型路由与 provider proxy。
+> **重要** —— Bodhi 负责原生桌面壳和 Bamboo sidecar 生命周期：启动并拥有 `bamboo serve` 进程，并等待健康检查通过。打包构建默认使用 Bamboo、Bodhi 与 Zenith 发布策略共同锁定的同一份 Lotus Next npm 制品；legacy Lotus 只保留一个固定版本的 registry 显式回滚入口，不再作为 Zenith 源码 submodule。Lotus Next 通过 HTTP 发请求，实时事件走共享 `/v2/stream` WebSocket。Bodhi Server 对本地运行不是必需依赖；配置使用时，它提供账号/认证、凭据存储、配额/计费、模型路由与 provider proxy。
 
 ### 各模块职责
 
 | 模块 | 路径 | 角色 | 从哪开始 |
 |---|---|---|---|
 | **Bodhi AI** | `bodhi/` | 对外产品门面：Tauri 桌面壳、原生集成、打包发布与受管 Bamboo sidecar 生命周期 | [Bodhi AI](https://github.com/bigduu/Bodhi-AI) |
-| **Lotus** | `lotus/` | 已冻结的 legacy React + Vite UI；迁移验收与退役门禁完成前，仅作为固定回滚包保留 | [Lotus](https://github.com/bigduu/Lotus) |
 | **Bamboo** | `bamboo/` | 执行引擎与生产 Lotus Next host：本地优先 Rust runtime，提供 HTTP、WebSocket 与 legacy SSE API | [Bamboo Agent](https://github.com/bigduu/Bamboo-agent) |
 | **Bodhi Server** | `bodhi-server/` | 可选托管 Go 服务：账号/认证、API key、加密 provider 凭据、模型路由、配额/计费与 provider proxy | [Bodhi Server](https://github.com/bigduu/bodhi-server) |
 | **Pavilion** | `pavilion/` | 官网与文档：下载入口、文档中心与对外叙事 | [Pavilion](https://github.com/bigduu/Pavilion) |
@@ -93,7 +90,7 @@ Zenith 最大的价值，是让任何一个人都能快速找到正确的入口�
 **如果你想参与开发**
 - 桌面产品 / Tauri 壳 → `bodhi/`
 - 权威前端交互 / React UI → `lotus-next/`
-- 固定 legacy 回滚 → `lotus/`
+- 固定 legacy 回滚制品 → release config 中的 `@bigduu/lotus`（Zenith 不再检出其源码）
 - Agent runtime / Rust 后端 → `bamboo/`
 - 可选托管账号 / 凭据 / 路由 / 计费服务 → `bodhi-server/`
 - 官网 / 文档 / 对外内容 → `pavilion/`
@@ -116,7 +113,8 @@ Zenith 最大的价值，是让任何一个人都能快速找到正确的入口�
 stdio MCP server。宿主负责选择 query terms、可选 rerank、prompt 位置与预算，
 以及 Dream 的生成和节奏；可选便携 Skill 只教授这份契约，并由宿主显式启用。
 Nova 通过 MCP 提供电脑操作；Magpie 负责把 IM 平台连接到 Bamboo。legacy
-Lotus 在剩余迁移验收与退役门禁完成前，继续作为有界的固定回滚保留。
+Lotus 源码不再作为 Zenith submodule；只保留固定的 registry 制品作为有界回滚，
+直到独立退役门禁完成。
 
 ### 3. 协调发布列车
 
@@ -166,20 +164,20 @@ git submodule update --init --recursive
 ### 运行桌面产品
 
 ```bash
-cd lotus
-npm install
+cd lotus-next
+npm ci
 cd ../bodhi
-npm install
+npm ci
 npm run tauri:dev
 ```
 
-> `tauri:dev` 会把 `../bamboo` 构建为受管 debug sidecar，启动 `../lotus` 的 Vite HMR，再启动 Bodhi。Bodhi 会启动或复用 Bamboo 并等待健康检查，开发界面继续由 Vite 提供；打包构建则加载 Bamboo 提供的 Lotus 前端。脚本定义见 `bodhi/package.json`，运行边界见 [Bodhi README](https://github.com/bigduu/Bodhi-AI)。
+> `tauri:dev` 会把 `../bamboo` 构建为受管 debug sidecar，启动 `../lotus-next` 的 Vite HMR，再启动 Bodhi。Bodhi 拥有 Bamboo 进程并等待其启动与健康信号，开发界面继续由 Vite 提供；打包构建则加载 Bamboo 提供且经过验证的 Lotus Next 前端。脚本定义见 `bodhi/package.json`，运行边界见 [Bodhi README](https://github.com/bigduu/Bodhi-AI)。
 
 ### 单独跑前端
 
 ```bash
-cd lotus
-npm install
+cd lotus-next
+npm ci
 npm run dev
 ```
 
@@ -204,7 +202,7 @@ git submodule status
 git submodule update --remote --recursive
 
 # 子模块改动后，回到根仓库提交指针
-git add .gitmodules bamboo bodhi bodhi-server jiandu lotus lotus-next magpie nova pavilion
+git add .gitmodules bamboo bodhi bodhi-server jiandu lotus-next magpie nova pavilion
 git commit -m "chore: bump submodule pointers"
 git push
 ```
@@ -218,7 +216,6 @@ git push
 | 模块 | Repository |
 |---|---|
 | Bodhi AI — 桌面产品门面 | https://github.com/bigduu/Bodhi-AI |
-| Lotus — 已冻结的固定版本 legacy 回滚 | https://github.com/bigduu/Lotus |
 | Bamboo — Rust agent runtime | https://github.com/bigduu/Bamboo-agent |
 | Bodhi Server — 可选托管账号、凭据、路由、配额/计费与 provider proxy | https://github.com/bigduu/bodhi-server |
 | Pavilion — 官网与文档 | https://github.com/bigduu/Pavilion |

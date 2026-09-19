@@ -4,9 +4,6 @@
 [submodule "bodhi"]
 	path = bodhi
 	url = https://github.com/bigduu/Bodhi-AI.git
-[submodule "lotus"]
-	path = lotus
-	url = https://github.com/bigduu/Lotus.git
 [submodule "pavilion"]
 	path = pavilion
 	url = https://github.com/bigduu/Pavilion.git

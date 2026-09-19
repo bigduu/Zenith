@@ -4,6 +4,8 @@
 >
 > **2026-09-13 生产/发布里程碑:**`@bigduu/lotus-next@2026.9.14` 已由受保护源码提交发布；Bamboo 和 Bodhi 已锁定并默认消费同一份 universal artifact；Zenith 已固定对应源码指针。根 release train 不再生产 legacy Lotus，也不自动发布 Lotus Next，而是在任何跨仓库 dispatch 前校验被接受的源码 ref、根 gitlink、npm tarball SHA-1/integrity，以及 Lotus Next manifest 中每个资源的 size/hash。legacy `@bigduu/lotus@2026.8.28` 仅保留为显式固定回滚。本阶段没有实际触发新的 Bamboo/Bodhi release。
 >
+> **2026-09-15 仓库布局说明:**Zenith 不再固定或检出 legacy Lotus 源码 submodule。下文中的历史 `lotus/...` 路径指向审计当时的外部 `bigduu/Lotus` 仓库，不代表当前 Zenith checkout 仍包含该目录；固定的 `@bigduu/lotus` registry 制品仍按独立回滚门禁保留。
+>
 > **2026-07-07 大批次(用户拍板:除 i18n 全部同步;传输只要 WSS 不要 SSE):**
 > 1. **传输 WSS-only 完成**:删除两条 legacy SSE 路径 + WS→SSE 回退机制 + `bodhi_api_v2_ws` 开关(净 −541 行);v2Stream 即唯一传输,初连失败与断线同走有界退避重连;msgpack 保持 opt-in。§2.2 的 "v2 WebSocket 传输 🟡" 行已过时 → ✅ 且比 lotus 更进一步(lotus 还保留回退)。
 > 2. **运行期可见性完成**(审计发现的最大洞):useChat 接上 tool_start/token/complete、task_list_*、token_budget、compression 事件 → live 工具卡(分段时间线,修多轮文本堆积)、Inspector 任务清单实时 + 评估横幅、用量环实时、状态行。

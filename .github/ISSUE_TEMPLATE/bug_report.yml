@@ -10,7 +10,7 @@ body:
       description: Which module has the bug?
       options:
         - bamboo
-        - lotus
+        - lotus-next
         - bodhi
         - bodhi-server
         - pavilion
