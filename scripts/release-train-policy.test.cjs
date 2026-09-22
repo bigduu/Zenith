@@ -40,19 +40,19 @@ test("accepts the committed release authority and fixed identities", () => {
   assert.equal(config.sources.bamboo.ref, "dev")
   assert.equal(
     config.sources.bamboo.revision,
-    "284cfd06ddc34b1ef7f9a6839b0692cc872a8123",
+    "d0e4dd8c56dba13977df18ab713c729a5882ac54",
   )
   assert.equal(config.sources.bodhi.ref, "main")
   assert.equal(
     config.sources.bodhi.revision,
-    "46fad2074adc2ce465553fd9a207731ce55b4fde",
+    "6d850368c6fe83bea85c70aea7d8426ee5575321",
   )
   assert.equal(config.frontend.defaultPackage, "@bigduu/lotus-next")
   assert.equal(config.frontend.lotusNext.ref, "main")
-  assert.equal(config.frontend.lotusNext.packageVersion, "2026.9.16")
+  assert.equal(config.frontend.lotusNext.packageVersion, "2026.9.22")
   assert.equal(
     config.frontend.lotusNext.sourceRevision,
-    "0495772ecab37402c3915c10a6c945cf286a132b",
+    "a480e2bb94f5dd08fe4b01b2f8844a2c9ed03245",
   )
   assert.equal(config.frontend.lotusNext.sourceDirty, false)
   assert.deepEqual(config.frontend.legacyRollback, {
