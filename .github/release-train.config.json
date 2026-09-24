@@ -5,21 +5,21 @@
       "repository": "bigduu/Bamboo-agent",
       "workflow": "publish-crate.yml",
       "ref": "dev",
-      "revision": "284cfd06ddc34b1ef7f9a6839b0692cc872a8123",
+      "revision": "d0e4dd8c56dba13977df18ab713c729a5882ac54",
       "rootPath": "bamboo"
     },
     "bodhi": {
       "repository": "bigduu/Bodhi-AI",
       "workflow": "release.yml",
       "ref": "main",
-      "revision": "46fad2074adc2ce465553fd9a207731ce55b4fde",
+      "revision": "6d850368c6fe83bea85c70aea7d8426ee5575321",
       "rootPath": "bodhi"
     }
   },
   "versions": {
-    "release": "2026.9.23",
-    "bamboo": "2026.9.23",
-    "bodhi": "2026.9.23"
+    "release": "2026.9.26",
+    "bamboo": "2026.9.26",
+    "bodhi": "2026.9.26"
   },
   "frontend": {
     "defaultPackage": "@bigduu/lotus-next",
@@ -29,14 +29,14 @@
       "rootPath": "lotus-next",
       "manifestSchemaVersion": 1,
       "packageName": "@bigduu/lotus-next",
-      "packageVersion": "2026.9.16",
-      "sourceRevision": "0495772ecab37402c3915c10a6c945cf286a132b",
+      "packageVersion": "2026.9.22",
+      "sourceRevision": "a480e2bb94f5dd08fe4b01b2f8844a2c9ed03245",
       "sourceDirty": false,
       "entrypoint": "index.html",
-      "resourcesSha256": "226bbf539244f5d9e7f0f9821ceb32fb2bcc80a85ba7b1ddf72549bc5ff436ff",
-      "manifestSha256": "544e2e20dabfcb10b28f96c82660bb146770267134f07f0bcba09513beb59bc6",
-      "npmShasum": "1ee7d9f8604104c9e0216a344659d6e2344c73cf",
-      "npmIntegrity": "sha512-RInZlrVYUy86DmznVlA9Ro6aikQbMRjrrhgexnsXg4uHFlsrM1kJDrKWNb/snqh2Pb3m+5K3FlNtGuohv80/iA=="
+      "resourcesSha256": "91d7c30fb0fc9b3a4d811f3099eeed7fb888315f03678a3a388e4a921bccf3d6",
+      "manifestSha256": "f378495a43d386715fcf17e2919fb40588af3f5df83b576f422b6da5df34bf0b",
+      "npmShasum": "12e99c8871a9e5f80ae5c808a9f38b0b28d00b24",
+      "npmIntegrity": "sha512-i2AfrIoh6KjvzXZY4JTZAGYLj58Jj1Oz4GWXLwUyHSeOq56D0yvVRLipYTIQevRB5TAzX1352glnMDxNf/17qg=="
     },
     "legacyRollback": {
       "packageName": "@bigduu/lotus",
