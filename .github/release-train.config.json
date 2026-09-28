@@ -17,9 +17,9 @@
     }
   },
   "versions": {
-    "release": "2026.9.29",
-    "bamboo": "2026.9.29",
-    "bodhi": "2026.9.29"
+    "release": "2026.9.30",
+    "bamboo": "2026.9.30",
+    "bodhi": "2026.9.30"
   },
   "frontend": {
     "defaultPackage": "@bigduu/lotus-next",
