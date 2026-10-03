@@ -67,10 +67,10 @@ npm run dev -- --host 127.0.0.1
 
 Open `http://127.0.0.1:9563`. Vite proxies API and stream requests to Bamboo on port 9562. The interface needs that backend; configure a supported model provider in the app before asking an agent to work. See [Bamboo's configuration and access boundaries](https://github.com/bigduu/Bamboo-agent/blob/dev/README.md).
 
-For the desktop development workflow, install the [Bodhi prerequisites](https://github.com/bigduu/Bodhi-AI/blob/main/README.md), install Lotus Next dependencies as above, then:
+For the desktop development workflow, install the [Bodhi prerequisites](https://github.com/bigduu/Bodhi-AI/blob/main/README.md) and Lotus Next dependencies as above. From the `lotus-next/` directory, switch to its sibling desktop module:
 
 ```bash
-cd bodhi
+cd ../bodhi
 npm ci
 npm run tauri:dev
 ```

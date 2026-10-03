@@ -34,7 +34,7 @@ No product code, root gitlinks or release configuration changed.
 |---|---|---|---|---|
 | Project workspace | Bamboo `0256413` `bamboo serve`; Lotus Next `1131c27` Vite UI | Fresh Bamboo/Jiandu roots, temporary workspace; real Playwright UI input and real project API | No | Create a project and select its context for a future task |
 | Memory console | Jiandu `5b50834`, actual stdio `memory` tool then `jiandu ui` | Dedicated host-authorized Project in a temporary store; MCP seed before browser recording | No | Search and open a saved fact in the source-only read-only console |
-| Browser checklist | Nova source tree `19dfeaa` (recorded after docs-only `d59dbf8`), `nova chrome-devtools --headless --npx <adapter>` | Dedicated local fixture; actual official `chrome-devtools-mcp@1.8.0` calls; capture adapter selects disposable browser | No | Navigate, inspect and click browser controls through MCP |
+| Browser checklist | Reachable Nova runtime source `19dfeaa`; original docs-only recording commit was unpublished; `nova chrome-devtools --headless --npx <adapter>` | Dedicated local fixture; actual official `chrome-devtools-mcp@1.8.0` calls; capture adapter selects disposable browser | No | Navigate, inspect and click browser controls through MCP |
 
 None demonstrates model reasoning, autonomous end-to-end work, released desktop
 acceptance, native operating-system interaction or an actual documentation release.

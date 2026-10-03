@@ -66,10 +66,10 @@ npm run dev -- --host 127.0.0.1
 
 打开 `http://127.0.0.1:9563`。Vite 将 API 和实时流请求代理给 9562 端口的 Bamboo。界面依赖后端服务；让 agent 工作前，先在应用中配置受支持的模型 provider。详见 [Bamboo 配置与访问边界](https://github.com/bigduu/Bamboo-agent/blob/dev/README.zh-CN.md)。
 
-桌面开发需安装 [Bodhi 原生依赖](https://github.com/bigduu/Bodhi-AI/blob/main/README.md)，按上方步骤安装 Lotus Next 依赖，然后运行：
+桌面开发需安装 [Bodhi 原生依赖](https://github.com/bigduu/Bodhi-AI/blob/main/README.md)，按上方步骤安装 Lotus Next 依赖。然后从 `lotus-next/` 目录切换到同级的桌面模块：
 
 ```bash
-cd bodhi
+cd ../bodhi
 npm ci
 npm run tauri:dev
 ```

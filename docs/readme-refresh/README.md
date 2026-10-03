@@ -89,8 +89,10 @@ Scripts and reproduction: `jiandu/docs/demos/`.
 MCP; actual MCP calls navigate, inspect and click a disposable fixture page.
 A disclosed recording-only `--npx` adapter connects the dedicated Playwright
 browser for capture; no product code was changed. The checklist labels do not
-mean a real release was reviewed. Source tree `19dfeaa` (recorded after its docs-only
-commit `d59dbf8`); launcher is not in release `v0.2.1`. No native GUI was tested.
+mean a real release was reviewed. Runtime source is the reachable Nova revision
+`19dfeaa1e49fd186202f731c92d2f7ec9b6539af`; the original recording workspace's
+documentation-only commit was unpublished and is not a reproduction ref.
+The launcher is not in release `v0.2.1`. No native GUI was tested.
 Scripts, fixture and nine-call MCP transcript: `nova/docs/demos/`.
 
 ## Validation and remaining limits
