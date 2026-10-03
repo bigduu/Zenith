@@ -2,7 +2,7 @@
 
 **A local AI agent harness toolkit: run agents with tools, project context and memory, in your browser or on your desktop.**
 
-[简体中文](./README.zh-CN.md) · [Desktop downloads](https://github.com/bigduu/Bodhi-AI/releases) · [Bamboo runtime](./bamboo/README.md) · [Source and release audit](./docs/readme-refresh/README.md)
+[简体中文](./README.zh-CN.md) · [Desktop downloads](https://github.com/bigduu/Bodhi-AI/releases) · [Bamboo runtime](https://github.com/bigduu/Bamboo-agent/blob/dev/README.md) · [Source and release audit](./docs/readme-refresh/README.md)
 
 Bamboo is the core runtime. Lotus Next is its web interface; Bodhi wraps that experience in a desktop application and manages the Bamboo process. Nova adds computer and browser tools, Jiandu provides shared memory, and Magpie connects supported messaging platforms. Choose the pieces you need; the hosted account service is optional.
 
@@ -12,14 +12,14 @@ Local-first means you can run the harness and keep its state on your machine. Re
 
 | You want to… | Start here |
 |---|---|
-| Try the desktop app | [Bodhi downloads and platform requirements](./bodhi/README.md) |
-| Run an agent service and open it in a browser | [Bamboo installation and quick start](./bamboo/README.md) |
-| Work on the web experience | [Lotus Next development setup](./lotus-next/README.md) |
-| Let an agent use browser or desktop tools | [Nova: installation and platform boundaries](./nova/README.md) |
-| Recall facts across sessions without an embedding service | [Jiandu: memory MCP](./jiandu/README.md) |
-| Reach Bamboo through messaging platforms | [Magpie: connectors and configuration](./magpie/README.md) |
-| Operate account, routing and quota services | [Bodhi Server](./bodhi-server/README.md) |
-| Contribute to the public website and guides | [Pavilion](./pavilion/README.md) |
+| Try the desktop app | [Bodhi downloads and platform requirements](https://github.com/bigduu/Bodhi-AI/blob/main/README.md) |
+| Run an agent service and open it in a browser | [Bamboo installation and quick start](https://github.com/bigduu/Bamboo-agent/blob/dev/README.md) |
+| Work on the web experience | [Lotus Next development setup](https://github.com/bigduu/lotus-next/blob/main/README.md) |
+| Let an agent use browser or desktop tools | [Nova: installation and platform boundaries](https://github.com/bigduu/Nova/blob/master/README.md) |
+| Recall facts across sessions without an embedding service | [Jiandu: memory MCP](https://github.com/bigduu/Jiandu/blob/main/README.md) |
+| Reach Bamboo through messaging platforms | [Magpie: connectors and configuration](https://github.com/bigduu/Magpie/blob/main/README.md) |
+| Operate account, routing and quota services | [Bodhi Server](https://github.com/bigduu/bodhi-server/blob/main/README.md) |
+| Contribute to the public website and guides | [Pavilion](https://github.com/bigduu/Pavilion/blob/main/README.md) |
 
 ## Watch the source in use
 
@@ -33,7 +33,7 @@ show source capabilities; they are not claims about the latest desktop installer
 
 ## Source checkout is not a released product version
 
-This repository pins eight source repositories. Those pins, upstream development branches and published binaries/packages can differ. The READMEs describe the checked-out source and call out release boundaries; consult each module's release instructions before installing.
+Module links open the upstream documentation; recursive clones retain the source pins recorded here. This repository pins eight source repositories. Those pins, upstream development branches and published binaries/packages can differ. The READMEs describe the checked-out source and call out release boundaries; consult each module's release instructions before installing.
 
 In the 2026-10-03 audit, Bamboo's published crate was `2026.9.20`, Bodhi's latest public desktop release was `app-v2026.9.20`, and the accepted Lotus Next package was `2026.9.22`. Nova's release was `v0.2.1` and Jiandu's `v0.2.0`; their checked-out source contains additional work. A release-train configuration value is not evidence that its release finished. See the [audit and demonstrations](./docs/readme-refresh/README.md) for exact revisions and limitations.
 
@@ -65,9 +65,9 @@ npm ci
 npm run dev -- --host 127.0.0.1
 ```
 
-Open `http://127.0.0.1:9563`. Vite proxies API and stream requests to Bamboo on port 9562. The interface needs that backend; configure a supported model provider in the app before asking an agent to work. See [Bamboo's configuration and access boundaries](./bamboo/README.md).
+Open `http://127.0.0.1:9563`. Vite proxies API and stream requests to Bamboo on port 9562. The interface needs that backend; configure a supported model provider in the app before asking an agent to work. See [Bamboo's configuration and access boundaries](https://github.com/bigduu/Bamboo-agent/blob/dev/README.md).
 
-For the desktop development workflow, install the [Bodhi prerequisites](./bodhi/README.md), install Lotus Next dependencies as above, then:
+For the desktop development workflow, install the [Bodhi prerequisites](https://github.com/bigduu/Bodhi-AI/blob/main/README.md), install Lotus Next dependencies as above, then:
 
 ```bash
 cd bodhi
@@ -102,6 +102,6 @@ Zenith owns documentation, eight gitlinks and the release train; feature code li
 The [release configuration](./.github/release-train.config.json) selects exact Bamboo/Bodhi revisions and the frontend artifact identity. The [release train](./.github/workflows/release-train.yml) verifies those inputs before publishing Bamboo and then Bodhi. Lotus Next publication is a separate producer step. Configuration and workflow presence do not guarantee a successful build or release; consult run results and published artifacts.
 
 - [Release playbook](./AGENTS.md#release-playbook)
-- [Bamboo architecture](./bamboo/docs/design/architecture-overview.md)
-- [Pavilion architecture overview](./pavilion/articles/zenith-architecture-overview.md)
+- [Bamboo architecture](https://github.com/bigduu/Bamboo-agent/blob/dev/docs/design/architecture-overview.md)
+- [Pavilion architecture overview](https://github.com/bigduu/Pavilion/blob/main/articles/zenith-architecture-overview.md)
 - [Documentation audit, recordings and known limitations](./docs/readme-refresh/README.md)

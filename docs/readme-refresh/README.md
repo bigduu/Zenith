@@ -1,21 +1,22 @@
-# README refresh: evidence and local delivery
+# README refresh: source evidence and media
 
 Audited 2026-10-03. The task edits documentation and actual recording assets only.
 The isolated worktree is `/workspace/zenith-readme`, branch `docs/readme-refresh`.
 Original Zenith base: `f17d93372db51d7b81210e4e8227f31e8e6bde73`.
-During the initial local-only phase, no remote writes, release dispatches, pushes, PRs, merges or deployments occurred. The user subsequently authorized documentation publication; cloud handoff is limited to pushing these documentation branches and creating draft PRs. MacBook owns approved artwork integration, final QA and any later merge. No release or Homebrew operation is included.
+The initial source audit and recordings were completed in an isolated cloud worktree. Documentation publication was subsequently authorized through separate PRs in Zenith and all eight modules. Approved artwork integration and final media QA use isolated MacBook worktrees. This documentation publication does not include releases or Homebrew changes.
 Supervisor #1481 and #791 source branches were not modified.
 
 ## All eight submodules
 
 Enumerated from `.gitmodules`. Gitlink pins in the root commit are preserved.
-Local documentation commits inside submodules are separate deliverables; their
-checked-out HEADs therefore differ from the root pins. A future root pointer
+Documentation commits inside submodules are separate deliverables; checking out
+their documentation branches produces HEADs that differ from the root pins. A future root pointer
 update must follow module review/merge, and is intentionally not part of this task.
 The root copies recording assets so its own preview does not require new gitlinks.
-Root `git status --short` therefore reports eight modified submodules (`M`);
-this is expected HEAD-versus-gitlink divergence, not an entirely clean root.
-Each module can have a clean internal working tree while the root shows `M`.
+In the cloud recording worktree, `git status --short` reported eight `M` submodules
+because its checked-out documentation HEADs differed from the recorded gitlinks.
+The final PR preserves the current base gitlinks; that earlier state is not a
+claim about the published root checkout.
 
 | Module | Original Zenith pin | Observed upstream | Published evidence | Documentation change |
 |---|---|---|---|---|
@@ -116,9 +117,11 @@ original task prohibited it and subsequent coordination explicitly kept release 
 The current tap matches observed releases; new source capability requires a real
 new release before new asset versions/hashes can be written and verified.
 
-## Local documentation commits
+## Cloud documentation checkpoint
 
-Full SHAs and unchanged original pins: [commits.json](commits.json).
+The following SHAs are the original cloud documentation checkpoint, before
+connector transfer and approved-art integration. They are historical local
+identities, not the final remote PR heads. Full original pins: [commits.json](commits.json).
 
 | Module | Documentation HEAD |
 |---|---|
@@ -137,4 +140,4 @@ See `lotus-next/docs/demos/isolation-evidence.json` for the sanitized evidence.
 
 [Independent QA, resolved findings and exact recording scope](qa.md).
 
-[Pending nature-series brand illustrations and handoff status](brand-art-status.md).
+[Approved nature-series brand illustrations and validation](brand-art-status.md).

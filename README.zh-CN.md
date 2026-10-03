@@ -2,7 +2,7 @@
 
 **本地 AI agent harness 套件：让 agent 带着工具、项目上下文和记忆，在浏览器或桌面中工作。**
 
-[English](./README.md) · [桌面版下载](https://github.com/bigduu/Bodhi-AI/releases) · [Bamboo 核心](./bamboo/README.zh-CN.md) · [源码与发布核对](./docs/readme-refresh/README.md)
+[English](./README.md) · [桌面版下载](https://github.com/bigduu/Bodhi-AI/releases) · [Bamboo 核心](https://github.com/bigduu/Bamboo-agent/blob/dev/README.zh-CN.md) · [源码与发布核对](./docs/readme-refresh/README.md)
 
 Bamboo 是核心运行时；Lotus Next 提供网页界面；Bodhi 将这套体验装进桌面应用，并管理 Bamboo 进程。Nova 扩展电脑与浏览器工具，Jiandu 提供共享记忆，Magpie 连接受支持的即时通讯平台。按场景选择组件即可，本地运行不要求部署托管账号服务。
 
@@ -12,14 +12,14 @@ Bamboo 是核心运行时；Lotus Next 提供网页界面；Bodhi 将这套体�
 
 | 你想做什么 | 入口 |
 |---|---|
-| 直接试用桌面应用 | [Bodhi 下载与平台要求](./bodhi/README.md) |
-| 启动 agent 服务，用浏览器操作 | [Bamboo 安装与快速开始](./bamboo/README.zh-CN.md) |
-| 开发网页交互体验 | [Lotus Next 开发配置](./lotus-next/README.md) |
-| 让 agent 使用浏览器或桌面工具 | [Nova 安装与平台边界](./nova/README.md) |
-| 跨会话召回事实，无需 embedding 服务 | [Jiandu 记忆 MCP](./jiandu/README.md) |
-| 通过即时通讯平台连接 Bamboo | [Magpie 连接器与配置](./magpie/README.md) |
-| 运营账号、模型路由和配额服务 | [Bodhi Server](./bodhi-server/README.md) |
-| 贡献官网和使用指南 | [Pavilion](./pavilion/README.zh-CN.md) |
+| 直接试用桌面应用 | [Bodhi 下载与平台要求](https://github.com/bigduu/Bodhi-AI/blob/main/README.md) |
+| 启动 agent 服务，用浏览器操作 | [Bamboo 安装与快速开始](https://github.com/bigduu/Bamboo-agent/blob/dev/README.zh-CN.md) |
+| 开发网页交互体验 | [Lotus Next 开发配置](https://github.com/bigduu/lotus-next/blob/main/README.md) |
+| 让 agent 使用浏览器或桌面工具 | [Nova 安装与平台边界](https://github.com/bigduu/Nova/blob/master/README.md) |
+| 跨会话召回事实，无需 embedding 服务 | [Jiandu 记忆 MCP](https://github.com/bigduu/Jiandu/blob/main/README.md) |
+| 通过即时通讯平台连接 Bamboo | [Magpie 连接器与配置](https://github.com/bigduu/Magpie/blob/main/README.md) |
+| 运营账号、模型路由和配额服务 | [Bodhi Server](https://github.com/bigduu/bodhi-server/blob/main/README.md) |
+| 贡献官网和使用指南 | [Pavilion](https://github.com/bigduu/Pavilion/blob/main/README.zh-CN.md) |
 
 ## 看源码实际运行
 
@@ -32,7 +32,7 @@ Bamboo 是核心运行时；Lotus Next 提供网页界面；Bodhi 将这套体�
 
 ## 源码检出不等于已发布版本
 
-Zenith 固定了八个源码仓库的提交。这里的 pin、上游开发分支和已发布二进制或包可能不同。各 README 说明当前源码并标注发布边界；安装时请按对应模块的发布说明操作。
+模块链接打开上游文档，递归 clone 仍保留本仓库记录的源码 pin。Zenith 固定了八个源码仓库的提交。这里的 pin、上游开发分支和已发布二进制或包可能不同。各 README 说明当前源码并标注发布边界；安装时请按对应模块的发布说明操作。
 
 2026-10-03 核对时，Bamboo 已发布 crate 为 `2026.9.20`，Bodhi 最新公开桌面 release 为 `app-v2026.9.20`，已接受的 Lotus Next 包为 `2026.9.22`。Nova release 为 `v0.2.1`，Jiandu 为 `v0.2.0`，两者的当前源码均有后续变更。发布配置中的版本号不代表发布已经成功。精确提交和限制见[核对记录与演示](./docs/readme-refresh/README.md)。
 
@@ -64,9 +64,9 @@ npm ci
 npm run dev -- --host 127.0.0.1
 ```
 
-打开 `http://127.0.0.1:9563`。Vite 将 API 和实时流请求代理给 9562 端口的 Bamboo。界面依赖后端服务；让 agent 工作前，先在应用中配置受支持的模型 provider。详见 [Bamboo 配置与访问边界](./bamboo/README.zh-CN.md)。
+打开 `http://127.0.0.1:9563`。Vite 将 API 和实时流请求代理给 9562 端口的 Bamboo。界面依赖后端服务；让 agent 工作前，先在应用中配置受支持的模型 provider。详见 [Bamboo 配置与访问边界](https://github.com/bigduu/Bamboo-agent/blob/dev/README.zh-CN.md)。
 
-桌面开发需安装 [Bodhi 原生依赖](./bodhi/README.md)，按上方步骤安装 Lotus Next 依赖，然后运行：
+桌面开发需安装 [Bodhi 原生依赖](https://github.com/bigduu/Bodhi-AI/blob/main/README.md)，按上方步骤安装 Lotus Next 依赖，然后运行：
 
 ```bash
 cd bodhi
@@ -101,6 +101,6 @@ Zenith 维护文档、八个 gitlink 和发布列车，功能代码位于各模�
 [发布配置](./.github/release-train.config.json) 选择精确 Bamboo/Bodhi 提交和前端制品身份。[发布列车](./.github/workflows/release-train.yml) 验证输入后，依次发布 Bamboo 和 Bodhi；Lotus Next 是独立的制品生产步骤。配置或工作流存在并不保证构建和发布成功，应核对运行结果及实际制品。
 
 - [发布手册](./AGENTS.md#release-playbook)
-- [Bamboo 架构](./bamboo/docs/design/architecture-overview.md)
-- [Pavilion 架构总览](./pavilion/articles/zenith-architecture-overview.md)
+- [Bamboo 架构](https://github.com/bigduu/Bamboo-agent/blob/dev/docs/design/architecture-overview.md)
+- [Pavilion 架构总览](https://github.com/bigduu/Pavilion/blob/main/articles/zenith-architecture-overview.md)
 - [文档核对、录屏与已知限制](./docs/readme-refresh/README.md)

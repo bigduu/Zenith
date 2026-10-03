@@ -75,22 +75,25 @@ branch has a clean internal working tree after its commits, but root `git status
 reports eight `M` submodules because their HEADs differ from the old gitlinks.
 **The root is not reported as entirely clean.**
 
-## Brand-image and release boundary
+## Approved brand art and publication scope
 
-The original Bamboo SVG was identified and preserved. Candidate imagegen brand
-illustrations are separate from real software captures. Official Library download
-plus one supported retry failed for the supplied candidates; they were not added
-to the repository. A subsequent user request explicitly paused those candidates
-pending redesign. No unreadable candidate or dead reference is committed.
+The user-approved nature-series PNGs were officially received on MacBook,
+checked against the package and per-image SHA-256 manifest, fully decoded and
+visually inspected. Original pixels are preserved. Five modules now reference
+their local PNG assets with explicit brand-illustration alt text and captions;
+existing English/Chinese README variants are synchronized. The original Bamboo
+SVG remains. See [asset identities and validation](brand-art-status.md).
 
-The only direct release-related user message received was:
+The earlier agent-core candidates were paused and are not used. Desktop and
+375 px asset previews loaded all five images without page overflow; the readable
+product descriptions sit outside the artwork. GitHub rendering is verified
+separately against final merged heads.
 
-> 那可能要考虑先release 然后再更新README, homebrew 也要更新
+The user authorized documentation pushes, PRs, checks and merges for this batch.
+No release workflow, tag, package publication, Homebrew change or social-preview
+setting update is included. The [read-only release review](release-readiness.md)
+remains a dated snapshot, not a completed release or permission to perform one.
 
-The coordinating follow-ups explicitly keep release/Homebrew/push/PR outside this
-work. No release or Homebrew mutation was performed; read-only readiness findings remain in
-`release-readiness.md`.
-
-A subsequent explicit authorization permits documentation branch pushes and draft
-PRs for MacBook handoff. This cloud task does not merge them or integrate feature
-branches; the prior no-public-write statement describes the initial local phase.
+The final root README links to upstream module documentation. Its PR preserves
+the current base gitlinks, so publishing these docs does not adopt other source
+changes. The three recordings retain their source-only and provider-free scope.

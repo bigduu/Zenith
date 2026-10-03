@@ -1,6 +1,6 @@
 # Release readiness — read-only review, 2026-10-03
 
-This is preparation, not a release approval or a completed release. No workflow was dispatched, tag pushed, tap updated, credential accessed, or root gitlink/configuration changed. Supervisor #1481 and #791 work remains outside this task. Public publication authorization is still pending with the parent agent.
+This is preparation, not a release approval or a completed release. No workflow was dispatched, tag pushed, tap updated, credential accessed, or root gitlink/configuration changed. Supervisor #1481 and #791 work remains outside this task. Documentation publication is separately authorized; this review does not authorize releases or Homebrew updates.
 
 ## Current release policy cannot pass
 
