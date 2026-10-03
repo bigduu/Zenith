@@ -1,0 +1,54 @@
+{
+  "zenith_base": "f17d93372db51d7b81210e4e8227f31e8e6bde73",
+  "gitlinks_changed": false,
+  "modules": [
+    {
+      "module": "bamboo",
+      "original_pin": "025641317c5703226052a4b94a52d1844615c352",
+      "documentation_head": "8ce8a5046dc88d49d1bdfe88398aac55916ced0d",
+      "branch": "docs/readme-refresh"
+    },
+    {
+      "module": "bodhi",
+      "original_pin": "6d850368c6fe83bea85c70aea7d8426ee5575321",
+      "documentation_head": "363766d609bf9f7fd454231952a9786c1b8e32c0",
+      "branch": "docs/readme-refresh"
+    },
+    {
+      "module": "bodhi-server",
+      "original_pin": "7d1d25b72cdd1d3e5e26e80200236d0e16252aa3",
+      "documentation_head": "1ca0c2beb7000136931055567036dd0b3379711d",
+      "branch": "docs/readme-refresh"
+    },
+    {
+      "module": "lotus-next",
+      "original_pin": "1131c275cb441694a41f996228d9f91473d920f5",
+      "documentation_head": "feb3c4dc97888c5ef7b721d3cb02bc2bac6d6b3b",
+      "branch": "docs/readme-refresh"
+    },
+    {
+      "module": "nova",
+      "original_pin": "19dfeaa1e49fd186202f731c92d2f7ec9b6539af",
+      "documentation_head": "57b8636c5137e4dec338a1a784bc2437ad8713d7",
+      "branch": "docs/readme-refresh"
+    },
+    {
+      "module": "jiandu",
+      "original_pin": "5b50834cc2e54adf506e72628620f5e028bf2aae",
+      "documentation_head": "5a58cbb9f635c39e343aae179b86ef684b04eec3",
+      "branch": "docs/readme-refresh"
+    },
+    {
+      "module": "magpie",
+      "original_pin": "192de16ed7384b027a3ecd3260eeb2c126c84f17",
+      "documentation_head": "0b01b206c13d33a080fab1a7d862df10f115b35d",
+      "branch": "docs/readme-refresh"
+    },
+    {
+      "module": "pavilion",
+      "original_pin": "b1a06f4e53633d6769a970d1d5b90c11c0f56d18",
+      "documentation_head": "148d22e963c2ff9aa50b7bbc5c2035d265d4d66f",
+      "branch": "docs/readme-refresh"
+    }
+  ]
+}
