@@ -136,3 +136,5 @@ fresh Bamboo and Jiandu roots; file-access tracing observed no default-root acce
 See `lotus-next/docs/demos/isolation-evidence.json` for the sanitized evidence.
 
 [Independent QA, resolved findings and exact recording scope](qa.md).
+
+[Pending nature-series brand illustrations and handoff status](brand-art-status.md).
