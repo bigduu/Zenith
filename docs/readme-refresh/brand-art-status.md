@@ -10,7 +10,7 @@ user. The latest user direction is vitality and plant symbolism: bamboo resilien
 bodhi wisdom, lotus beauty and purity, early written records for Jiandu, and a
 robotic identity for Nova, without eye-like motifs.
 
-The coordinator supplied these **latest pending nature candidates**, all version 0:
+The user approved the nature series with “可以 请用这一套来更新”. These are now the **approved images awaiting actual transfer**, all version 0:
 
 | Candidate | Supplied Library ID |
 |---|---|
@@ -24,5 +24,30 @@ These identities are handoff metadata, not a claim that bytes, dimensions or tex
 have been inspected in this environment. The latest instruction explicitly says
 not to repeat the known-failing download route. Actual image transfer and visual
 QA must precede repository integration, with matching language variants and clear
-illustration alt text. This pending art handoff does not block the finished
+illustration alt text. This pending byte transfer does not block the finished
 README and real-recording deliverables.
+
+## Supported transfer and exact integration plan
+
+This executor exposes `download_file` for an ordinary authorized attachment's
+exact `file_id` (maximum 32 MiB). No ordinary attachment file IDs for the approved
+nature images have been supplied in this thread yet; a `libfile_` ID cannot be
+substituted. This capability has not been tested on these five images.
+No distinct cross-executor filesystem transfer tool or verified shared mount has
+been exposed. Empty local scratch/shared directories do not establish such a route.
+The known Library route failed and is not retried again.
+
+After authorized bytes arrive and pass pixel/size inspection, use these paths:
+
+| Module | Repository-relative asset | README files to update |
+|---|---|---|
+| Bamboo | `docs/assets/bamboo-nature-hero.png` | `README.md`, `README.zh-CN.md` |
+| Bodhi | `docs/assets/bodhi-nature-hero.png` | `README.md`, `README.zh-CN.md` |
+| Lotus Next | `docs/assets/lotus-next-nature-hero.png` | `README.md` |
+| Nova | `docs/assets/nova-nature-hero.png` | `README.md` |
+| Jiandu | `docs/assets/jiandu-nature-hero.png` | `README.md` |
+
+Place each hero near the top and explicitly identify it as a brand illustration,
+not a screenshot. English/Chinese alt text will be matched where both READMEs
+exist. These are planned paths only: no nonexistent image reference is committed.
+Preserve the old Bamboo SVG and use no eye-like agent-core candidate.
