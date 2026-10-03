@@ -13,6 +13,9 @@ Local documentation commits inside submodules are separate deliverables; their
 checked-out HEADs therefore differ from the root pins. A future root pointer
 update must follow module review/merge, and is intentionally not part of this task.
 The root copies recording assets so its own preview does not require new gitlinks.
+Root `git status --short` therefore reports eight modified submodules (`M`);
+this is expected HEAD-versus-gitlink divergence, not an entirely clean root.
+Each module can have a clean internal working tree while the root shows `M`.
 
 | Module | Original Zenith pin | Observed upstream | Published evidence | Documentation change |
 |---|---|---|---|---|
@@ -58,7 +61,7 @@ indefinitely. No recording calls an LLM or claims autonomous task completion.
 
 [Static alternative](demos/project-workspace.png)
 
-1100×720, 15.38 s, 2,193,821 bytes. Real project creation through the UI, verified
+1100×720, 15.51 s, 2,033,461 bytes. Real project creation through the UI, verified
 against Bamboo's API response. No task is submitted. Lotus source `1131c27` and
 Bamboo source `0256413`; not a published Bodhi or macOS/Windows acceptance run.
 The setup-complete marker was applied only to a fresh disposable server to allow
@@ -109,7 +112,7 @@ Scripts, fixture and nine-call MCP transcript: `nova/docs/demos/`.
 
 The user subsequently suggested release first and Homebrew updates. A concrete
 readiness review is included; public mutation was not undertaken because the
-original task explicitly prohibited it and expanded authorization remained pending.
+original task prohibited it and subsequent coordination explicitly kept release and Homebrew outside this work.
 The current tap matches observed releases; new source capability requires a real
 new release before new asset versions/hashes can be written and verified.
 
@@ -119,11 +122,17 @@ Full SHAs and unchanged original pins: [commits.json](commits.json).
 
 | Module | Documentation HEAD |
 |---|---|
-| bamboo | `8ce8a5046dc88d49d1bdfe88398aac55916ced0d` |
+| bamboo | `87263c032463e4783dc2253e4ad54bd1c1c610f9` |
 | bodhi | `363766d609bf9f7fd454231952a9786c1b8e32c0` |
-| bodhi-server | `1ca0c2beb7000136931055567036dd0b3379711d` |
-| lotus-next | `feb3c4dc97888c5ef7b721d3cb02bc2bac6d6b3b` |
-| nova | `57b8636c5137e4dec338a1a784bc2437ad8713d7` |
+| bodhi-server | `bd1cf2bafc7e12786e8fb350b88d27c9a88bd913` |
+| lotus-next | `5c7a952912c064286f64afbc5535508d48833cf4` |
+| nova | `799b1ee8278b4c404450fa1ea56c74a8186c9a4b` |
 | jiandu | `5a58cbb9f635c39e343aae179b86ef684b04eec3` |
 | magpie | `0b01b206c13d33a080fab1a7d862df10f115b35d` |
-| pavilion | `148d22e963c2ff9aa50b7bbc5c2035d265d4d66f` |
+| pavilion | `bb380223a51ad4fb35da2e23e9d2140717821615` |
+
+The project recording was replaced after isolation QA. The replacement uses separate
+fresh Bamboo and Jiandu roots; file-access tracing observed no default-root accesses.
+See `lotus-next/docs/demos/isolation-evidence.json` for the sanitized evidence.
+
+[Independent QA, resolved findings and exact recording scope](qa.md).
