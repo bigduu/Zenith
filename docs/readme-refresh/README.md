@@ -3,7 +3,7 @@
 Audited 2026-10-03. The task edits documentation and actual recording assets only.
 The isolated worktree is `/workspace/zenith-readme`, branch `docs/readme-refresh`.
 Original Zenith base: `f17d93372db51d7b81210e4e8227f31e8e6bde73`.
-No remote writes, release dispatches, pushes, PRs, merges or deployments occurred.
+During the initial local-only phase, no remote writes, release dispatches, pushes, PRs, merges or deployments occurred. The user subsequently authorized documentation publication; cloud handoff is limited to pushing these documentation branches and creating draft PRs. MacBook owns approved artwork integration, final QA and any later merge. No release or Homebrew operation is included.
 Supervisor #1481 and #791 source branches were not modified.
 
 ## All eight submodules

@@ -88,5 +88,9 @@ The only direct release-related user message received was:
 > 那可能要考虑先release 然后再更新README, homebrew 也要更新
 
 The coordinating follow-ups explicitly keep release/Homebrew/push/PR outside this
-work. No public mutation was performed; read-only readiness findings remain in
+work. No release or Homebrew mutation was performed; read-only readiness findings remain in
 `release-readiness.md`.
+
+A subsequent explicit authorization permits documentation branch pushes and draft
+PRs for MacBook handoff. This cloud task does not merge them or integrate feature
+branches; the prior no-public-write statement describes the initial local phase.
