@@ -1,44 +1,79 @@
-# Zenith
+# Bodhi — 跑在你电脑上的 AI Agent 工作台
 
-**本地 AI agent harness 套件：让 agent 带着工具、项目上下文和记忆，在浏览器或桌面中工作。**
+[English](./README.md) · [简体中文](./README.zh-CN.md)
 
-[English](./README.md) · [桌面版下载](https://github.com/bigduu/Bodhi-AI/releases) · [Bamboo 核心](https://github.com/bigduu/Bamboo-agent/blob/dev/README.zh-CN.md) · [源码与发布核对](./docs/readme-refresh/README.md)
+**交给它任务，看清每一步工具调用，记忆一直留着。** Bodhi 是基于 Rust 运行时的桌面
+agent：它用工具处理你的项目，高风险操作前先征求你的同意，每一步都实时展示出来。本仓库
+（内部代号 Zenith）是桌面应用、agent 运行时和配套 MCP 工具的总入口。
 
-Bamboo 是核心运行时；Lotus Next 提供网页界面；Bodhi 将这套体验装进桌面应用，并管理 Bamboo 进程。Nova 扩展电脑与浏览器工具，Jiandu 提供共享记忆，Magpie 连接受支持的即时通讯平台。按场景选择组件即可，本地运行不要求部署托管账号服务。
+[下载](https://github.com/bigduu/Bodhi-AI/releases/latest) · [Bamboo 运行时文档](https://github.com/bigduu/Bamboo-agent/blob/dev/README.zh-CN.md) · [MIT 开源](./LICENSE)
 
-“本地优先”指 harness 与状态可以留在本机。调用配置的远程模型、MCP 或即时通讯服务时，请求仍会离开本机。要获得 agent 回复，需要配置模型 provider。
+- **真干活，不只聊天**：Bamboo 运行时内置文件、命令行和网页工具，支持 Skills、MCP 服务、
+  子 agent、定时任务和工作流。
+- **模型自己选**：Anthropic、OpenAI（以及兼容 OpenAI 接口的服务）、Gemini 或 GitHub Copilot。
+- **记忆能和其他 agent 共享**：[简牍 Jiandu](https://github.com/bigduu/Jiandu/blob/main/README.zh-CN.md)
+  是本地 MCP 记忆服务（BM25 + 中文分词，不需要向量库），Claude Code、Codex、Cursor 也能接入。
+- **不止在终端里**：用 [Nova](https://github.com/bigduu/Nova/blob/master/README.zh-CN.md) 操作
+  macOS / Windows 原生应用；用 [Magpie 鹊](https://github.com/bigduu/Magpie/blob/main/README.zh-CN.md)
+  在飞书 / Lark 或 Telegram 里派活。
 
-## 从你的场景开始
+![Bodhi 打开的界面 Lotus Next 在 Bamboo 中创建项目，并为新任务选择工作区。](docs/readme-refresh/demos/project-workspace.gif)
 
-| 你想做什么 | 入口 |
-|---|---|
-| 直接试用桌面应用 | [Bodhi 下载与平台要求](https://github.com/bigduu/Bodhi-AI/blob/main/README.md) |
-| 启动 agent 服务，用浏览器操作 | [Bamboo 安装与快速开始](https://github.com/bigduu/Bamboo-agent/blob/dev/README.zh-CN.md) |
-| 开发网页交互体验 | [Lotus Next 开发配置](https://github.com/bigduu/lotus-next/blob/main/README.md) |
-| 让 agent 使用浏览器或桌面工具 | [Nova 安装与平台边界](https://github.com/bigduu/Nova/blob/master/README.md) |
-| 跨会话召回事实，无需 embedding 服务 | [Jiandu 记忆 MCP](https://github.com/bigduu/Jiandu/blob/main/README.md) |
-| 通过即时通讯平台连接 Bamboo | [Magpie 连接器与配置](https://github.com/bigduu/Magpie/blob/main/README.md) |
-| 运营账号、模型路由和配额服务 | [Bodhi Server](https://github.com/bigduu/bodhi-server/blob/main/README.md) |
-| 贡献官网和使用指南 | [Pavilion](https://github.com/bigduu/Pavilion/blob/main/README.zh-CN.md) |
+在浏览器中连接 Bamboo 源码录制，使用一次性的演示数据；只准备项目上下文，没有调用模型。
+[静态图片](docs/readme-refresh/demos/project-workspace.png) · [更多录屏](docs/readme-refresh/README.md#recordings)
 
-## 看源码实际运行
+## 开始使用
 
-![Lotus Next 在 Bamboo 中创建项目，并为新任务选择工作区。](docs/readme-refresh/demos/project-workspace.gif)
+**macOS（推荐用 Homebrew）：**
 
-[静态图片](docs/readme-refresh/demos/project-workspace.png) · [记忆与浏览器工具录屏](docs/readme-refresh/README.md#recordings)
+```sh
+brew tap bigduu/tap
+brew trust bigduu/tap
+brew install --cask bigduu/tap/bodhi
+```
 
-真实浏览器录屏，连接固定源码的 Bamboo 后端，使用独立演示数据准备项目上下文，
-没有调用模型。三段演示均展示源码能力，不表示最新桌面安装包已包含这些能力。
+`brew trust` 会信任这个 tap，包括它以后发布的包；这个 cask 还会一起安装简牍和 Nova 命令行工具。
+**Windows x64 / Linux x64 / macOS（手动）：**到 [Releases](https://github.com/bigduu/Bodhi-AI/releases/latest)
+下载安装包（`-setup.exe`、`.AppImage` / `.deb` / `.rpm`、`.dmg`）。
 
-## 源码检出不等于已发布版本
+装好后打开 **设置 → 提供方**，填入你能用的模型的 Key，然后试试：*“解释一下这个文件夹，再提一个小改进。”*
 
-模块链接打开上游文档，递归 clone 仍保留本仓库记录的源码 pin。Zenith 固定了八个源码仓库的提交。这里的 pin、上游开发分支和已发布二进制或包可能不同。各 README 说明当前源码并标注发布边界；安装时请按对应模块的发布说明操作。
+> 本地优先：运行时和数据都在你的电脑上；调用你配置的模型时，请求仍会发给对应的模型服务商。
+> macOS 版本暂未公证（Homebrew cask 会在本机重新签名；直接安装 `.dmg` 可以用
+> [自签脚本](https://github.com/bigduu/Bodhi-AI/blob/main/scripts/self-sign-macos-app.sh)），
+> Windows 安装包也没有签名。进度见 [Bodhi #75](https://github.com/bigduu/Bodhi-AI/issues/75)。
 
-2026-10-03 核对时，Bamboo 已发布 crate 为 `2026.9.20`，Bodhi 最新公开桌面 release 为 `app-v2026.9.20`，已接受的 Lotus Next 包为 `2026.9.22`。Nova release 为 `v0.2.1`，Jiandu 为 `v0.2.0`，两者的当前源码均有后续变更。发布配置中的版本号不代表发布已经成功。精确提交和限制见[核对记录与演示](./docs/readme-refresh/README.md)。
+## 只想用其中一个组件？
 
-## 本地试用源码
+| 我想… | 用这个 | 现在怎么装 |
+|---|---|---|
+| 让 Claude Desktop、Cursor、Codex 或 Claude Code 操作我 Mac / Windows 上的应用 | [Nova](https://github.com/bigduu/Nova/blob/master/README.zh-CN.md) | `brew install bigduu/tap/nova`（macOS），或下载 Windows zip |
+| 让多个编程 agent 共用一份记忆 | [简牍 Jiandu](https://github.com/bigduu/Jiandu/blob/main/README.zh-CN.md) | `brew install bigduu/tap/jiandu` 或 `cargo install jiandu-mcp --locked` |
+| 把 agent 循环嵌进自己的产品（HTTP/WS 或 Rust SDK） | [Bamboo](https://github.com/bigduu/Bamboo-agent/blob/dev/README.zh-CN.md) | `cargo install bamboo-agent` |
+| 在飞书 / Lark 或 Telegram 里给 agent 派活 | [Magpie 鹊](https://github.com/bigduu/Magpie/blob/main/README.zh-CN.md) | 从 [Releases](https://github.com/bigduu/Magpie/releases/latest) 安装 Bamboo 插件 |
+| 开发网页界面 | [Lotus Next](https://github.com/bigduu/lotus-next/blob/main/README.zh-CN.md) | 从源码 |
+| 为团队提供账号、模型路由和配额（可选） | [Bodhi Server](https://github.com/bigduu/bodhi-server/blob/main/README.zh-CN.md) | 从源码 / Docker |
+| 贡献官网和使用指南 | [Pavilion](https://github.com/bigduu/Pavilion/blob/main/README.zh-CN.md) | 从源码 |
 
-安装已打包产品请使用上方各模块入口。开发当前固定源码：
+## 开发者
+
+以下内容面向参与源码开发的人。Bamboo 是核心运行时；Lotus Next 是它的网页界面；Bodhi 把这套
+体验装进桌面应用，并管理 Bamboo 进程。Nova 提供电脑和浏览器工具，简牍提供共享记忆，Magpie 连接
+即时通讯平台。托管账号服务（Bodhi Server）是可选的。
+
+### 已发布版本与当前源码
+
+模块链接打开上游文档，递归 clone 仍保留本仓库记录的源码 pin。本仓库固定了八个源码仓库的提交。
+这些 pin、上游开发分支和已发布的二进制或包可能不同。
+
+截至 2026-10-04 的最新发布版本：Bodhi `app-v2026.9.20`、Bamboo crate `2026.9.20`、Nova `v0.2.1`、
+简牍 `v0.2.0`、Magpie `v0.1.1`。Nova `0.3.0`、简牍 `0.3.0` 和 Magpie `0.1.2` 只是已经合并到各自
+默认分支的版本号变更，还没有发布。依赖某个功能之前，请先查看对应模块的 Releases 页面。发布配置中的
+版本号不代表发布已经成功。精确提交和限制见[核对记录与演示](./docs/readme-refresh/README.md)。
+
+### 本地试用源码
+
+安装已打包产品请看[开始使用](#开始使用)。开发当前固定源码：
 
 ```bash
 git clone --recursive https://github.com/bigduu/Zenith.git
@@ -76,7 +111,7 @@ npm run tauri:dev
 
 该命令构建本地 Bamboo sidecar 并启动前端 HMR，需要受支持的图形桌面与原生编译依赖。无界面 Linux 的浏览器验证不代表 macOS 或 Windows 桌面验证。
 
-## 组件如何协作
+### 组件如何协作
 
 ```mermaid
 graph LR
@@ -94,7 +129,7 @@ graph LR
 
 Nova 的原生能力取决于操作系统和权限，源码中的浏览器启动器与原生桌面 API 是不同路径。Jiandu 负责记忆持久化和词法检索；宿主决定保存什么、何时生成 Dream 快照。Magpie 的真实消息收发需要另行配置平台凭据。
 
-## 贡献与发布协调
+### 贡献与发布协调
 
 Zenith 维护文档、八个 gitlink 和发布列车，功能代码位于各模块。请使用隔离分支并遵循 [AGENTS.md](./AGENTS.md)。`git submodule status` 可查看检出提交，初始化会遵守已记录的 pin。更新 pin 是单独审核的改动，不是试用当前源码的前置步骤。
 
