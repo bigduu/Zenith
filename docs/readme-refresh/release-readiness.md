@@ -16,7 +16,7 @@ Evidence: `git ls-tree HEAD bamboo bodhi lotus-next`, read-only `git ls-remote` 
 
 `node --test scripts/release-train-policy.test.cjs` passed **10/10**. Running the policy CLI `resolve` also succeeded. Those establish that the configuration is structurally accepted, not that live source/artifact gates pass. The mismatches above would fail the workflow's exact-source step.
 
-Configured downstream version is `2026.10.4`. Configured frontend is `@bigduu/lotus-next@2026.9.22`, with one fixed rollback `@bigduu/lotus@2026.8.28`. This review has not downloaded and verified both npm tarballs, confirmed whether downstream version `2026.10.4` is already published, run platform release builds, or checked signing availability. Do not change recorded hashes to accommodate different bytes or reuse a published version. `resume=true` is for the same exact partial train, not a newer source under an old version.
+Configured downstream version is `2026.10.4`. Configured frontend is `@bigduu/lotus-next@2026.9.22`, with one fixed rollback `@bigduu/lotus@2026.8.28`. Fresh registry downloads of both exact npm packages passed the repository’s `verify-tarball` and `verify-package` checks on 2026-10-04: committed SHA-1/SHA-512 match, and Lotus Next’s full manifest plus all 37 resources verify. This review has not confirmed whether downstream version `2026.10.4` is already published, run platform release builds, or checked signing availability. Do not change recorded hashes to accommodate different bytes or reuse a published version. `resume=true` is for the same exact partial train, not a newer source under an old version.
 
 ## Homebrew snapshot and update ownership
 
