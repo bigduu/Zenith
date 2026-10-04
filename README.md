@@ -1,45 +1,91 @@
-# Zenith
+# Bodhi — your local-first AI agent workbench
 
-**A local AI agent harness toolkit: run agents with tools, project context and memory, in your browser or on your desktop.**
+[English](./README.md) · [简体中文](./README.zh-CN.md)
 
-[简体中文](./README.zh-CN.md) · [Desktop downloads](https://github.com/bigduu/Bodhi-AI/releases) · [Bamboo runtime](https://github.com/bigduu/Bamboo-agent/blob/dev/README.md) · [Source and release audit](./docs/readme-refresh/README.md)
+**Hand it a task. Watch every tool call. Keep the memory.** Bodhi is a desktop
+agent built on a Rust runtime: it works on your projects with tools, asks before
+risky actions and shows each step as it happens. This repository (codename
+Zenith) is the index for the desktop app, the agent runtime and its MCP tools.
 
-Bamboo is the core runtime. Lotus Next is its web interface; Bodhi wraps that experience in a desktop application and manages the Bamboo process. Nova adds computer and browser tools, Jiandu provides shared memory, and Magpie connects supported messaging platforms. Choose the pieces you need; the hosted account service is optional.
+[Download](https://github.com/bigduu/Bodhi-AI/releases/latest) · [Bamboo runtime docs](https://github.com/bigduu/Bamboo-agent/blob/dev/README.md) · [MIT](./LICENSE)
 
-Local-first means you can run the harness and keep its state on your machine. Requests to a configured remote model, MCP server or messaging service still leave that machine. A model provider must be configured for agent responses.
+- **Does the work, not just chat:** the Bamboo runtime has file, shell and web
+  tools, skills, MCP servers, sub-agents, cron schedules and workflows.
+- **Your choice of model:** Anthropic, OpenAI (and OpenAI-compatible endpoints),
+  Gemini or GitHub Copilot.
+- **Memory your other agents can share:** [Jiandu](https://github.com/bigduu/Jiandu)
+  is a local MCP memory server (BM25 + CJK, no embeddings) that Claude Code,
+  Codex and Cursor can use too.
+- **Reaches beyond the terminal:** drive native macOS/Windows apps with
+  [Nova](https://github.com/bigduu/Nova); send tasks from Feishu/Lark or Telegram
+  with [Magpie](https://github.com/bigduu/Magpie).
 
-## Choose your starting point
+![Lotus Next, the interface Bodhi opens, creates a project in Bamboo and selects its workspace for a new task.](docs/readme-refresh/demos/project-workspace.gif)
 
-| You want to… | Start here |
-|---|---|
-| Try the desktop app | [Bodhi downloads and platform requirements](https://github.com/bigduu/Bodhi-AI/blob/main/README.md) |
-| Run an agent service and open it in a browser | [Bamboo installation and quick start](https://github.com/bigduu/Bamboo-agent/blob/dev/README.md) |
-| Work on the web experience | [Lotus Next development setup](https://github.com/bigduu/lotus-next/blob/main/README.md) |
-| Let an agent use browser or desktop tools | [Nova: installation and platform boundaries](https://github.com/bigduu/Nova/blob/master/README.md) |
-| Recall facts across sessions without an embedding service | [Jiandu: memory MCP](https://github.com/bigduu/Jiandu/blob/main/README.md) |
-| Reach Bamboo through messaging platforms | [Magpie: connectors and configuration](https://github.com/bigduu/Magpie/blob/main/README.md) |
-| Operate account, routing and quota services | [Bodhi Server](https://github.com/bigduu/bodhi-server/blob/main/README.md) |
-| Contribute to the public website and guides | [Pavilion](https://github.com/bigduu/Pavilion/blob/main/README.md) |
+Recorded in a browser against Bamboo source with disposable demo data; it
+prepares project context without calling a model. [Static image](docs/readme-refresh/demos/project-workspace.png) · [More recordings](docs/readme-refresh/README.md#recordings)
 
-## Watch the source in use
+## Get started
 
-![Lotus Next creates a project in Bamboo and selects its workspace for a new task.](docs/readme-refresh/demos/project-workspace.gif)
+**macOS (Homebrew, recommended):**
 
-[Static image](docs/readme-refresh/demos/project-workspace.png) · [Memory and browser-tool recordings](docs/readme-refresh/README.md#recordings)
+```sh
+brew tap bigduu/tap
+brew trust bigduu/tap
+brew install --cask bigduu/tap/bodhi
+```
 
-Real browser recording against the pinned Bamboo source, using disposable demo
-data. It prepares project context without calling a model. All three recordings
-show source capabilities; they are not claims about the latest desktop installer.
+`brew trust` trusts this tap, including its future packages; the cask also
+installs the Jiandu and Nova command-line tools. **Windows x64 / Linux x64 /
+macOS (manual):** download the installer (`-setup.exe`, `.AppImage` / `.deb` /
+`.rpm`, `.dmg`) from [Releases](https://github.com/bigduu/Bodhi-AI/releases/latest).
 
-## Source checkout is not a released product version
+Then open **Settings → Provider** (shown as **设置 → 提供方** in the current release, whose settings screen is not translated yet), add a key for a model you can use, and try:
+*"Explain this folder, then suggest one small improvement."*
 
-Module links open the upstream documentation; recursive clones retain the source pins recorded here. This repository pins eight source repositories. Those pins, upstream development branches and published binaries/packages can differ. The READMEs describe the checked-out source and call out release boundaries; consult each module's release instructions before installing.
+> Local-first: the runtime and your data stay on your machine; requests to the
+> model provider you configure still go to that provider. macOS builds are not
+> notarized yet (the Homebrew cask re-signs the app locally; direct `.dmg`
+> installs can use the [self-sign script](https://github.com/bigduu/Bodhi-AI/blob/main/scripts/self-sign-macos-app.sh)),
+> and the Windows installer is unsigned. See [Bodhi #75](https://github.com/bigduu/Bodhi-AI/issues/75).
 
-In the 2026-10-03 audit, Bamboo's published crate was `2026.9.20`, Bodhi's latest public desktop release was `app-v2026.9.20`, and the accepted Lotus Next package was `2026.9.22`. Nova's release was `v0.2.1` and Jiandu's `v0.2.0`; their checked-out source contains additional work. A release-train configuration value is not evidence that its release finished. See the [audit and demonstrations](./docs/readme-refresh/README.md) for exact revisions and limitations.
+## Just want one piece?
 
-## Try the source locally
+| I want to… | Use | Install today |
+|---|---|---|
+| Let Claude Desktop, Cursor, Codex or Claude Code use my Mac or Windows apps | [Nova](https://github.com/bigduu/Nova/blob/master/README.md) | `brew install bigduu/tap/nova` (macOS) or the Windows zip |
+| Give my coding agents one shared memory | [Jiandu](https://github.com/bigduu/Jiandu/blob/main/README.md) | `brew install bigduu/tap/jiandu` or `cargo install jiandu-mcp --locked` |
+| Embed an agent loop in my own app (HTTP/WS or Rust SDK) | [Bamboo](https://github.com/bigduu/Bamboo-agent/blob/dev/README.md) | `cargo install bamboo-agent` |
+| Send tasks from Feishu/Lark or Telegram | [Magpie](https://github.com/bigduu/Magpie/blob/main/README.md) | Bamboo plugin from [Releases](https://github.com/bigduu/Magpie/releases/latest) |
+| Work on the web interface | [Lotus Next](https://github.com/bigduu/lotus-next/blob/main/README.md) | From source |
+| Run accounts, routing and quotas for a team (optional) | [Bodhi Server](https://github.com/bigduu/bodhi-server/blob/main/README.md) | From source / Docker |
+| Contribute to the website and guides | [Pavilion](https://github.com/bigduu/Pavilion/blob/main/README.md) | From source |
 
-For a packaged installation, use the module links above. To develop the pinned source:
+## For contributors
+
+The sections below are for developers working on the source. Bamboo is the core
+runtime; Lotus Next is its web interface; Bodhi wraps that experience in a
+desktop application and manages the Bamboo process. Nova adds computer and
+browser tools, Jiandu provides shared memory, and Magpie connects messaging
+platforms. The hosted account service (Bodhi Server) is optional.
+
+### Releases versus this checkout
+
+Module links open the upstream documentation; recursive clones retain the source
+pins recorded here. This repository pins eight source repositories. Those pins,
+upstream development branches and published binaries/packages can differ.
+
+Latest published releases as of 2026-10-04: Bodhi `app-v2026.9.20`, Bamboo crate
+`2026.9.20`, Nova `v0.2.1`, Jiandu `v0.2.0` and Magpie `v0.1.1`. Nova `0.3.0`,
+Jiandu `0.3.0` and Magpie `0.1.2` are version bumps merged on their default
+branches and not yet released. Check each module's Releases page before relying
+on a feature. A release-train configuration value is not evidence that its
+release finished. See the [audit and demonstrations](./docs/readme-refresh/README.md)
+for exact revisions and limitations.
+
+### Try the source locally
+
+For a packaged installation, use [Get started](#get-started). To develop the pinned source:
 
 ```bash
 git clone --recursive https://github.com/bigduu/Zenith.git
@@ -77,7 +123,7 @@ npm run tauri:dev
 
 This command builds the local Bamboo sidecar and starts frontend HMR. It needs a supported graphical desktop and native build dependencies. Headless Linux browser verification is not verification of the macOS or Windows desktop app.
 
-## How the pieces fit
+### How the pieces fit
 
 ```mermaid
 graph LR
@@ -95,7 +141,7 @@ Packaged Bamboo and Bodhi builds consume a verified, locked Lotus Next artifact.
 
 Nova's native capabilities depend on the operating system and granted permissions. Its source browser launcher and native desktop API are separate paths. Jiandu owns memory persistence and lexical recall; the host decides what to remember and when to generate Dream snapshots. Magpie needs separate platform credentials for live messaging.
 
-## Contributing and release coordination
+### Contributing and release coordination
 
 Zenith owns documentation, eight gitlinks and the release train; feature code lives in the modules. Use isolated branches and follow [AGENTS.md](./AGENTS.md). `git submodule status` shows the checked-out revisions; initialization preserves the recorded pins. Updating them is a separate reviewed change, not a prerequisite for trying this checkout.
 
