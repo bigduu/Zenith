@@ -232,3 +232,8 @@ git push
 ---
 
 Only clicking one link? Open **[Bodhi AI](https://github.com/bigduu/Bodhi-AI)**. Want the why? Read the **[Zenith Architecture Overview](https://github.com/bigduu/Pavilion/blob/main/articles/zenith-architecture-overview.md)**.
+
+## License
+
+Project-owned code and documentation are licensed under the [MIT License](./LICENSE).
+Third-party components retain their respective licenses and copyright notices.
