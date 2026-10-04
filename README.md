@@ -105,3 +105,8 @@ The [release configuration](./.github/release-train.config.json) selects exact B
 - [Bamboo architecture](https://github.com/bigduu/Bamboo-agent/blob/dev/docs/design/architecture-overview.md)
 - [Pavilion architecture overview](https://github.com/bigduu/Pavilion/blob/main/articles/zenith-architecture-overview.md)
 - [Documentation audit, recordings and known limitations](./docs/readme-refresh/README.md)
+
+## License
+
+Project-owned code and documentation are licensed under the [MIT License](./LICENSE).
+Third-party components retain their respective licenses and copyright notices.

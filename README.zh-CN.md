@@ -104,3 +104,7 @@ Zenith 维护文档、八个 gitlink 和发布列车，功能代码位于各模�
 - [Bamboo 架构](https://github.com/bigduu/Bamboo-agent/blob/dev/docs/design/architecture-overview.md)
 - [Pavilion 架构总览](https://github.com/bigduu/Pavilion/blob/main/articles/zenith-architecture-overview.md)
 - [文档核对、录屏与已知限制](./docs/readme-refresh/README.md)
+
+## 许可证
+
+项目自有代码和文档采用 [MIT 许可证](./LICENSE)。第三方组件保留各自的许可证和版权声明。
