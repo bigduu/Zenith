@@ -102,8 +102,14 @@ Backlog → Triaged → Ready → In Progress → In Review → Done
 
 ### 2. Parallel Constraints
 
-- Same module: max 2 agents simultaneously (e.g. one feature + one fix).
-- `scope:cross-module` tasks: serialize — wait until all involved modules are free.
+- There is no fixed per-module agent limit. Independent acceptance slices may
+  proceed in parallel, including within the same module or across modules.
+- Coordinate by explicit file and contract ownership. Serialize overlapping
+  edits or changes to the same persistence, recovery, lifecycle, or authority
+  boundary; a busy module alone does not block unrelated work.
+- Coordinate shared manifests and lockfiles before integration. Recheck the
+  current base, resolve conflicts in an isolated worktree, and refresh affected
+  tests and review evidence for the combined changes.
 - Always work in an isolated worktree: `git worktree add` or equivalent.
 
 ### 2.1 Scope Control and Issue Splitting
