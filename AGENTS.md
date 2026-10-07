@@ -270,5 +270,5 @@ Use this checklist for every release train. Bodhi releases use `Zenith -> releas
 
 8. Verify independent publication and Homebrew delivery:
    - For Bamboo main publication, verify the successful main CI SHA, published crate provenance, and the GitHub Release's exact source identity. A workflow merged only to `dev` is not yet active on `main`; do not promote unrelated development solely to enable it.
-   - The Bodhi tap updater follows the latest final stable Bodhi release. It verifies both architecture-specific DMG digests and runs the ARM64 and Intel Homebrew gates against the candidate commit before merging its cask update PR.
-   - A successful tap no-op means its cask already matches the latest published stable release. It does not mean newer Bodhi source has been released or that installed applications have upgraded; users still run `brew update` and `brew upgrade --cask bigduu/tap/bodhi`.
+   - The tap updater follows the latest final stable releases of Bodhi, Jiandu, and Nova. It verifies both Bodhi DMG digests, Jiandu's tagged source archive, and Nova's universal CLI archive, then runs the ARM64 and Intel Homebrew gates against the candidate commit before merging its update PR.
+   - A successful tap no-op means all three definitions already match their latest published stable releases. It does not mean newer source has been released or that installed packages have upgraded; users still run `brew update`, `brew upgrade bigduu/tap/jiandu bigduu/tap/nova`, and `brew upgrade --cask bigduu/tap/bodhi`.
