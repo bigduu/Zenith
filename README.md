@@ -145,7 +145,9 @@ Nova's native capabilities depend on the operating system and granted permission
 
 Zenith owns documentation, eight gitlinks and the release train; feature code lives in the modules. Use isolated branches and follow [AGENTS.md](./AGENTS.md). `git submodule status` shows the checked-out revisions; initialization preserves the recorded pins. Updating them is a separate reviewed change, not a prerequisite for trying this checkout.
 
-The [release configuration](./.github/release-train.config.json) selects exact Bamboo/Bodhi revisions and the frontend artifact identity. The [release train](./.github/workflows/release-train.yml) verifies those inputs before publishing Bamboo and then Bodhi. Lotus Next publication is a separate producer step. Configuration and workflow presence do not guarantee a successful build or release; consult run results and published artifacts.
+The [release configuration](./.github/release-train.config.json) selects exact Bamboo/Bodhi revisions and the frontend artifact identity. The [release train](./.github/workflows/release-train.yml) verifies those inputs before publishing Bamboo and then Bodhi. Bodhi continues to use this train. Bamboo also has an independent publication path for each successful main CI commit, publishing to crates.io and GitHub Releases once its automation reaches main through the normal dev promotion. Lotus Next publication remains a separate producer step. Configuration and workflow presence do not guarantee a successful build or release; consult run results and published artifacts.
+
+The [Homebrew tap](https://github.com/bigduu/homebrew-tap) follows the verified stable releases of Bodhi, Jiandu, and Nova through an update PR checked on ARM64 and Intel macOS. Run `brew update`, then `brew upgrade bigduu/tap/jiandu bigduu/tap/nova` and `brew upgrade --cask bigduu/tap/bodhi` to upgrade installed packages; newer source code alone does not advance the tap.
 
 - [Release playbook](./AGENTS.md#release-playbook)
 - [Bamboo architecture](https://github.com/bigduu/Bamboo-agent/blob/dev/docs/design/architecture-overview.md)

@@ -219,12 +219,12 @@ See `.github/labels.tsv` for the full label taxonomy. Key labels:
 Examples: `[lotus-next] feat: add conversation export`, `[bamboo] fix: streaming timeout`
 
 ## Release Playbook
-Use this checklist for every release train. The only normal release entrypoint is `Zenith -> release-train.yml`.
+Use this checklist for every release train. Bodhi releases use `Zenith -> release-train.yml`. Bamboo also has an independent main publication path: successful CI for each main push publishes the exact tested source to crates.io and records it in a GitHub Release. Bamboo implementation PRs still target `dev`; the automation becomes active when it reaches `main` through the normal promotion flow.
 
 1. Land release changes through each repository's protected pull-request flow:
    - Use isolated branches/worktrees and Conventional Commits; never push feature or release-preparation commits directly to `main`.
    - Lotus Next publication is a separate protected producer step. Accept its exact npm identity in Bamboo and Bodhi first, then pin the resulting source commits and artifact identity in a focused Zenith PR.
-   - Bamboo feature PRs target `dev`. Release only the exact Bamboo and Bodhi revisions recorded in `.github/release-train.config.json` and pinned by the matching Zenith gitlinks.
+   - Bamboo feature PRs target `dev`. For train-controlled releases, release only the exact Bamboo and Bodhi revisions recorded in `.github/release-train.config.json` and pinned by the matching Zenith gitlinks. Independent Bamboo main releases use the exact successful main CI commit and its committed frontend identity; they do not advance Zenith's accepted Bodhi inputs.
    - If Zenith submodule pointers or release configuration change, update them in a focused Zenith PR after the submodule commits are merged.
 
 2. Run release gates against the exact candidate refs:
@@ -240,6 +240,7 @@ Use this checklist for every release train. The only normal release entrypoint i
    - The frontend version is not derived from the downstream release number. The train downloads the exact committed npm package/version and verifies its tarball plus, for Lotus Next, its full universal manifest before dispatch.
    - For a config-driven release, update `.github/release-train.config.json` through a focused Zenith PR or let the nightly workflow advance it.
    - For an ad-hoc release, pass an unused `release_version`; do not edit submodule manifests or the committed frontend identity.
+   - Independent Bamboo publication allocates an unused version under the same Bamboo publication lock as manual/train dispatches. Retries must verify the recorded source and frontend identity before resuming an existing version; version existence alone is not proof of the same release.
 
 4. Trigger the release train:
    - Config-driven full train: `gh workflow run release-train.yml -R bigduu/Zenith --ref main`.
@@ -266,3 +267,8 @@ Use this checklist for every release train. The only normal release entrypoint i
    - Verify the configured frontend package/version still reports the committed npm shasum and integrity.
    - `cargo search bamboo-agent --limit 1` (confirm expected version is published)
    - `gh release view app-v<version> -R bigduu/Bodhi-AI`
+
+8. Verify independent publication and Homebrew delivery:
+   - For Bamboo main publication, verify the successful main CI SHA, published crate provenance, and the GitHub Release's exact source identity. A workflow merged only to `dev` is not yet active on `main`; do not promote unrelated development solely to enable it.
+   - The tap updater follows the latest final stable releases of Bodhi, Jiandu, and Nova. It verifies both Bodhi DMG digests, Jiandu's tagged source archive, and Nova's universal CLI archive, then runs the ARM64 and Intel Homebrew gates against the candidate commit before merging its update PR.
+   - A successful tap no-op means all three definitions already match their latest published stable releases. It does not mean newer source has been released or that installed packages have upgraded; users still run `brew update`, `brew upgrade bigduu/tap/jiandu bigduu/tap/nova`, and `brew upgrade --cask bigduu/tap/bodhi`.
