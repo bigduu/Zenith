@@ -133,6 +133,28 @@ test("rejects malformed or mismatched release authority", () => {
   assert.throws(() => validateConfig(badIntegrity), /canonical SHA-512/)
 })
 
+test("requires an immutable annotated tag object and publication receipt authority", () => {
+  const tagged = clone(readConfig(configPath))
+  tagged.sources.bamboo.ref = "refs/tags/bamboo-bodhi-source-2026.10.8"
+  assert.throws(() => validateConfig(tagged), /Git object ID/)
+  tagged.sources.bamboo.tagObjectSha = "1".repeat(40)
+  assert.doesNotThrow(() => validateConfig(tagged))
+  tagged.sources.bamboo.ref = "dev"
+  assert.throws(() => validateConfig(tagged), /requires an annotated tag/)
+
+  const frontend = clone(readConfig(configPath))
+  frontend.frontend.lotusNext.ref = "refs/tags/lotus-next-v" + frontend.frontend.lotusNext.packageVersion
+  assert.throws(() => validateConfig(frontend))
+  frontend.frontend.lotusNext.publication = {
+    workflowRef: "bigduu/lotus-next/.github/workflows/publish-npm.yml@refs/heads/main",
+    workflowRevision: "2".repeat(40), runId: 123, runAttempt: 1,
+    tagObjectSha: "3".repeat(40), sourceReceiptSha256: "4".repeat(64), workflowEvidenceSha256: "5".repeat(64),
+  }
+  assert.doesNotThrow(() => validateConfig(frontend))
+  frontend.frontend.lotusNext.publication.workflowRef = "bigduu/lotus-next/.github/workflows/publish-npm.yml@refs/heads/dev"
+  assert.throws(() => validateConfig(frontend))
+})
+
 test("rejects moving versions, unknown targets, and uncommitted package choices", () => {
   const config = readConfig(configPath)
   assert.throws(
