@@ -12,6 +12,10 @@ on:
       - "scripts/release-train-policy.test.cjs"
       - "scripts/release-publication.cjs"
       - "scripts/release-publication.test.cjs"
+      - "scripts/finalize-bodhi-release.cjs"
+      - "scripts/finalize-bodhi-release.test.cjs"
+      - ".github/workflows/recover-bodhi-release.yml"
+      - ".github/bodhi-original-draft-2026.10.9.json"
       - ".github/accepted-frontend-publication.json"
       - ".github/accepted-frontend-workflow.json"
   pull_request:
@@ -26,6 +30,10 @@ on:
       - "scripts/release-train-policy.test.cjs"
       - "scripts/release-publication.cjs"
       - "scripts/release-publication.test.cjs"
+      - "scripts/finalize-bodhi-release.cjs"
+      - "scripts/finalize-bodhi-release.test.cjs"
+      - ".github/workflows/recover-bodhi-release.yml"
+      - ".github/bodhi-original-draft-2026.10.9.json"
       - ".github/accepted-frontend-publication.json"
       - ".github/accepted-frontend-workflow.json"
 
@@ -51,7 +59,7 @@ jobs:
           package-manager-cache: false
 
       - name: Run focused policy tests
-        run: node --test scripts/release-train-policy.test.cjs scripts/release-publication.test.cjs
+        run: node --test scripts/release-train-policy.test.cjs scripts/release-publication.test.cjs scripts/finalize-bodhi-release.test.cjs
 
       - name: Validate workflow syntax
         shell: bash
@@ -71,7 +79,8 @@ jobs:
             .github/workflows/release-policy.yml \
             .github/workflows/release-train.yml \
             .github/workflows/nightly-release.yml \
-            .github/workflows/submodule-guard.yml
+            .github/workflows/submodule-guard.yml \
+            .github/workflows/recover-bodhi-release.yml
 
       - name: Verify accepted root and downstream source revisions
         shell: bash

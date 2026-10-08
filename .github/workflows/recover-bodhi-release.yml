@@ -1,0 +1,29 @@
+name: Finalize original Bodhi 2026.10.9 draft
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bodhi-finalization-2026.10.9
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    name: Publish original verified Bodhi draft
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Verify and publish the original build without rebuilding
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_ORCHESTRATOR_TOKEN }}
+        run: |
+          node scripts/finalize-bodhi-release.cjs .github/release-train.config.json \
+            37840013631 1 407268193 publish \
+            .github/bodhi-original-draft-2026.10.9.json

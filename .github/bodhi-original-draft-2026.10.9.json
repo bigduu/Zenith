@@ -1,0 +1,63 @@
+{
+  "id": 407268193,
+  "tag_name": "bodhi-draft-v2026.10.9-37840013631-1",
+  "target_commitish": "571a6a9b716e6fd6967ed64db0c054f864f4b6aa",
+  "assets": [
+    {
+      "id": 623024391,
+      "name": "Bodhi.AI-2026.10.9-1.x86_64.rpm",
+      "size": 228198194,
+      "digest": "sha256:96b7bfcf9c6964882779d26c314854d0d6cde9d9135e3fa32db0ca685ad265db",
+      "state": "uploaded"
+    },
+    {
+      "id": 623296523,
+      "name": "Bodhi.AI_2026.10.9_aarch64.dmg",
+      "size": 196098734,
+      "digest": "sha256:09a1a474b26b7852c0dc7b7ebec822cd74eebc635d0d9670143b2d5d7f0cabb5",
+      "state": "uploaded"
+    },
+    {
+      "id": 623024799,
+      "name": "Bodhi.AI_2026.10.9_amd64.AppImage",
+      "size": 285342200,
+      "digest": "sha256:d879f0eb93075c34a7729f21a094567083d4bdc2bbf56c7559468a1b6ffd600e",
+      "state": "uploaded"
+    },
+    {
+      "id": 623024019,
+      "name": "Bodhi.AI_2026.10.9_amd64.deb",
+      "size": 228224420,
+      "digest": "sha256:549424d0706eb440a9a6bd6ef877af8d427a893fd07d3519d0b5d0941a6f3567",
+      "state": "uploaded"
+    },
+    {
+      "id": 623072095,
+      "name": "Bodhi.AI_2026.10.9_x64-setup.exe",
+      "size": 156842313,
+      "digest": "sha256:f9d2ea8e10bcab432657ea7ab6e35b78a5c5aa3de3a81bde47f03bb50d9f7b80",
+      "state": "uploaded"
+    },
+    {
+      "id": 623159584,
+      "name": "Bodhi.AI_2026.10.9_x64.dmg",
+      "size": 209709692,
+      "digest": "sha256:beed837f1b3b0ea27f4791a280f4e98a588a8015b783a2e3dc543f126dc2314a",
+      "state": "uploaded"
+    },
+    {
+      "id": 623296809,
+      "name": "Bodhi.AI_aarch64.app.tar.gz",
+      "size": 194244460,
+      "digest": "sha256:3636cd77bdcc72c904bf6ea7a1cdb3681a16f5a869740023938f2f4e2edcdbec",
+      "state": "uploaded"
+    },
+    {
+      "id": 623159915,
+      "name": "Bodhi.AI_x64.app.tar.gz",
+      "size": 208122199,
+      "digest": "sha256:4b698ccc33a5de90ad70fdadecafbdab391b73d42fa64463f2197c198fbf1956",
+      "state": "uploaded"
+    }
+  ]
+}
