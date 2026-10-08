@@ -4,39 +4,50 @@
     "bamboo": {
       "repository": "bigduu/Bamboo-agent",
       "workflow": "publish-crate.yml",
-      "ref": "dev",
-      "revision": "d0e4dd8c56dba13977df18ab713c729a5882ac54",
-      "rootPath": "bamboo"
+      "ref": "refs/tags/bamboo-bodhi-source-2026.10.9",
+      "revision": "16e98d94cd971b7341dbd82110dd056497090d26",
+      "rootPath": "bamboo",
+      "tagObjectSha": "62b59ae2b878d2f9e666167483a5103929348e25"
     },
     "bodhi": {
       "repository": "bigduu/Bodhi-AI",
       "workflow": "release.yml",
-      "ref": "main",
-      "revision": "6d850368c6fe83bea85c70aea7d8426ee5575321",
-      "rootPath": "bodhi"
+      "ref": "refs/tags/bodhi-source-2026.10.9",
+      "revision": "571a6a9b716e6fd6967ed64db0c054f864f4b6aa",
+      "rootPath": "bodhi",
+      "tagObjectSha": "41bd30938936c6f3c894d89172664bbdf089b031"
     }
   },
   "versions": {
-    "release": "2026.10.8",
-    "bamboo": "2026.10.8",
-    "bodhi": "2026.10.8"
+    "release": "2026.10.9",
+    "bamboo": "2026.10.9",
+    "bodhi": "2026.10.9"
   },
   "frontend": {
     "defaultPackage": "@bigduu/lotus-next",
     "lotusNext": {
       "repository": "bigduu/lotus-next",
-      "ref": "main",
+      "ref": "refs/tags/lotus-next-v2026.10.8",
       "rootPath": "lotus-next",
       "manifestSchemaVersion": 1,
       "packageName": "@bigduu/lotus-next",
-      "packageVersion": "2026.9.22",
-      "sourceRevision": "a480e2bb94f5dd08fe4b01b2f8844a2c9ed03245",
+      "packageVersion": "2026.10.8",
+      "sourceRevision": "5242eaf1d6e8cd8d437e8a4dcb82c63d00af82f1",
       "sourceDirty": false,
       "entrypoint": "index.html",
-      "resourcesSha256": "91d7c30fb0fc9b3a4d811f3099eeed7fb888315f03678a3a388e4a921bccf3d6",
-      "manifestSha256": "f378495a43d386715fcf17e2919fb40588af3f5df83b576f422b6da5df34bf0b",
-      "npmShasum": "12e99c8871a9e5f80ae5c808a9f38b0b28d00b24",
-      "npmIntegrity": "sha512-i2AfrIoh6KjvzXZY4JTZAGYLj58Jj1Oz4GWXLwUyHSeOq56D0yvVRLipYTIQevRB5TAzX1352glnMDxNf/17qg=="
+      "resourcesSha256": "813c2249f30d57acb0bdf2e9edbf1d9d4e6e5c565fbadd11e7e0e37532868f77",
+      "manifestSha256": "e5a8f6e10dbfa1425e9443f6558866ebb6484b7bef1f971ddba9fda3b96355b6",
+      "npmShasum": "b9ebf25ed90ff1452ae27ba6ff598bca9a63865b",
+      "npmIntegrity": "sha512-gEvUf5oNtDlSnveiHA5ysD/tHBCqKig9EVUUyniTezWXlz+XNGWMCYqCy2P+5Y6xd6T3J7henh7rAAwL97ha+w==",
+      "publication": {
+        "workflowRef": "bigduu/lotus-next/.github/workflows/publish-npm.yml@refs/heads/main",
+        "workflowRevision": "0730499f9e87cfcf818eec67557409b4ba4f7ba3",
+        "runId": 37781330129,
+        "runAttempt": 1,
+        "workflowEvidenceSha256": "3451b78d63dc70bd86dcfc06cdeae09d21b4a2116a8bb070c8a3018c290f1c8a",
+        "tagObjectSha": "4d0e2ec1780efea0798dc4f8ef55e528ffc32b38",
+        "sourceReceiptSha256": "7b005d00b6b17ad1bac13903cea0e300eee9ecc7718b5c83da9beb4dea4a5e2e"
+      }
     },
     "legacyRollback": {
       "packageName": "@bigduu/lotus",

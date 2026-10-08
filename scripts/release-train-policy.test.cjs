@@ -37,24 +37,20 @@ const digest = (algorithm, value, encoding) =>
 test("accepts the committed release authority and fixed identities", () => {
   const config = readConfig(configPath)
   assert.equal(config.schemaVersion, 2)
-  assert.equal(config.sources.bamboo.ref, "dev")
-  assert.equal(
-    config.sources.bamboo.revision,
-    "d0e4dd8c56dba13977df18ab713c729a5882ac54",
-  )
-  assert.equal(config.sources.bodhi.ref, "main")
-  assert.equal(
-    config.sources.bodhi.revision,
-    "6d850368c6fe83bea85c70aea7d8426ee5575321",
-  )
+  assert.equal(config.sources.bamboo.ref, "refs/tags/bamboo-bodhi-source-2026.10.9")
+  assert.equal(config.sources.bamboo.revision, "16e98d94cd971b7341dbd82110dd056497090d26")
+  assert.equal(config.sources.bamboo.tagObjectSha, "62b59ae2b878d2f9e666167483a5103929348e25")
+  assert.equal(config.sources.bodhi.ref, "refs/tags/bodhi-source-2026.10.9")
+  assert.equal(config.sources.bodhi.revision, "571a6a9b716e6fd6967ed64db0c054f864f4b6aa")
+  assert.equal(config.sources.bodhi.tagObjectSha, "41bd30938936c6f3c894d89172664bbdf089b031")
   assert.equal(config.frontend.defaultPackage, "@bigduu/lotus-next")
-  assert.equal(config.frontend.lotusNext.ref, "main")
-  assert.equal(config.frontend.lotusNext.packageVersion, "2026.9.22")
-  assert.equal(
-    config.frontend.lotusNext.sourceRevision,
-    "a480e2bb94f5dd08fe4b01b2f8844a2c9ed03245",
-  )
+  assert.equal(config.frontend.lotusNext.ref, "refs/tags/lotus-next-v2026.10.8")
+  assert.equal(config.frontend.lotusNext.packageVersion, "2026.10.8")
+  assert.equal(config.frontend.lotusNext.sourceRevision, "5242eaf1d6e8cd8d437e8a4dcb82c63d00af82f1")
   assert.equal(config.frontend.lotusNext.sourceDirty, false)
+  assert.equal(config.frontend.lotusNext.publication.workflowRevision, "0730499f9e87cfcf818eec67557409b4ba4f7ba3")
+  assert.equal(config.frontend.lotusNext.publication.runId, 37781330129)
+  assert.equal(config.frontend.lotusNext.publication.tagObjectSha, "4d0e2ec1780efea0798dc4f8ef55e528ffc32b38")
   assert.deepEqual(config.frontend.legacyRollback, {
     packageName: "@bigduu/lotus",
     packageVersion: "2026.8.28",
@@ -136,6 +132,7 @@ test("rejects malformed or mismatched release authority", () => {
 test("requires an immutable annotated tag object and publication receipt authority", () => {
   const tagged = clone(readConfig(configPath))
   tagged.sources.bamboo.ref = "refs/tags/bamboo-bodhi-source-2026.10.8"
+  delete tagged.sources.bamboo.tagObjectSha
   assert.throws(() => validateConfig(tagged), /Git object ID/)
   tagged.sources.bamboo.tagObjectSha = "1".repeat(40)
   assert.doesNotThrow(() => validateConfig(tagged))
@@ -144,6 +141,7 @@ test("requires an immutable annotated tag object and publication receipt authori
 
   const frontend = clone(readConfig(configPath))
   frontend.frontend.lotusNext.ref = "refs/tags/lotus-next-v" + frontend.frontend.lotusNext.packageVersion
+  delete frontend.frontend.lotusNext.publication
   assert.throws(() => validateConfig(frontend))
   frontend.frontend.lotusNext.publication = {
     workflowRef: "bigduu/lotus-next/.github/workflows/publish-npm.yml@refs/heads/main",
