@@ -9,6 +9,7 @@ const {
   readdirSync,
 } = require("node:fs")
 const path = require("node:path")
+const { canonicalRef, assertPublicationIdentity } = require("./release-publication.cjs")
 
 const CONFIG_SCHEMA_VERSION = 2
 const MANIFEST_FILE = "lotus-next-manifest.json"
@@ -114,6 +115,7 @@ const assertRef = (value, label) => {
   ) {
     throw new Error(label + " is not a safe branch ref.")
   }
+  canonicalRef(value)
   return value
 }
 
@@ -121,7 +123,7 @@ const validateSource = (source, name, expected) => {
   const label = "sources." + name
   assertExactKeys(
     source,
-    ["repository", "workflow", "ref", "revision", "rootPath"],
+    ["repository", "workflow", "ref", "revision", "rootPath", ...(Object.hasOwn(source, "tagObjectSha") ? ["tagObjectSha"] : [])],
     label,
   )
   if (
@@ -137,6 +139,8 @@ const validateSource = (source, name, expected) => {
     throw new Error(label + ".workflow must be exactly " + expected.workflow + ".")
   }
   assertRef(source.ref, label + ".ref")
+  if (source.ref.startsWith("refs/tags/")) assertRevision(source.tagObjectSha, label + ".tagObjectSha")
+  else if (Object.hasOwn(source, "tagObjectSha")) throw new Error(label + ".tagObjectSha requires an annotated tag ref.")
   assertRevision(source.revision, label + ".revision")
   if (source.rootPath !== expected.rootPath) {
     throw new Error(label + ".rootPath must be exactly " + expected.rootPath + ".")
@@ -161,6 +165,7 @@ const validateLotusNext = (frontend) => {
       "manifestSha256",
       "npmShasum",
       "npmIntegrity",
+      ...(Object.hasOwn(frontend, "publication") ? ["publication"] : []),
     ],
     label,
   )
@@ -189,6 +194,7 @@ const validateLotusNext = (frontend) => {
   assertDigest(frontend.manifestSha256, sha256Pattern, label + ".manifestSha256")
   assertDigest(frontend.npmShasum, sha1Pattern, label + ".npmShasum")
   assertNpmIntegrity(frontend.npmIntegrity, label + ".npmIntegrity")
+  if (frontend.ref.startsWith("refs/tags/") || Object.hasOwn(frontend, "publication")) assertPublicationIdentity(frontend)
 }
 
 const validateLegacyRollback = (frontend) => {

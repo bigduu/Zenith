@@ -138,23 +138,18 @@ jobs:
             local ref="$3"
             local revision="$4"
             local root_path="$5"
-            local remote
 
             verify_root_pointer "${label}" "${revision}" "${root_path}"
 
-            remote="$(git ls-remote --exit-code \
-              "https://github.com/${repository}.git" \
-              "refs/heads/${ref}" | awk 'NR == 1 { print $1 }')"
-            if [ "${remote}" != "${revision}" ]; then
-              echo "::error::${repository}@${ref} moved from accepted revision ${revision} to ${remote:-missing}."
-              exit 1
-            fi
+            node scripts/release-publication.cjs ref .github/release-train.config.json "${label,,}" "${repository}" "${ref}" "${revision}"
             echo "Verified dispatch source ${repository}@${ref} = ${revision}."
           }
 
           verify_dispatch_source Bamboo "${BAMBOO_REPOSITORY}" "${BAMBOO_REF}" "${BAMBOO_REVISION}" "${BAMBOO_ROOT_PATH}"
           verify_dispatch_source Bodhi "${BODHI_REPOSITORY}" "${BODHI_REF}" "${BODHI_REVISION}" "${BODHI_ROOT_PATH}"
           verify_root_pointer "Lotus Next artifact source" "${LOTUS_NEXT_REVISION}" "${LOTUS_NEXT_ROOT_PATH}"
+          node scripts/release-publication.cjs ref .github/release-train.config.json lotus-next
+          node scripts/release-publication.cjs publication .github/release-train.config.json .github/accepted-frontend-publication.json
           echo "Verified Lotus Next provenance: ${LOTUS_NEXT_REPOSITORY}@${LOTUS_NEXT_REVISION} was accepted from ${LOTUS_NEXT_REF}; the locked artifact remains stable if that branch advances."
 
       - name: Download and verify the selected frontend artifact
@@ -307,14 +302,13 @@ jobs:
             local repository="$1"
             local ref="$2"
             local revision="$3"
-            local remote
-            remote="$(git ls-remote --exit-code \
-              "https://github.com/${repository}.git" \
-              "refs/heads/${ref}" | awk 'NR == 1 { print $1 }')"
-            if [ "${remote}" != "${revision}" ]; then
-              echo "::error::${repository}@${ref} moved from accepted revision ${revision} to ${remote:-missing} before dispatch."
-              exit 1
-            fi
+            local selector
+            case "${repository}" in
+              bigduu/Bamboo-agent) selector=bamboo ;;
+              bigduu/Bodhi-AI) selector=bodhi ;;
+              *) echo "::error::Unaccepted downstream repository."; exit 1 ;;
+            esac
+            node scripts/release-publication.cjs ref .github/release-train.config.json "${selector}" "${repository}" "${ref}" "${revision}"
           }
 
           dispatch_and_wait() {
@@ -322,6 +316,8 @@ jobs:
             local workflow="$2"
             local ref="$3"
             local revision="$4"
+            local dispatch_ref="${ref#refs/heads/}"
+            dispatch_ref="${dispatch_ref#refs/tags/}"
             shift 4
 
             assert_remote_ref "${repository}" "${ref}" "${revision}"
@@ -329,7 +325,7 @@ jobs:
             start_epoch="$(date -u +%s)"
 
             echo "Dispatching ${repository}:${workflow} at accepted ${ref}=${revision}"
-            local command=(gh workflow run "${workflow}" -R "${repository}" --ref "${ref}")
+            local command=(gh workflow run "${workflow}" -R "${repository}" --ref "${dispatch_ref}")
             for input in "$@"; do
               command+=(-f "${input}")
             done
@@ -343,7 +339,7 @@ jobs:
                 -R "${repository}" \
                 --workflow "${workflow}" \
                 --event workflow_dispatch \
-                --branch "${ref}" \
+                --branch "${dispatch_ref}" \
                 --limit 20 \
                 --json databaseId,createdAt,headSha)"
               run_id="$(printf '%s' "${recent_runs}" | jq -r \
@@ -407,6 +403,7 @@ jobs:
                 "${BAMBOO_WORKFLOW}" \
                 "${BAMBOO_REF}" \
                 "${BAMBOO_REVISION}" \
+                "expected_source_sha=${BAMBOO_REVISION}" \
                 "version=${BAMBOO_VERSION}" \
                 "frontend_package=${FRONTEND_PACKAGE}" \
                 "lotus_version=${FRONTEND_VERSION}"
@@ -423,6 +420,7 @@ jobs:
                 "${BODHI_WORKFLOW}" \
                 "${BODHI_REF}" \
                 "${BODHI_REVISION}" \
+                "expected_source_sha=${BODHI_REVISION}" \
                 "bodhi_version=${BODHI_VERSION}" \
                 "bamboo_version=${BAMBOO_VERSION}" \
                 "bamboo_ref=${BAMBOO_REVISION}" \

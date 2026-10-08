@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "repository": "bigduu/lotus-next",
+  "run": {
+    "id": 37781330129,
+    "run_attempt": 1,
+    "path": ".github/workflows/publish-npm.yml",
+    "head_branch": "main",
+    "head_sha": "0730499f9e87cfcf818eec67557409b4ba4f7ba3",
+    "event": "workflow_dispatch",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/bigduu/lotus-next/actions/runs/37781330129"
+  },
+  "jobs": {
+    "total_count": 5,
+    "jobs": [
+      {
+        "id": 113324890421,
+        "name": "Validate publication request",
+        "head_sha": "0730499f9e87cfcf818eec67557409b4ba4f7ba3",
+        "status": "completed",
+        "conclusion": "success",
+        "html_url": "https://github.com/bigduu/lotus-next/actions/runs/37781330129/job/113324890421"
+      },
+      {
+        "id": 113325004930,
+        "name": "Node 22 release artifact",
+        "head_sha": "0730499f9e87cfcf818eec67557409b4ba4f7ba3",
+        "status": "completed",
+        "conclusion": "success",
+        "html_url": "https://github.com/bigduu/lotus-next/actions/runs/37781330129/job/113325004930"
+      },
+      {
+        "id": 113325005012,
+        "name": "Node 24 release artifact",
+        "head_sha": "0730499f9e87cfcf818eec67557409b4ba4f7ba3",
+        "status": "completed",
+        "conclusion": "success",
+        "html_url": "https://github.com/bigduu/lotus-next/actions/runs/37781330129/job/113325005012"
+      },
+      {
+        "id": 113330937242,
+        "name": "Real Bamboo / Node 22 release artifact",
+        "head_sha": "0730499f9e87cfcf818eec67557409b4ba4f7ba3",
+        "status": "completed",
+        "conclusion": "success",
+        "html_url": "https://github.com/bigduu/lotus-next/actions/runs/37781330129/job/113330937242"
+      },
+      {
+        "id": 113344628624,
+        "name": "Pack, publish, and verify registry artifact",
+        "head_sha": "0730499f9e87cfcf818eec67557409b4ba4f7ba3",
+        "status": "completed",
+        "conclusion": "success",
+        "html_url": "https://github.com/bigduu/lotus-next/actions/runs/37781330129/job/113344628624"
+      }
+    ]
+  }
+}

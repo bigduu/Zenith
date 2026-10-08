@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "repository": "bigduu/lotus-next",
+  "version": "2026.10.8",
+  "sourceRef": "refs/tags/lotus-next-v2026.10.8",
+  "sourceSha": "5242eaf1d6e8cd8d437e8a4dcb82c63d00af82f1",
+  "sourceTree": "7c8866f30563022b4ceec7ce6515f99040835196",
+  "bambooSha": "0a7589586da0e5c60895e3222ece487415b7a9df",
+  "tagObjectSha": "4d0e2ec1780efea0798dc4f8ef55e528ffc32b38",
+  "workflowRef": "bigduu/lotus-next/.github/workflows/publish-npm.yml@refs/heads/main",
+  "workflowSha": "0730499f9e87cfcf818eec67557409b4ba4f7ba3",
+  "runId": "37781330129",
+  "runAttempt": "1",
+  "candidateRecordSha256": "7e24899edcb623991ef269e19f7bfae7f74ac8532c0ac7d1d4954050b5c0f570",
+  "acceptanceRunId": 37750101665,
+  "acceptanceReceiptSha256": "588d4b6925af536ad640c1e4361cf50b1debca8f2af3eafe1bc94e829ba14ea5",
+  "productPullRequest": 282,
+  "productMergeSha": "87a2a83eed98a93aed5caa49a6b0c79337bb3ee0",
+  "reviewEvidence": [
+    "https://github.com/bigduu/lotus-next/pull/282#issuecomment-6055988963",
+    "https://github.com/bigduu/lotus-next/pull/282#issuecomment-6055995084"
+  ],
+  "npmIntegrity": "sha512-gEvUf5oNtDlSnveiHA5ysD/tHBCqKig9EVUUyniTezWXlz+XNGWMCYqCy2P+5Y6xd6T3J7henh7rAAwL97ha+w==",
+  "npmShasum": "b9ebf25ed90ff1452ae27ba6ff598bca9a63865b",
+  "manifestSha256": "e5a8f6e10dbfa1425e9443f6558866ebb6484b7bef1f971ddba9fda3b96355b6",
+  "resourcesSha256": "813c2249f30d57acb0bdf2e9edbf1d9d4e6e5c565fbadd11e7e0e37532868f77",
+  "sourceDirty": false
+}

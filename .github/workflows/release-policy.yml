@@ -10,6 +10,10 @@ on:
       - ".github/workflows/nightly-release.yml"
       - "scripts/release-train-policy.cjs"
       - "scripts/release-train-policy.test.cjs"
+      - "scripts/release-publication.cjs"
+      - "scripts/release-publication.test.cjs"
+      - ".github/accepted-frontend-publication.json"
+      - ".github/accepted-frontend-workflow.json"
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
@@ -20,6 +24,10 @@ on:
       - ".github/workflows/nightly-release.yml"
       - "scripts/release-train-policy.cjs"
       - "scripts/release-train-policy.test.cjs"
+      - "scripts/release-publication.cjs"
+      - "scripts/release-publication.test.cjs"
+      - ".github/accepted-frontend-publication.json"
+      - ".github/accepted-frontend-workflow.json"
 
 permissions:
   contents: read
@@ -43,7 +51,7 @@ jobs:
           package-manager-cache: false
 
       - name: Run focused policy tests
-        run: node --test scripts/release-train-policy.test.cjs
+        run: node --test scripts/release-train-policy.test.cjs scripts/release-publication.test.cjs
 
       - name: Validate workflow syntax
         shell: bash
@@ -104,15 +112,8 @@ jobs:
             local ref="$3"
             local revision="$4"
             local root_path="$5"
-            local remote
             verify_root_pointer "${label}" "${revision}" "${root_path}"
-            remote="$(git ls-remote --exit-code \
-              "https://github.com/${repository}.git" \
-              "refs/heads/${ref}" | awk 'NR == 1 { print $1 }')"
-            if [ "${remote}" != "${revision}" ]; then
-              echo "::error::${repository}@${ref} is ${remote:-missing}, expected ${revision}."
-              exit 1
-            fi
+            node scripts/release-publication.cjs ref .github/release-train.config.json "${label,,}" "${repository}" "${ref}" "${revision}"
           }
 
           verify_dispatch_source \
@@ -131,6 +132,11 @@ jobs:
             "Lotus Next artifact source" \
             "$(jq -r .lotus_next_revision "${resolved}")" \
             "$(jq -r .lotus_next_root_path "${resolved}")"
+
+      - name: Verify fixed frontend tag and publication source receipt
+        run: |
+          node scripts/release-publication.cjs ref .github/release-train.config.json lotus-next
+          node scripts/release-publication.cjs publication .github/release-train.config.json .github/accepted-frontend-publication.json
 
       - name: Round-trip both committed npm artifacts
         shell: bash
