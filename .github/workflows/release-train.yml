@@ -366,7 +366,21 @@ jobs:
             fi
             test "$(gh run view "${run_id}" -R "${repository}" --json headSha --jq .headSha)" = "${revision}"
             echo "Watching exact run ${run_id} for ${repository}:${workflow}@${revision}"
-            gh run watch "${run_id}" -R "${repository}" --interval 20 --exit-status
+            if ! gh run watch "${run_id}" -R "${repository}" --interval 20 --exit-status; then
+              if [ "${repository}" != "bigduu/Bodhi-AI" ]; then
+                echo "::error::The downstream build failed."
+                exit 1
+              fi
+              local original_attempt draft_tag draft_id
+              original_attempt="$(gh api "repos/${repository}/actions/runs/${run_id}" --jq .run_attempt)"
+              draft_tag="bodhi-draft-v${BODHI_VERSION}-${run_id}-${original_attempt}"
+              draft_id="$(gh api --paginate --slurp "repos/${repository}/releases?per_page=100" | jq -er --arg tag "${draft_tag}" '[.[][] | select(.tag_name == $tag)] | if length == 1 then .[0].id else error("Missing or ambiguous original draft") end')"
+              # Recovery independently requires all four native builds and their
+              # real frontend, sidecar, actor and browser gates to have passed.
+              # The original failed run remains historical evidence.
+              node scripts/finalize-bodhi-release.cjs .github/release-train.config.json \
+                "${run_id}" "${original_attempt}" "${draft_id}" publish
+            fi
           }
 
           wait_for_crates_version() {
