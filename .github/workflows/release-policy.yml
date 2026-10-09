@@ -12,6 +12,9 @@ on:
       - "scripts/release-train-policy.test.cjs"
       - "scripts/release-publication.cjs"
       - "scripts/release-publication.test.cjs"
+      - "scripts/verify-bamboo-publication.cjs"
+      - "scripts/verify-bamboo-publication.py"
+      - "scripts/verify-bamboo-publication.test.cjs"
       - "scripts/finalize-bodhi-release.cjs"
       - "scripts/finalize-bodhi-release.test.cjs"
       - ".github/workflows/recover-bodhi-release.yml"
@@ -30,6 +33,9 @@ on:
       - "scripts/release-train-policy.test.cjs"
       - "scripts/release-publication.cjs"
       - "scripts/release-publication.test.cjs"
+      - "scripts/verify-bamboo-publication.cjs"
+      - "scripts/verify-bamboo-publication.py"
+      - "scripts/verify-bamboo-publication.test.cjs"
       - "scripts/finalize-bodhi-release.cjs"
       - "scripts/finalize-bodhi-release.test.cjs"
       - ".github/workflows/recover-bodhi-release.yml"
@@ -58,8 +64,13 @@ jobs:
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
 
+      - name: Set up publication verification runtime
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
       - name: Run focused policy tests
-        run: node --test scripts/release-train-policy.test.cjs scripts/release-publication.test.cjs scripts/finalize-bodhi-release.test.cjs
+        run: node --test scripts/release-train-policy.test.cjs scripts/release-publication.test.cjs scripts/finalize-bodhi-release.test.cjs scripts/verify-bamboo-publication.test.cjs
 
       - name: Validate workflow syntax
         shell: bash
