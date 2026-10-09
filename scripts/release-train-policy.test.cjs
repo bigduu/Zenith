@@ -2,6 +2,7 @@
 
 const assert = require("node:assert/strict")
 const { createHash } = require("node:crypto")
+const { spawnSync } = require("node:child_process")
 const {
   mkdirSync,
   mkdtempSync,
@@ -58,6 +59,116 @@ test("accepts the committed release authority and fixed identities", () => {
     npmIntegrity:
       "sha512-XHsTmskpprHNSr7w+qwBICZvYsqowdgtQ7H5OcWwjXlzl17M7K91eMGQEMN/LLzD+XGnaWuGlVmiawRknJ2yrg==",
   })
+})
+
+// Exercise the workflow's actual shell so a verifier failure cannot silently
+// become an absent version or fall through to a Bodhi dispatch.
+const runTrainShell = (step, options = {}) => {
+  const directory = mkdtempSync(path.join(os.tmpdir(), "zenith-train-admission-"))
+  try {
+    const workflow = readFileSync(path.join(repositoryRoot, ".github/workflows/release-train.yml"), "utf8")
+    const section = workflow.split("      - name: " + step + "\n")[1]?.split(/\n      - name:/)[0]
+    assert.ok(section, "Missing release train step: " + step)
+    const lines = section.split("        run: |\n")[1].split("\n")
+    const end = lines.findIndex((line) => line.trim() && !line.startsWith("          "))
+    const shell = lines.slice(0, end < 0 ? undefined : end).map((line) => line.replace(/^          /, "")).join("\n")
+    const bin = path.join(directory, "bin")
+    mkdirSync(bin)
+    writeFileSync(path.join(bin, "node"), `#!/bin/bash
+set -eu
+if [[ "$1" == *"verify-bamboo-publication.cjs" ]]; then
+  echo verify >> "$VERIFY_LOG"
+  if [ "$MOCK_BAMBOO_STATE" = error ]; then exit 47; fi
+  printf '{"state":"%s"}\\n' "$MOCK_BAMBOO_STATE"
+elif [[ "$1" != *"release-publication.cjs" ]]; then
+  exit 48
+fi
+`, { mode: 0o755 })
+    writeFileSync(path.join(bin, "gh"), `#!/bin/bash
+set -eu
+revision="$BAMBOO_REVISION"
+if [[ "$*" == *"bigduu/Bodhi-AI"* ]]; then revision="$BODHI_REVISION"; fi
+case "$1 $2" in
+  "release view") [ "$MOCK_BODHI_EXISTS" = true ] ;;
+  "workflow run") echo "$*" >> "$DISPATCH_LOG" ;;
+  "run list") printf '[{"databaseId":1,"createdAt":"2099-01-01T00:00:00Z","headSha":"%s"}]' "$revision" ;;
+  "run view") echo "$revision" ;;
+  "run watch") exit 0 ;;
+  *) exit 49 ;;
+esac
+`, { mode: 0o755 })
+    const result = spawnSync("bash", ["-c", shell], {
+      encoding: "utf8",
+      env: {
+        PATH: bin + path.delimiter + process.env.PATH,
+        RUNNER_TEMP: directory,
+        GITHUB_OUTPUT: path.join(directory, "output"),
+        VERIFY_LOG: path.join(directory, "verify"),
+        DISPATCH_LOG: path.join(directory, "dispatch"),
+        MOCK_BAMBOO_STATE: "verified",
+        MOCK_BODHI_EXISTS: "false",
+        INCLUDE_BAMBOO: "true", INCLUDE_BODHI: "true", RESUME: "true",
+        SKIP_BAMBOO: "false", SKIP_BODHI: "false",
+        BAMBOO_VERSION: "2026.10.10", BODHI_VERSION: "2026.10.10",
+        BAMBOO_REPOSITORY: "bigduu/Bamboo-agent", BAMBOO_WORKFLOW: "publish-crate.yml",
+        BAMBOO_REF: "refs/tags/bamboo-source", BAMBOO_REVISION: "1".repeat(40),
+        BODHI_REPOSITORY: "bigduu/Bodhi-AI", BODHI_WORKFLOW: "release.yml",
+        BODHI_REF: "refs/tags/bodhi-source", BODHI_REVISION: "2".repeat(40),
+        FRONTEND_PACKAGE: "@bigduu/lotus-next", FRONTEND_VERSION: "2026.10.8",
+        FRONTEND_PACKAGE_DIR: path.join(directory, "frontend"),
+        BAMBOO_SOURCE_DIR: path.join(directory, "bamboo"),
+        ...options,
+      },
+    })
+    const contents = (name) => {
+      try { return readFileSync(path.join(directory, name), "utf8") } catch (error) {
+        if (error.code !== "ENOENT") throw error
+        return ""
+      }
+    }
+    return { ...result, output: contents("output"), dispatch: contents("dispatch"), verification: contents("verify") }
+  } finally {
+    rmSync(directory, { recursive: true, force: true })
+  }
+}
+
+test("train preflight admits only a complete identity or an entirely unused version", () => {
+  const cases = [
+    [{}, true, "skip_bamboo=true"],
+    [{ RESUME: "false" }, false],
+    [{ MOCK_BAMBOO_STATE: "absent" }, true, "skip_bamboo=false"],
+    [{ INCLUDE_BAMBOO: "false" }, true, "skip_bamboo=false"],
+    [{ INCLUDE_BAMBOO: "false", MOCK_BAMBOO_STATE: "absent" }, false],
+    [{ MOCK_BAMBOO_STATE: "error" }, false],
+    [{ MOCK_BAMBOO_STATE: "unexpected" }, false],
+  ]
+  for (const [options, success, expectedOutput] of cases) {
+    const result = runTrainShell("Check downstream version collisions", options)
+    assert.equal(result.status === 0, success, JSON.stringify(options) + result.stderr)
+    assert.equal(result.dispatch, "")
+    assert.equal(result.verification, "verify\n")
+    if (success) assert.ok(result.output.includes(expectedOutput))
+    else assert.equal(result.output, "")
+  }
+})
+
+test("train rechecks Bamboo after publication and before every Bodhi admission", () => {
+  const cases = [
+    [{}, true, ["bigduu/Bamboo-agent", "bigduu/Bodhi-AI"]],
+    [{ MOCK_BAMBOO_STATE: "error" }, false, ["bigduu/Bamboo-agent"]],
+    [{ MOCK_BAMBOO_STATE: "absent" }, false, ["bigduu/Bamboo-agent"]],
+    [{ SKIP_BAMBOO: "true", MOCK_BAMBOO_STATE: "error" }, false, []],
+    [{ INCLUDE_BAMBOO: "false", MOCK_BAMBOO_STATE: "error" }, false, []],
+    [{ INCLUDE_BAMBOO: "false" }, true, ["bigduu/Bodhi-AI"]],
+    [{ INCLUDE_BODHI: "false", MOCK_BAMBOO_STATE: "error" }, false, ["bigduu/Bamboo-agent"]],
+  ]
+  for (const [options, success, repositories] of cases) {
+    const result = runTrainShell("Run Bamboo then Bodhi", options)
+    assert.equal(result.status === 0, success, JSON.stringify(options) + result.stderr)
+    assert.equal(result.verification, "verify\n")
+    const actual = result.dispatch.trim().split("\n").filter(Boolean).map((line) => line.match(/-R ([^ ]+)/)[1])
+    assert.deepEqual(actual, repositories)
+  }
 })
 
 test("defaults to a Bamboo then Bodhi train with the locked Lotus Next artifact", () => {

@@ -69,6 +69,11 @@ jobs:
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
 
+      - name: Set up publication verification runtime
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
       - name: Resolve the committed release policy
         id: resolve
         shell: bash
@@ -152,7 +157,16 @@ jobs:
           node scripts/release-publication.cjs publication .github/release-train.config.json .github/accepted-frontend-publication.json
           echo "Verified Lotus Next provenance: ${LOTUS_NEXT_REPOSITORY}@${LOTUS_NEXT_REVISION} was accepted from ${LOTUS_NEXT_REF}; the locked artifact remains stable if that branch advances."
 
+      - name: Checkout accepted Bamboo verification source
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ steps.resolve.outputs.bamboo_repository }}
+          ref: ${{ steps.resolve.outputs.bamboo_revision }}
+          path: .release-inputs/bamboo
+          persist-credentials: false
+
       - name: Download and verify the selected frontend artifact
+        id: frontend
         shell: bash
         env:
           FRONTEND_PACKAGE: ${{ steps.resolve.outputs.frontend_package }}
@@ -191,6 +205,7 @@ jobs:
             --config "${GITHUB_WORKSPACE}/.github/release-train.config.json" \
             --frontend-package "${FRONTEND_PACKAGE}" \
             --package-dir unpacked/package
+          echo "package_dir=${artifact_dir}/unpacked/package" >> "${GITHUB_OUTPUT}"
 
       - name: Validate cross-repository release token
         shell: bash
@@ -214,17 +229,23 @@ jobs:
           RESUME: ${{ steps.resolve.outputs.resume }}
           BAMBOO_VERSION: ${{ steps.resolve.outputs.bamboo_version }}
           BODHI_VERSION: ${{ steps.resolve.outputs.bodhi_version }}
+          FRONTEND_PACKAGE: ${{ steps.resolve.outputs.frontend_package }}
+          FRONTEND_PACKAGE_DIR: ${{ steps.frontend.outputs.package_dir }}
+          BAMBOO_SOURCE_DIR: ${{ github.workspace }}/.release-inputs/bamboo
         run: |
           set -euo pipefail
-          user_agent="zenith-release-train/2.0 (+https://github.com/${{ github.repository }})"
 
-          crates_version_exists() {
-            local status
-            status="$(curl -sS -o /dev/null -w "%{http_code}" \
-              -H "User-Agent: ${user_agent}" \
-              "https://crates.io/api/v1/crates/bamboo-agent/$1" || true)"
-            [ "${status}" = "200" ]
-          }
+          node scripts/verify-bamboo-publication.cjs inspect \
+            --config .github/release-train.config.json \
+            --version "${BAMBOO_VERSION}" \
+            --frontend-package "${FRONTEND_PACKAGE}" \
+            --frontend-package-dir "${FRONTEND_PACKAGE_DIR}" \
+            --source-dir "${BAMBOO_SOURCE_DIR}" > "${RUNNER_TEMP}/bamboo-preflight.json"
+          bamboo_state="$(jq -er .state "${RUNNER_TEMP}/bamboo-preflight.json")"
+          case "${bamboo_state}" in
+            absent|verified) ;;
+            *) echo "::error::Invalid Bamboo publication verification result."; exit 1 ;;
+          esac
 
           bodhi_release_exists() {
             gh release view "app-v$1" -R bigduu/Bodhi-AI >/dev/null 2>&1
@@ -249,23 +270,21 @@ jobs:
             fi
           }
 
-          require_exists() {
-            local name="$1"
-            local version="$2"
-            local exists_fn="$3"
-            if ! "${exists_fn}" "${version}"; then
-              echo "::error::${name}@${version} is required by an included target but is not published."
-              exit 1
-            fi
-          }
-
           if [ "${INCLUDE_BAMBOO}" = "true" ]; then
-            check_collision bamboo-agent "${BAMBOO_VERSION}" crates_version_exists skip_bamboo
+            if [ "${bamboo_state}" = "verified" ]; then
+              if [ "${RESUME}" != "true" ]; then
+                echo "::error::Bamboo@${BAMBOO_VERSION} is already published. Choose an unused version or resume this exact train."
+                exit 1
+              fi
+              echo "Verified the complete accepted Bamboo publication; resume=true skips this leg."
+              skip_bamboo=true
+            fi
           fi
           if [ "${INCLUDE_BODHI}" = "true" ]; then
             check_collision "Bodhi app release" "${BODHI_VERSION}" bodhi_release_exists skip_bodhi
-            if [ "${INCLUDE_BAMBOO}" != "true" ]; then
-              require_exists bamboo-agent "${BAMBOO_VERSION}" crates_version_exists
+            if [ "${INCLUDE_BAMBOO}" != "true" ] && [ "${bamboo_state}" != "verified" ]; then
+              echo "::error::Bodhi requires the complete accepted Bamboo@${BAMBOO_VERSION} publication."
+              exit 1
             fi
           fi
 
@@ -295,6 +314,8 @@ jobs:
           BODHI_VERSION: ${{ steps.resolve.outputs.bodhi_version }}
           FRONTEND_PACKAGE: ${{ steps.resolve.outputs.frontend_package }}
           FRONTEND_VERSION: ${{ steps.resolve.outputs.frontend_version }}
+          FRONTEND_PACKAGE_DIR: ${{ steps.frontend.outputs.package_dir }}
+          BAMBOO_SOURCE_DIR: ${{ github.workspace }}/.release-inputs/bamboo
         run: |
           set -euo pipefail
 
@@ -383,34 +404,9 @@ jobs:
             fi
           }
 
-          wait_for_crates_version() {
-            local crate_name="$1"
-            local version="$2"
-            local max_attempts=30
-            local attempt=1
-            local url="https://crates.io/api/v1/crates/${crate_name}/${version}"
-            local status
-
-            echo "Waiting for ${crate_name}@${version} on crates.io."
-            while [ "${attempt}" -le "${max_attempts}" ]; do
-              status="$(curl -sS -o /dev/null -w "%{http_code}" \
-                -H "User-Agent: zenith-release-train/2.0 (+https://github.com/bigduu/Zenith)" \
-                "${url}" || true)"
-              if [ "${status}" = "200" ]; then
-                echo "Found ${crate_name}@${version} on crates.io."
-                return 0
-              fi
-              echo "Attempt ${attempt}/${max_attempts}: status=${status}; retrying in 10 seconds."
-              attempt=$((attempt + 1))
-              sleep 10
-            done
-            echo "::error::Unable to find ${crate_name}@${version} on crates.io."
-            exit 1
-          }
-
           if [ "${INCLUDE_BAMBOO}" = "true" ]; then
             if [ "${SKIP_BAMBOO}" = "true" ]; then
-              echo "Skipping Bamboo leg because this exact version already exists and resume=true."
+              echo "Skipping the verified complete Bamboo publication because resume=true."
             else
               dispatch_and_wait \
                 "${BAMBOO_REPOSITORY}" \
@@ -421,9 +417,19 @@ jobs:
                 "version=${BAMBOO_VERSION}" \
                 "frontend_package=${FRONTEND_PACKAGE}" \
                 "lotus_version=${FRONTEND_VERSION}"
-              wait_for_crates_version bamboo-agent "${BAMBOO_VERSION}"
             fi
           fi
+
+          # A frozen publisher may race another writer after preflight. Verify
+          # every crate again before accepting Bamboo or dispatching Bodhi.
+          # This detects mixed publication; it is not a publication mutex.
+          node scripts/verify-bamboo-publication.cjs inspect \
+            --config .github/release-train.config.json \
+            --version "${BAMBOO_VERSION}" \
+            --frontend-package "${FRONTEND_PACKAGE}" \
+            --frontend-package-dir "${FRONTEND_PACKAGE_DIR}" \
+            --source-dir "${BAMBOO_SOURCE_DIR}" > "${RUNNER_TEMP}/bamboo-admission.json"
+          jq -e '.state == "verified"' "${RUNNER_TEMP}/bamboo-admission.json" > /dev/null
 
           if [ "${INCLUDE_BODHI}" = "true" ]; then
             if [ "${SKIP_BODHI}" = "true" ]; then
