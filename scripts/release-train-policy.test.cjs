@@ -264,6 +264,25 @@ test("requires an immutable annotated tag object and publication receipt authori
   assert.throws(() => validateConfig(frontend))
 })
 
+test("accepts only an explicit separately bound reviewed registry-recovery header", () => {
+  const fixture = require("./fixtures/lotus-recovery-2026.10.12.json")
+  const config = clone(readConfig(configPath))
+  config.frontend.lotusNext = clone(fixture.identity)
+  assert.doesNotThrow(() => validateConfig(config))
+  for (const update of [
+    (p) => { delete p.recovery.artifactDigest },
+    (p) => { p.recovery.runId = p.runId },
+    (p) => { p.recovery.workflowRevision = p.workflowRevision },
+    (p) => { p.recovery.workflowRef = p.workflowRef },
+    (p) => { p.recovery.allowFailedGate = true },
+    (p) => { p.sourceReceiptSha256 = p.recovery.receiptSha256 },
+    (p) => { p.runAttempt++ },
+  ]) {
+    const changed = clone(config); update(changed.frontend.lotusNext.publication)
+    assert.throws(() => validateConfig(changed))
+  }
+})
+
 test("rejects moving versions, unknown targets, and uncommitted package choices", () => {
   const config = readConfig(configPath)
   assert.throws(
