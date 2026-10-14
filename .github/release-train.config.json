@@ -4,49 +4,59 @@
     "bamboo": {
       "repository": "bigduu/Bamboo-agent",
       "workflow": "publish-crate.yml",
-      "ref": "refs/tags/bamboo-bodhi-source-2026.10.9",
-      "revision": "16e98d94cd971b7341dbd82110dd056497090d26",
+      "ref": "refs/tags/bamboo-release-source-2026.10.11",
+      "revision": "430bf3b5a1e10305fd4226b81b13f6a2c28afa8e",
       "rootPath": "bamboo",
-      "tagObjectSha": "62b59ae2b878d2f9e666167483a5103929348e25"
+      "tagObjectSha": "cd0bda3fc54ba2774c36a130d56671fe5c4176c9"
     },
     "bodhi": {
       "repository": "bigduu/Bodhi-AI",
       "workflow": "release.yml",
-      "ref": "refs/tags/bodhi-source-2026.10.9",
-      "revision": "571a6a9b716e6fd6967ed64db0c054f864f4b6aa",
+      "ref": "refs/tags/bodhi-source-2026.10.11",
+      "revision": "9e45e903f864834a94e526192045750e564b8340",
       "rootPath": "bodhi",
-      "tagObjectSha": "41bd30938936c6f3c894d89172664bbdf089b031"
+      "tagObjectSha": "3021496f749919e3fd2313c3d4521a770535339a"
     }
   },
   "versions": {
-    "release": "2026.10.10",
-    "bamboo": "2026.10.10",
-    "bodhi": "2026.10.10"
+    "release": "2026.10.11",
+    "bamboo": "2026.10.11",
+    "bodhi": "2026.10.11"
   },
   "frontend": {
     "defaultPackage": "@bigduu/lotus-next",
     "lotusNext": {
       "repository": "bigduu/lotus-next",
-      "ref": "refs/tags/lotus-next-v2026.10.8",
+      "ref": "refs/tags/lotus-next-v2026.10.12",
       "rootPath": "lotus-next",
       "manifestSchemaVersion": 1,
       "packageName": "@bigduu/lotus-next",
-      "packageVersion": "2026.10.8",
-      "sourceRevision": "5242eaf1d6e8cd8d437e8a4dcb82c63d00af82f1",
+      "packageVersion": "2026.10.12",
+      "sourceRevision": "d8b0eb6cad98ec53afe8dc4f6aeaa35ef050ec9f",
       "sourceDirty": false,
       "entrypoint": "index.html",
-      "resourcesSha256": "813c2249f30d57acb0bdf2e9edbf1d9d4e6e5c565fbadd11e7e0e37532868f77",
-      "manifestSha256": "e5a8f6e10dbfa1425e9443f6558866ebb6484b7bef1f971ddba9fda3b96355b6",
-      "npmShasum": "b9ebf25ed90ff1452ae27ba6ff598bca9a63865b",
-      "npmIntegrity": "sha512-gEvUf5oNtDlSnveiHA5ysD/tHBCqKig9EVUUyniTezWXlz+XNGWMCYqCy2P+5Y6xd6T3J7henh7rAAwL97ha+w==",
+      "resourcesSha256": "60ef877ef46416a049a79085e1306351b4e1f7ba96ba39a32c9a4c24104a8c5d",
+      "manifestSha256": "65297891364371b42e44dc0e0d6ce88a160b31121f2385b7c396260c07193d58",
+      "npmShasum": "0ec6edfbe6830cfde9efd9545f72a73dad996381",
+      "npmIntegrity": "sha512-UWLteg5Bz7l8NERxisfubipMQPZ0oezIDLh1C+Df9kZFFhICYhmH6evX3C6cdPQAxvGdk9gGqeSBNjin3RTDoQ==",
       "publication": {
         "workflowRef": "bigduu/lotus-next/.github/workflows/publish-npm.yml@refs/heads/main",
-        "workflowRevision": "0730499f9e87cfcf818eec67557409b4ba4f7ba3",
-        "runId": 37781330129,
+        "workflowRevision": "c50e0805a83c5e1cbcd6b37a07ca8646c23d2f9e",
+        "runId": 38228276879,
         "runAttempt": 1,
-        "workflowEvidenceSha256": "3451b78d63dc70bd86dcfc06cdeae09d21b4a2116a8bb070c8a3018c290f1c8a",
-        "tagObjectSha": "4d0e2ec1780efea0798dc4f8ef55e528ffc32b38",
-        "sourceReceiptSha256": "7b005d00b6b17ad1bac13903cea0e300eee9ecc7718b5c83da9beb4dea4a5e2e"
+        "sourceReceiptSha256": "171959bc171ac0e7913643876ef021c27bbf9941bf7a88225b0461ba47024b66",
+        "workflowEvidenceSha256": "486199dbdac1f4e7315fbdc2352df0d9e8ba7545843d90a4138d7f95628d2b42",
+        "tagObjectSha": "059e718f234acd7911f6a5822f5d43cf1e423f1e",
+        "recovery": {
+          "workflowRef": "bigduu/lotus-next/.github/workflows/verify-published-npm.yml@refs/heads/main",
+          "workflowRevision": "a08703a5c0eb5447d8fd80be7389108d6cc3db5b",
+          "runId": 38243218607,
+          "runAttempt": 1,
+          "receiptSha256": "1b358fd60e9c8ab92e1f9059d652636139e1f439c1f603bd0cc7aa039771d3ce",
+          "artifactId": 11744071549,
+          "artifactDigest": "sha256:a8ebb33b5b4368fb434aad5da10490dfe3b33ef4920028ee75f6677c9610c9ab",
+          "recordSha256": "08489f5e33a69f713944a78db57ec822bb0e232d218caad5c5a7eaac43510c57"
+        }
       }
     },
     "legacyRollback": {

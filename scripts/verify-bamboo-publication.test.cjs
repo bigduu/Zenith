@@ -72,7 +72,7 @@ function fixture(t, exact = false, indirectKind, legacy = false) {
   const frontendVersion = legacy ? config.frontend.legacyRollback.packageVersion : identity.packageVersion
   for (const item of payload) write(frontendPackageDir, "dist/" + item.name, item.bytes)
   write(frontendPackageDir, "package.json", json({ name: frontendPackage, version: frontendVersion }))
-  const acceptedFrontend = bundle(nextPayload)
+  const acceptedFrontend = bundle(nextPayload, { frontend_version: identity.packageVersion })
   const frontend = legacy ? bundle(payload, { frontend_name: "lotus", frontend_version: frontendVersion }) : acceptedFrontend
   const manifests = {}
   const fixtureEdges = indirectKind ? { ...edges, "bamboo-agent": ["bamboo-server"] } : edges
