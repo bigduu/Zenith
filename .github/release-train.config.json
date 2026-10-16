@@ -4,59 +4,49 @@
     "bamboo": {
       "repository": "bigduu/Bamboo-agent",
       "workflow": "publish-crate.yml",
-      "ref": "refs/tags/bamboo-release-source-2026.10.11",
-      "revision": "430bf3b5a1e10305fd4226b81b13f6a2c28afa8e",
+      "ref": "refs/tags/bamboo-release-source-dbafb74522794012fc8f0a61e761817b3913989a",
+      "revision": "dbafb74522794012fc8f0a61e761817b3913989a",
       "rootPath": "bamboo",
-      "tagObjectSha": "cd0bda3fc54ba2774c36a130d56671fe5c4176c9"
+      "tagObjectSha": "501d9d70b35ba89427505f33d7dde6737ac3ff38"
     },
     "bodhi": {
       "repository": "bigduu/Bodhi-AI",
       "workflow": "release.yml",
-      "ref": "refs/tags/bodhi-source-2026.10.11",
-      "revision": "9e45e903f864834a94e526192045750e564b8340",
+      "ref": "refs/tags/bodhi-source-2026.10.16",
+      "revision": "f1079d4b422005c41369e55f8a07274620be9cba",
       "rootPath": "bodhi",
-      "tagObjectSha": "3021496f749919e3fd2313c3d4521a770535339a"
+      "tagObjectSha": "6b27f124f4a84bcd3459557888104c0466ef81d3"
     }
   },
   "versions": {
-    "release": "2026.10.11",
-    "bamboo": "2026.10.11",
-    "bodhi": "2026.10.11"
+    "release": "2026.10.16",
+    "bamboo": "2026.10.12",
+    "bodhi": "2026.10.16"
   },
   "frontend": {
     "defaultPackage": "@bigduu/lotus-next",
     "lotusNext": {
       "repository": "bigduu/lotus-next",
-      "ref": "refs/tags/lotus-next-v2026.10.12",
+      "ref": "refs/tags/lotus-next-v2026.10.15",
       "rootPath": "lotus-next",
       "manifestSchemaVersion": 1,
       "packageName": "@bigduu/lotus-next",
-      "packageVersion": "2026.10.12",
-      "sourceRevision": "d8b0eb6cad98ec53afe8dc4f6aeaa35ef050ec9f",
+      "packageVersion": "2026.10.15",
+      "sourceRevision": "58920d5b58b98847ef10f70e60b8f8c23afb9df4",
       "sourceDirty": false,
       "entrypoint": "index.html",
-      "resourcesSha256": "60ef877ef46416a049a79085e1306351b4e1f7ba96ba39a32c9a4c24104a8c5d",
-      "manifestSha256": "65297891364371b42e44dc0e0d6ce88a160b31121f2385b7c396260c07193d58",
-      "npmShasum": "0ec6edfbe6830cfde9efd9545f72a73dad996381",
-      "npmIntegrity": "sha512-UWLteg5Bz7l8NERxisfubipMQPZ0oezIDLh1C+Df9kZFFhICYhmH6evX3C6cdPQAxvGdk9gGqeSBNjin3RTDoQ==",
+      "resourcesSha256": "7b34ed5b086a6c6ceab8ad804134c4d363996ba673635a3f4c5213a890f73163",
+      "manifestSha256": "3119fe399bc92576888a17c7c61e13d3d029a8ff81df97f2eef502699ed17f26",
+      "npmShasum": "ed24e758a07296877b93b6df77d7996b49f5a5fe",
+      "npmIntegrity": "sha512-xT9if3gEXJXA6GQIi3qgv9S2rCkebFuMIsXvI3iwunIHE7cHgRuGZIrgv/2klF4kIr1nIKQjwM3aqj3xrf0R4A==",
       "publication": {
         "workflowRef": "bigduu/lotus-next/.github/workflows/publish-npm.yml@refs/heads/main",
-        "workflowRevision": "c50e0805a83c5e1cbcd6b37a07ca8646c23d2f9e",
-        "runId": 38228276879,
+        "workflowRevision": "a42df675e58123d106b80e6d19c3de07110e9e02",
+        "runId": 38720625532,
         "runAttempt": 1,
-        "sourceReceiptSha256": "171959bc171ac0e7913643876ef021c27bbf9941bf7a88225b0461ba47024b66",
-        "workflowEvidenceSha256": "486199dbdac1f4e7315fbdc2352df0d9e8ba7545843d90a4138d7f95628d2b42",
-        "tagObjectSha": "059e718f234acd7911f6a5822f5d43cf1e423f1e",
-        "recovery": {
-          "workflowRef": "bigduu/lotus-next/.github/workflows/verify-published-npm.yml@refs/heads/main",
-          "workflowRevision": "a08703a5c0eb5447d8fd80be7389108d6cc3db5b",
-          "runId": 38243218607,
-          "runAttempt": 1,
-          "receiptSha256": "1b358fd60e9c8ab92e1f9059d652636139e1f439c1f603bd0cc7aa039771d3ce",
-          "artifactId": 11744071549,
-          "artifactDigest": "sha256:a8ebb33b5b4368fb434aad5da10490dfe3b33ef4920028ee75f6677c9610c9ab",
-          "recordSha256": "08489f5e33a69f713944a78db57ec822bb0e232d218caad5c5a7eaac43510c57"
-        }
+        "sourceReceiptSha256": "fe5596fbd24bf541498d453ca83ad4540910c3f273739b9f2e6286ec8d839a2f",
+        "workflowEvidenceSha256": "4eed0818408f939d16f05c9ee7eebf3e9a4375f460a136851bbf8056bf2a50cc",
+        "tagObjectSha": "bf76779f126a397e957b8d0475671780964bc36b"
       }
     },
     "legacyRollback": {
