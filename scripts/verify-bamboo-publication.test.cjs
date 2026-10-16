@@ -45,7 +45,7 @@ function bundle(payload, overrides = {}) {
   return { wrapper, zip: archive("zip", [...payload, { name: "frontend-manifest.json", bytes: wrapper }]) }
 }
 
-function fixture(t, exact = false, indirectKind, legacy = false) {
+function fixture(t, exact = false, indirectKind, legacy = false, sourcePatch = false) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "zenith-publication-test-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
   const sourceDir = path.join(root, "source")
@@ -85,6 +85,11 @@ function fixture(t, exact = false, indirectKind, legacy = false) {
     const workspace = name === "bamboo-agent" ? '[workspace]\nmembers = ["crates/core/bamboo-domain", "crates/app/bamboo-server"]\nresolver = "2"\n\n[workspace.package]\nversion = "0.0.0"\n\n' : ""
     const deps = fixtureEdges[name].map(dep => `${dep} = { path = "${path.posix.relative(paths[name] || ".", paths[dep])}"${optional(name) ? ", optional = true" : ""} }`).join("\n") + (name === "bamboo-agent" ? '\nserde = { version = "1", default-features = false }' : "")
     manifests[name] = workspace + `[package]\nname = "${name}"\nversion.workspace = true\nedition = "2021"\nlicense = "MIT"\n` + (deps ? `\n[${section(name)}]\n` + deps + "\n" : "") + (optional(name) ? '\n[features]\ndomain = ["dep:bamboo-domain"]\n' : "")
+    if (name === "bamboo-agent" && sourcePatch) {
+      const patched = sourcePatch === "runtime" ? "serde" : "libduckdb-sys"
+      manifests[name] += `\n[patch.crates-io.${patched}]\npath = "third_party/${patched}"\n`
+      write(sourceDir, `third_party/${patched}/Cargo.toml`, `[package]\nname = "${patched}"\nversion = "1.0.0"\n`)
+    }
     write(sourceDir, prefix + "Cargo.toml", manifests[name])
     write(sourceDir, prefix + "src/lib.rs", `pub fn ${name.replaceAll("-", "_")}() -> bool { true }\n`)
   }
@@ -92,7 +97,9 @@ function fixture(t, exact = false, indirectKind, legacy = false) {
   write(sourceDir, "README.md", "Independent publication fixture\n")
   const registry = "registry+https://github.com/rust-lang/crates.io-index"
   const externalLock = `\n[[package]]\nname = "serde"\nversion = "1.0.228"\nsource = "${registry}"\nchecksum = "${"a".repeat(64)}"\n`
-  write(sourceDir, "Cargo.lock", "version = 4\n" + names.map(name => `\n[[package]]\nname = "${name}"\nversion = "0.0.0"\n`).join("") + externalLock)
+  const sourceExternalLock = sourcePatch === "runtime"
+    ? '\n[[package]]\nname = "serde"\nversion = "1.0.228"\n' : externalLock
+  write(sourceDir, "Cargo.lock", "version = 4\n" + names.map(name => `\n[[package]]\nname = "${name}"\nversion = "0.0.0"\n`).join("") + sourceExternalLock)
   write(sourceDir, "scripts/frontend-package-lock.json", json({ schemaVersion: 1, packageName: identity.packageName, packageVersion: identity.packageVersion, sourceRevision: identity.sourceRevision, sourceDirty: false, entrypoint: identity.entrypoint, resourcesSha256, manifestSha256: identity.manifestSha256 }))
   write(sourceDir, "crates/app/bamboo-server/frontend_package/frontend-manifest.json", acceptedFrontend.wrapper)
   write(sourceDir, "crates/app/bamboo-server/frontend_package/lotus-frontend.zip", acceptedFrontend.zip)
@@ -421,4 +428,24 @@ test("source inspection rejects a moved HEAD or dirty checkout before accepting 
   const moved = fixture(t)
   moved.config.sources.bamboo.revision = "c".repeat(40)
   await assert.rejects(moved.inspect())
+})
+
+
+test("strips source-only Cargo overrides while preserving complete registry closure", async t => {
+  const f = fixture(t, true, undefined, false, true)
+  const result = await f.inspect()
+  assert.equal(result.state, "verified")
+  assert.equal(result.crateCount, 3)
+})
+
+test("rejects published local patch even when it matches the source override", async t => {
+  const f = fixture(t, true, undefined, false, true)
+  const manifest = f.entries.get("bamboo-agent").find(e => e.name === "Cargo.toml").bytes.toString()
+  f.change("bamboo-agent", "Cargo.toml", manifest + '\n[patch.crates-io.libduckdb-sys]\npath = "third_party/libduckdb-sys"\n')
+  await assert.rejects(f.inspect(), /Published manifest retains Cargo-only override/)
+})
+
+test("rejects a runtime patch missing a source-locked registry identity", async t => {
+  const f = fixture(t, true, undefined, false, "runtime")
+  await assert.rejects(f.inspect(), /Published lock changed a source-locked external dependency/)
 })

@@ -245,8 +245,14 @@ def normalized_manifest(actual, expected, root, files, name, version, source_pat
         check(expected_build in source_paths and expected_build in files, "Unaccepted build script entrypoint")
     check(actual.get("features", {}) == expected.get("features", {}), "Normalized feature contract mismatch")
     target_kinds = {"lib", "bin", "test", "bench", "example"}
-    check(set(actual) <= (set(expected) - {"workspace"}) | target_kinds, "Unexpected normalized top-level contract")
-    for key in set(expected) - {"workspace", "package", "features", "target", *KINDS, *target_kinds}:
+    # Cargo removes workspace and source-only overrides while packaging. The
+    # original manifest remains source-bound; no effective override may survive
+    # in an archive. Source-locked registry identities are checked separately.
+    check("patch" not in actual and "replace" not in actual,
+          "Published manifest retains Cargo-only override")
+    cargo_removed = {"workspace", "patch", "replace"}
+    check(set(actual) <= (set(expected) - cargo_removed) | target_kinds, "Unexpected normalized top-level contract")
+    for key in set(expected) - cargo_removed - {"package", "features", "target", *KINDS, *target_kinds}:
         check(actual.get(key) == expected[key], "Normalized manifest section changed: " + key)
     for target, table in actual.get("target", {}).items():
         check(set(table) <= set(KINDS), "Unexpected normalized target-platform contract")
