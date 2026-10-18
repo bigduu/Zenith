@@ -21,6 +21,8 @@ on:
       - ".github/bodhi-original-draft-2026.10.9.json"
       - ".github/accepted-frontend-publication.json"
       - ".github/accepted-frontend-workflow.json"
+      - ".github/accepted-bamboo-frontend-publication.json"
+      - ".github/accepted-bamboo-frontend-workflow.json"
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
@@ -42,6 +44,8 @@ on:
       - ".github/bodhi-original-draft-2026.10.9.json"
       - ".github/accepted-frontend-publication.json"
       - ".github/accepted-frontend-workflow.json"
+      - ".github/accepted-bamboo-frontend-publication.json"
+      - ".github/accepted-bamboo-frontend-workflow.json"
 
 permissions:
   contents: read
@@ -157,6 +161,8 @@ jobs:
         run: |
           node scripts/release-publication.cjs ref .github/release-train.config.json lotus-next
           node scripts/release-publication.cjs publication .github/release-train.config.json .github/accepted-frontend-publication.json
+          node scripts/release-publication.cjs ref .github/release-train.config.json bamboo-frontend
+          node scripts/release-publication.cjs publication .github/release-train.config.json .github/accepted-bamboo-frontend-publication.json bamboo
 
       - name: Round-trip both committed npm artifacts
         shell: bash
@@ -174,6 +180,7 @@ jobs:
             local package_name="$1"
             local package_version="$2"
             local slug="$3"
+            local consumer="${4:-bodhi}"
             local artifact_dir archive
             artifact_dir="$(mktemp -d "${RUNNER_TEMP}/${slug}.XXXXXX")"
             cd "${artifact_dir}"
@@ -190,6 +197,7 @@ jobs:
             node "${GITHUB_WORKSPACE}/scripts/release-train-policy.cjs" verify-tarball \
               --config "${config}" \
               --frontend-package "${package_name}" \
+              --consumer "${consumer}" \
               --tarball "${archive}"
             mkdir unpacked
             tar --extract --gzip --file "${archive}" --directory unpacked --no-same-owner
@@ -198,6 +206,7 @@ jobs:
             node "${GITHUB_WORKSPACE}/scripts/release-train-policy.cjs" verify-package \
               --config "${config}" \
               --frontend-package "${package_name}" \
+              --consumer "${consumer}" \
               --package-dir unpacked/package
           }
 
@@ -209,3 +218,7 @@ jobs:
             "$(jq -r .frontend.legacyRollback.packageName "${config}")" \
             "$(jq -r .frontend.legacyRollback.packageVersion "${config}")" \
             legacy-lotus
+          verify_registry_package \
+            "$(jq -r .frontend.bambooLotusNext.packageName "${config}")" \
+            "$(jq -r .frontend.bambooLotusNext.packageVersion "${config}")" \
+            bamboo-lotus-next bamboo

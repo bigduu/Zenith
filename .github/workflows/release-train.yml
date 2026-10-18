@@ -5,8 +5,8 @@ name: Release Train
 #   locked npm frontend -> Bamboo (crates.io) -> Bodhi (desktop release)
 #
 # Lotus Next is published and accepted in its own protected producer/consumer
-# sequence. This workflow never publishes a frontend. It verifies one committed
-# npm artifact identity before dispatching Bamboo and Bodhi.
+# sequence. This workflow never publishes a frontend. It verifies each consumer's
+# exact accepted npm identity before dispatching Bamboo and Bodhi.
 
 on:
   workflow_dispatch:
@@ -155,6 +155,8 @@ jobs:
           verify_root_pointer "Lotus Next artifact source" "${LOTUS_NEXT_REVISION}" "${LOTUS_NEXT_ROOT_PATH}"
           node scripts/release-publication.cjs ref .github/release-train.config.json lotus-next
           node scripts/release-publication.cjs publication .github/release-train.config.json .github/accepted-frontend-publication.json
+          node scripts/release-publication.cjs ref .github/release-train.config.json bamboo-frontend
+          node scripts/release-publication.cjs publication .github/release-train.config.json .github/accepted-bamboo-frontend-publication.json bamboo
           echo "Verified Lotus Next provenance: ${LOTUS_NEXT_REPOSITORY}@${LOTUS_NEXT_REVISION} was accepted from ${LOTUS_NEXT_REF}; the locked artifact remains stable if that branch advances."
 
       - name: Checkout accepted Bamboo verification source
@@ -171,6 +173,8 @@ jobs:
         env:
           FRONTEND_PACKAGE: ${{ steps.resolve.outputs.frontend_package }}
           FRONTEND_VERSION: ${{ steps.resolve.outputs.frontend_version }}
+          BAMBOO_FRONTEND_PACKAGE: ${{ steps.resolve.outputs.bamboo_frontend_package }}
+          BAMBOO_FRONTEND_VERSION: ${{ steps.resolve.outputs.bamboo_frontend_version }}
           NPM_CONFIG_AUDIT: "false"
           NPM_CONFIG_FUND: "false"
           NPM_CONFIG_PROGRESS: "false"
@@ -178,10 +182,13 @@ jobs:
           NPM_CONFIG_CACHE: ${{ runner.temp }}/zenith-release-npm-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           set -euo pipefail
-          artifact_dir="$(mktemp -d "${RUNNER_TEMP}/frontend-artifact.XXXXXX")"
-          cd "${artifact_dir}"
+          stage_frontend() {
+            local consumer="$1" package_name="$2" package_version="$3" output_name="$4"
+            local artifact_dir archive
+            artifact_dir="$(mktemp -d "${RUNNER_TEMP}/frontend-${consumer}.XXXXXX")"
+            cd "${artifact_dir}"
 
-          npm pack "${FRONTEND_PACKAGE}@${FRONTEND_VERSION}" \
+          npm pack "${package_name}@${package_version}" \
             --ignore-scripts \
             --prefer-online \
             --json > pack.json
@@ -194,7 +201,8 @@ jobs:
 
           node "${GITHUB_WORKSPACE}/scripts/release-train-policy.cjs" verify-tarball \
             --config "${GITHUB_WORKSPACE}/.github/release-train.config.json" \
-            --frontend-package "${FRONTEND_PACKAGE}" \
+            --frontend-package "${package_name}" \
+            --consumer "${consumer}" \
             --tarball "${archive}"
 
           mkdir unpacked
@@ -203,9 +211,13 @@ jobs:
           test "$(find unpacked -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" = "1"
           node "${GITHUB_WORKSPACE}/scripts/release-train-policy.cjs" verify-package \
             --config "${GITHUB_WORKSPACE}/.github/release-train.config.json" \
-            --frontend-package "${FRONTEND_PACKAGE}" \
+            --frontend-package "${package_name}" \
+            --consumer "${consumer}" \
             --package-dir unpacked/package
-          echo "package_dir=${artifact_dir}/unpacked/package" >> "${GITHUB_OUTPUT}"
+            echo "${output_name}=${artifact_dir}/unpacked/package" >> "${GITHUB_OUTPUT}"
+          }
+          stage_frontend bodhi "${FRONTEND_PACKAGE}" "${FRONTEND_VERSION}" package_dir
+          stage_frontend bamboo "${BAMBOO_FRONTEND_PACKAGE}" "${BAMBOO_FRONTEND_VERSION}" bamboo_package_dir
 
       - name: Validate cross-repository release token
         shell: bash
@@ -230,7 +242,7 @@ jobs:
           BAMBOO_VERSION: ${{ steps.resolve.outputs.bamboo_version }}
           BODHI_VERSION: ${{ steps.resolve.outputs.bodhi_version }}
           FRONTEND_PACKAGE: ${{ steps.resolve.outputs.frontend_package }}
-          FRONTEND_PACKAGE_DIR: ${{ steps.frontend.outputs.package_dir }}
+          FRONTEND_PACKAGE_DIR: ${{ steps.frontend.outputs.bamboo_package_dir }}
           BAMBOO_SOURCE_DIR: ${{ github.workspace }}/.release-inputs/bamboo
         run: |
           set -euo pipefail
@@ -314,7 +326,8 @@ jobs:
           BODHI_VERSION: ${{ steps.resolve.outputs.bodhi_version }}
           FRONTEND_PACKAGE: ${{ steps.resolve.outputs.frontend_package }}
           FRONTEND_VERSION: ${{ steps.resolve.outputs.frontend_version }}
-          FRONTEND_PACKAGE_DIR: ${{ steps.frontend.outputs.package_dir }}
+          BAMBOO_FRONTEND_VERSION: ${{ steps.resolve.outputs.bamboo_frontend_version }}
+          FRONTEND_PACKAGE_DIR: ${{ steps.frontend.outputs.bamboo_package_dir }}
           BAMBOO_SOURCE_DIR: ${{ github.workspace }}/.release-inputs/bamboo
         run: |
           set -euo pipefail
@@ -416,7 +429,7 @@ jobs:
                 "expected_source_sha=${BAMBOO_REVISION}" \
                 "version=${BAMBOO_VERSION}" \
                 "frontend_package=${FRONTEND_PACKAGE}" \
-                "lotus_version=${FRONTEND_VERSION}"
+                "lotus_version=${BAMBOO_FRONTEND_VERSION}"
             fi
           fi
 

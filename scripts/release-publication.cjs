@@ -362,12 +362,13 @@ const readRecoveryEvidence = async (identity, fetchImpl = fetch) => {
 
 const main = async () => {
   const [command, configPath, selector, ...expected] = process.argv.slice(2)
-  const { readConfig } = require("./release-train-policy.cjs")
+  const { readConfig, configForConsumer } = require("./release-train-policy.cjs")
   const config = readConfig(configPath)
   if (command === "ref") {
-    assert.ok(["bamboo", "bodhi", "lotus-next"].includes(selector))
-    const identity = selector === "lotus-next" ? config.frontend.lotusNext : config.sources[selector]
-    if (selector === "lotus-next" && !identity.publication) return
+    assert.ok(["bamboo", "bodhi", "lotus-next", "bamboo-frontend"].includes(selector))
+    const frontend = ["lotus-next", "bamboo-frontend"].includes(selector)
+    const identity = frontend ? configForConsumer(config, selector === "bamboo-frontend" ? "bamboo" : "bodhi").frontend.lotusNext : config.sources[selector]
+    if (frontend && !identity.publication) return
     const ref = canonicalRef(identity.ref)
     if (expected.length) assert.deepEqual(expected, [identity.repository, identity.ref, identity.revision || identity.sourceRevision])
     const queries = [ref, ref + "^{}"]
@@ -378,10 +379,12 @@ const main = async () => {
     return
   }
   if (command === "publication") {
-    const identity = config.frontend.lotusNext
+    assert.ok(expected.length <= 1)
+    const consumer = expected[0] || "bodhi"
+    const identity = configForConsumer(config, consumer).frontend.lotusNext
     if (!identity.publication) return
     const bytes = readFileSync(selector)
-    const evidenceBytes = readFileSync(".github/accepted-frontend-workflow.json")
+    const evidenceBytes = readFileSync(consumer === "bamboo" ? ".github/accepted-bamboo-frontend-workflow.json" : ".github/accepted-frontend-workflow.json")
     assert.equal(createHash("sha256").update(evidenceBytes).digest("hex"), identity.publication.workflowEvidenceSha256)
     const evidence = JSON.parse(evidenceBytes)
     if (identity.publication.recovery) {
@@ -396,7 +399,7 @@ const main = async () => {
     console.log("Verified exact frontend source and main publication workflow identities")
     return
   }
-  throw new Error("Usage: release-publication.cjs ref CONFIG bamboo|bodhi|lotus-next OR publication CONFIG RECEIPT")
+  throw new Error("Usage: release-publication.cjs ref CONFIG bamboo|bodhi|lotus-next|bamboo-frontend OR publication CONFIG RECEIPT [bamboo|bodhi]")
 }
 
 module.exports = { canonicalRef, verifyRemoteRows, assertPublicationIdentity, verifyPublicationReceipt, verifyRecoveryReceipt, readRecoveryEvidence }

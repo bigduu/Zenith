@@ -16,6 +16,7 @@ const test = require("node:test")
 
 const {
   calculateResourcesSha256,
+  configForConsumer,
   formatGitHubOutputs,
   readConfig,
   resourceRecord,
@@ -38,12 +39,12 @@ const digest = (algorithm, value, encoding) =>
 test("accepts the committed release authority and fixed identities", () => {
   const config = readConfig(configPath)
   assert.equal(config.schemaVersion, 2)
-  assert.equal(config.sources.bamboo.ref, "refs/tags/bamboo-release-source-dbafb74522794012fc8f0a61e761817b3913989a")
-  assert.equal(config.sources.bamboo.revision, "dbafb74522794012fc8f0a61e761817b3913989a")
-  assert.equal(config.sources.bamboo.tagObjectSha, "501d9d70b35ba89427505f33d7dde6737ac3ff38")
-  assert.equal(config.sources.bodhi.ref, "refs/tags/bodhi-source-2026.10.16")
-  assert.equal(config.sources.bodhi.revision, "f1079d4b422005c41369e55f8a07274620be9cba")
-  assert.equal(config.sources.bodhi.tagObjectSha, "6b27f124f4a84bcd3459557888104c0466ef81d3")
+  assert.equal(config.sources.bamboo.ref, "refs/tags/bamboo-release-source-7979ae9117b947fa56f99e9f8f1770f719f51bfc")
+  assert.equal(config.sources.bamboo.revision, "7979ae9117b947fa56f99e9f8f1770f719f51bfc")
+  assert.equal(config.sources.bamboo.tagObjectSha, "c15d9ca637ba9fd5ebb3a771260525e4afc7ec4d")
+  assert.equal(config.sources.bodhi.ref, "refs/tags/bodhi-source-2026.10.17")
+  assert.equal(config.sources.bodhi.revision, "3a04967a36147f2cc7b3a601233af31f82ac0b3d")
+  assert.equal(config.sources.bodhi.tagObjectSha, "986ee88f22eb3f3c8920a2679c9a63d9df4e8fca")
   assert.equal(config.frontend.defaultPackage, "@bigduu/lotus-next")
   assert.equal(config.frontend.lotusNext.ref, "refs/tags/lotus-next-v2026.10.15")
   assert.equal(config.frontend.lotusNext.packageVersion, "2026.10.15")
@@ -115,6 +116,7 @@ esac
         BODHI_REPOSITORY: "bigduu/Bodhi-AI", BODHI_WORKFLOW: "release.yml",
         BODHI_REF: "refs/tags/bodhi-source", BODHI_REVISION: "2".repeat(40),
         FRONTEND_PACKAGE: "@bigduu/lotus-next", FRONTEND_VERSION: "2026.10.8",
+        BAMBOO_FRONTEND_VERSION: "2026.10.8",
         FRONTEND_PACKAGE_DIR: path.join(directory, "frontend"),
         BAMBOO_SOURCE_DIR: path.join(directory, "bamboo"),
         ...options,
@@ -169,6 +171,67 @@ test("train rechecks Bamboo after publication and before every Bodhi admission",
     const actual = result.dispatch.trim().split("\n").filter(Boolean).map((line) => line.match(/-R ([^ ]+)/)[1])
     assert.deepEqual(actual, repositories)
   }
+})
+
+test("actual train shell dispatches each consumer's exact frontend version", () => {
+  const result = runTrainShell("Run Bamboo then Bodhi", {
+    BAMBOO_FRONTEND_VERSION: "2026.10.16", FRONTEND_VERSION: "2026.10.15",
+  })
+  assert.equal(result.status, 0, result.stderr)
+  const lines = result.dispatch.trim().split("\n")
+  assert.equal(lines.length, 2)
+  assert.match(lines[0], /bigduu\/Bamboo-agent.*lotus_version=2026\.10\.16(?:\s|$)/)
+  assert.match(lines[1], /bigduu\/Bodhi-AI.*lotus_version=2026\.10\.15(?:\s|$)/)
+})
+
+test("keeps Bamboo16 and Bodhi15 identities separate without mutating the config", () => {
+  const config = readConfig(configPath)
+  const before = JSON.stringify(config)
+  const resolved = resolvePolicy(config, { targets: "bodhi" })
+  assert.equal(resolved.frontend_version, "2026.10.15")
+  assert.equal(resolved.bamboo_frontend_version, "2026.10.16")
+  assert.equal(configForConsumer(config, "bamboo").frontend.lotusNext.sourceRevision, "ad9ab8ffb9502fa538c9f36e112dfd4b1a1e8801")
+  assert.equal(configForConsumer(config, "bodhi").frontend.lotusNext.sourceRevision, "58920d5b58b98847ef10f70e60b8f8c23afb9df4")
+  assert.equal(JSON.stringify(config), before)
+  assert.throws(() => configForConsumer(config, "unknown"), /consumer must be/)
+  const shared = clone(config); delete shared.frontend.bambooLotusNext
+  assert.equal(resolvePolicy(shared).bamboo_frontend_version, shared.frontend.lotusNext.packageVersion)
+  for (const mutate of [
+    identity => { identity.sourceDirty = true },
+    identity => { delete identity.manifestSha256 },
+    identity => { identity.npmIntegrity = "sha512-invalid" },
+    identity => { delete identity.publication },
+    identity => { identity.packageVersion = "2026.10.15" },
+  ]) {
+    const changed = clone(config); mutate(changed.frontend.bambooLotusNext)
+    assert.throws(() => validateConfig(changed))
+  }
+})
+
+test("consumer tarball verification never borrows the other consumer's digest", t => {
+  const config = clone(readConfig(configPath))
+  const directory = mkdtempSync(path.join(os.tmpdir(), "zenith-two-frontends-"))
+  t.after(() => rmSync(directory, { recursive: true, force: true }))
+  for (const consumer of ["bamboo", "bodhi"]) {
+    const bytes = Buffer.from(consumer + " distinct synthetic npm tarball")
+    const identity = consumer === "bamboo" ? config.frontend.bambooLotusNext : config.frontend.lotusNext
+    identity.npmShasum = digest("sha1", bytes, "hex")
+    identity.npmIntegrity = "sha512-" + digest("sha512", bytes, "base64")
+    writeFileSync(path.join(directory, consumer + ".tgz"), bytes)
+  }
+  for (const consumer of ["bamboo", "bodhi"]) {
+    const selected = configForConsumer(config, consumer)
+    assert.equal(verifyTarball(selected, "@bigduu/lotus-next", path.join(directory, consumer + ".tgz")).packageVersion,
+      consumer === "bamboo" ? "2026.10.16" : "2026.10.15")
+    const other = consumer === "bamboo" ? "bodhi" : "bamboo"
+    assert.throws(() => verifyTarball(selected, "@bigduu/lotus-next", path.join(directory, other + ".tgz")), /does not match the committed identity/)
+  }
+  assert.equal(resolvePolicy(config, { frontendPackage: "@bigduu/lotus" }).bamboo_frontend_version, config.frontend.legacyRollback.packageVersion)
+  const workflow = readFileSync(path.join(repositoryRoot, ".github/workflows/release-train.yml"), "utf8")
+  assert.match(workflow, /stage_frontend bodhi .*package_dir/)
+  assert.match(workflow, /stage_frontend bamboo .*bamboo_package_dir/)
+  assert.match(workflow, /--consumer "\$\{consumer\}"/)
+  assert.equal((workflow.match(/FRONTEND_PACKAGE_DIR: \$\{\{ steps\.frontend\.outputs\.bamboo_package_dir \}\}/g) || []).length, 2)
 })
 
 test("defaults to a Bamboo then Bodhi train with the locked Lotus Next artifact", () => {
