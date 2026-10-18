@@ -1,5 +1,7 @@
 # Lotus → Lotus Next 迁移体检与落地计划
 
+> **2026-10-19 发布边界更新:**Bodhi 已改为在自己的仓库独立发布，Bamboo 与 Lotus Next 各自负责生产者发布。Zenith 不再维护共享 release train、版本配置或发布恢复；开发源码 gitlink 不决定消费制品版本。消费者继续保留自己的精确版本、源码与摘要锁，以及 Bodhi 四平台原生验收。操作见 [Bodhi 发布手册](https://github.com/bigduu/Bodhi-AI/blob/main/docs/releasing.md)。下列带日期的里程碑保留为历史记录。
+>
 > 状态:**生产默认消费与锁定发布链已落地；运行验收与 legacy 退役仍在推进** · 最后更新:2026-09-13
 >
 > **2026-09-13 生产/发布里程碑:**`@bigduu/lotus-next@2026.9.14` 已由受保护源码提交发布；Bamboo 和 Bodhi 已锁定并默认消费同一份 universal artifact；Zenith 已固定对应源码指针。根 release train 不再生产 legacy Lotus，也不自动发布 Lotus Next，而是在任何跨仓库 dispatch 前校验被接受的源码 ref、根 gitlink、npm tarball SHA-1/integrity，以及 Lotus Next manifest 中每个资源的 size/hash。legacy `@bigduu/lotus@2026.8.28` 仅保留为显式固定回滚。本阶段没有实际触发新的 Bamboo/Bodhi release。

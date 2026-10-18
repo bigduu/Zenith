@@ -1,8 +1,10 @@
 # Release readiness — read-only review, refreshed 2026-10-04
 
+> Historical snapshot: the shared Zenith release authority described below was retired on 2026-10-19. Use the current [Release Playbook](../../AGENTS.md#release-playbook) and [Bodhi release playbook](https://github.com/bigduu/Bodhi-AI/blob/main/docs/releasing.md). The dated evidence and proposed sequence below describe the old process, not current release instructions.
+
 This is preparation, not a release approval or a completed release. No workflow was dispatched, tag pushed, tap updated, credential accessed, or root gitlink/configuration changed. Supervisor #1481 and #791 work remains outside this task. Documentation publication is separately authorized; this review does not authorize releases or Homebrew updates.
 
-## Current release policy cannot pass
+## Release policy at the 2026-10-04 snapshot
 
 This snapshot is tied to accepted Zenith `main` commit `93aa6fc796564602168ad6120d7c6a78d69002e3`, checked on 2026-10-04. The checked-in release authority is `.github/release-train.config.json`. The policy workflow checks **committed root gitlinks**, then checks that downstream dispatch branches still point at the exact accepted revision. Local documentation commits in submodule worktrees are not accepted release candidates.
 
@@ -36,7 +38,7 @@ The tap `check.yml` runs on Apple Silicon (`macos-15`) and Intel (`macos-15-inte
 
 The 2026-10-04 public recheck still resolves Bamboo GitHub releases to `v2026.3.3`, Bodhi to `app-v2026.9.20`, Jiandu to `v0.2.0`, and Nova to `v0.2.1`. The official Cargo sparse index still ends at non-yanked `bamboo-agent@2026.9.20`. These are observations of published surfaces, not a claim that the configured `2026.10.4` candidate is ready or that a version is available for reuse.
 
-## Safe proposed publication sequence
+## Historical proposed publication sequence (superseded)
 
 1. Obtain explicit authorization for public releases and their side effects, including Nova's possible automatic tap push. This document does not authorize those actions.
 2. Have owners finish and merge intended source changes through each repository's protected flow. Exclude unfinished Supervisor work and unmerged feature branches; identify the exact approved release scope first.

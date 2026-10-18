@@ -219,56 +219,36 @@ See `.github/labels.tsv` for the full label taxonomy. Key labels:
 Examples: `[lotus-next] feat: add conversation export`, `[bamboo] fix: streaming timeout`
 
 ## Release Playbook
-Use this checklist for every release train. Bodhi releases use `Zenith -> release-train.yml`. Bamboo also has an independent main publication path: successful CI for each main push publishes the exact tested source to crates.io and records it in a GitHub Release. Bamboo implementation PRs still target `dev`; the automation becomes active when it reaches `main` through the normal promotion flow.
 
-1. Land release changes through each repository's protected pull-request flow:
-   - Use isolated branches/worktrees and Conventional Commits; never push feature or release-preparation commits directly to `main`.
-   - Lotus Next publication is a separate protected producer step. Accept its exact npm identity in Bamboo and Bodhi first, then pin the resulting source commits and artifact identity in a focused Zenith PR.
-   - Bamboo feature PRs target `dev`. For train-controlled releases, release only the exact Bamboo and Bodhi revisions recorded in `.github/release-train.config.json` and pinned by the matching Zenith gitlinks. Independent Bamboo main releases use the exact successful main CI commit and its committed frontend identity; they do not advance Zenith's accepted Bodhi inputs.
-   - If Zenith submodule pointers or release configuration change, update them in a focused Zenith PR after the submodule commits are merged.
+Each producer and product owns its release workflow. Zenith owns source gitlinks and documentation; it does not publish, allocate downstream versions, dispatch another repository, or recover Bodhi drafts. Use the [Bodhi release playbook](https://github.com/bigduu/Bodhi-AI/blob/main/docs/releasing.md) for exact commands and recovery requirements.
 
-2. Run release gates against the exact candidate refs:
-   - `cd bamboo && cargo fmt --check && cargo clippy && cargo test`
-   - `cd lotus-next && npm run verify && npm run test:e2e:built` for a new frontend artifact; its own publish workflow also performs a real Bamboo round trip.
-   - `cd bodhi && npm run web:verify:migration && npm run web:verify:docs-boundary`
-   - For release-policy changes: `node --test scripts/release-train-policy.test.cjs` and `actionlint .github/workflows/release-policy.yml .github/workflows/release-train.yml .github/workflows/nightly-release.yml`.
-   - If website changed: `cd pavilion && npm run lint && npm run build`
-   - For cross-page UI changes, run the affected Lotus Next browser suite.
+1. Land source and lock changes through the owning repository's reviewed PR flow:
+   - Use isolated branches/worktrees and Conventional Commits. Bamboo feature PRs target `dev`; promotion to `main` remains a separate change.
+   - Lotus Next publication is a separate protected producer step. Publish and verify its exact npm artifact before accepting that identity in a consumer lock.
+   - Bodhi owns `scripts/bamboo-sidecar-lock.json` and `scripts/frontend-package-lock.json`. Preserve their full source, version, target and digest identities; do not substitute a moving `latest`, registry bytes with edited digests, or a local source build.
+   - Bamboo's embedded frontend and Bodhi's external static directory can use different accepted Lotus Next identities. Validate each consumer's own lock.
+   - Update Zenith gitlinks in a separate focused PR after source merge. Those development pins are not a publication prerequisite or a second artifact lock.
 
-3. Resolve the release version without editing package manifests:
-   - Bamboo and Bodhi source manifests intentionally keep `0.0.0` placeholders. Their publish workflows stamp the requested downstream release version in temporary publishing checkouts.
-   - The frontend version is not derived from the downstream release number. The train downloads the exact committed npm package/version and verifies its tarball plus, for Lotus Next, its full universal manifest before dispatch.
-   - For a config-driven release, update `.github/release-train.config.json` through a focused Zenith PR or let the nightly workflow advance it.
-   - For an ad-hoc release, pass an unused `release_version`; do not edit submodule manifests or the committed frontend identity.
-   - Independent Bamboo publication allocates an unused version under the same Bamboo publication lock as manual/train dispatches. Retries must verify the recorded source and frontend identity before resuming an existing version; version existence alone is not proof of the same release.
+2. Verify the exact candidate in the owning repository:
+   - Bamboo: `cargo fmt --check`, `cargo clippy` and `cargo test`, plus its publisher's source, dependency-closure and frontend gates.
+   - Lotus Next: `npm run verify` and `npm run test:e2e:built`, plus its publish workflow's real Bamboo round trip.
+   - Bodhi: `npm run test:build`, `node scripts/verify-boundaries.cjs migration`, `node scripts/verify-boundaries.cjs docs-boundary`, and actionlint for its workflows.
+   - Bodhi retains all four native targets: macOS Intel, macOS ARM64, Linux x64 and Windows x64. Real assembly, actor transport, browser-host and external static-directory gates must pass before final publication.
+   - Zenith policy changes: `node --test scripts/repository-policy.test.cjs` and `actionlint .github/workflows/*.yml`. No registry downloads or cross-repository publication checks run here.
 
-4. Trigger the release train:
-   - Config-driven full train: `gh workflow run release-train.yml -R bigduu/Zenith --ref main`.
-   - Ad-hoc full train: `gh workflow run release-train.yml -R bigduu/Zenith --ref main -f release_version=<version>`.
-   - Add `-f targets=bamboo` or `-f targets=bodhi` for a partial release.
-   - The default frontend is the locked Lotus Next artifact. The only rollback selector is `-f frontend_package=@bigduu/lotus`, which still resolves to the one fixed legacy version in config.
+3. Publish independently:
+   - Bamboo publishes from its own successful main CI source or authorized exact-source manual publisher. Keep its publication queue and provenance checks in Bamboo.
+   - Bodhi's `release.yml` takes an explicit unused `bodhi_version` and full `expected_source_sha`, dispatched directly in `bigduu/Bodhi-AI` against that source. Source manifests retain `0.0.0`; only temporary publishing checkouts are stamped. The candidate's committed upstream locks remain authoritative.
+   - An ordinary Bodhi shell release reuses the locked published Bamboo binary and frontend. It does not republish Bamboo or Lotus Next.
+   - Watch the owning repository's run and verify its exact source, all four platform outcomes, final `app-v<version>` and eight asset identities. A draft or version's mere existence is not successful publication.
 
-5. Watch and verify the release chain:
-   - `gh run watch <root_run_id> -R bigduu/Zenith --exit-status`
-   - `gh run list -R bigduu/Bamboo-agent --workflow publish-crate.yml --limit 1`
-   - `gh run list -R bigduu/Bodhi-AI --workflow release.yml --limit 1`
-   - Confirm the downstream runs' `headSha` values equal the accepted revisions in config.
+4. Recover in the owning repository:
+   - Never rerun a Zenith train or dispatch through an old frozen train definition. Existing published assets and historical tags remain unchanged.
+   - Bodhi recovery binds the original release run, original attempt, exact source/version and verified asset receipt. All four original native jobs and gates must have succeeded; only finalization may be recovered without rebuilding.
+   - Missing or mismatched source, lock, gate, receipt or asset evidence stops recovery. A failed native build is not a finalizer-only recovery candidate.
+   - If a producer lock needs changing, publish and verify a new producer artifact, then accept it through a consumer PR. Do not mutate a lock to fit unexpected bytes or reuse a version for a different source.
 
-6. Handle failures without changing the release order:
-   - If locked frontend verification fails, stop. Do not edit a digest to fit registry bytes; publish and accept a new Lotus Next artifact through the staged producer → consumer → Zenith-pointer sequence.
-   - If Bodhi fails with npm `ETARGET`:
-     - Wait until `npm view <configured-package>@<configured-version> version` succeeds.
-     - Rerun failed jobs only: `gh run rerun <bodhi_run_id> -R bigduu/Bodhi-AI --failed`.
-   - If a partial train fails after publishing one downstream artifact, rerun the same versions with `resume=true`. Never substitute a moving `latest`.
-   - If the root train fails due a transient GitHub API issue, resume in the same Bamboo → Bodhi order and retain the exact accepted refs.
-
-7. Run post-release checks:
-   - `git status -sb` at root and inside all submodules (must be clean).
-   - Verify the configured frontend package/version still reports the committed npm shasum and integrity.
-   - `cargo search bamboo-agent --limit 1` (confirm expected version is published)
-   - `gh release view app-v<version> -R bigduu/Bodhi-AI`
-
-8. Verify independent publication and Homebrew delivery:
-   - For Bamboo main publication, verify the successful main CI SHA, published crate provenance, and the GitHub Release's exact source identity. A workflow merged only to `dev` is not yet active on `main`; do not promote unrelated development solely to enable it.
-   - The tap updater follows the latest final stable releases of Bodhi, Jiandu, and Nova. It verifies both Bodhi DMG digests, Jiandu's tagged source archive, and Nova's universal CLI archive, then runs the ARM64 and Intel Homebrew gates against the candidate commit before merging its update PR.
-   - A successful tap no-op means all three definitions already match their latest published stable releases. It does not mean newer source has been released or that installed packages have upgraded; users still run `brew update`, `brew upgrade bigduu/tap/jiandu bigduu/tap/nova`, and `brew upgrade --cask bigduu/tap/bodhi`.
+5. Verify delivery:
+   - Check final published identities in the producer/product repository. Source, configuration or a green fixture suite alone does not establish publication or native acceptance.
+   - The Homebrew tap independently follows stable Bodhi, Jiandu and Nova releases through its update PR and ARM64/Intel macOS checks. Zenith does not dispatch or update the tap.
+   - A tap no-op means its definitions already match published releases; installed users still run `brew update`, `brew upgrade bigduu/tap/jiandu bigduu/tap/nova`, and `brew upgrade --cask bigduu/tap/bodhi`.

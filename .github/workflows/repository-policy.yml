@@ -1,0 +1,55 @@
+name: Repository Policy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/**"
+      - "scripts/**"
+      - "AGENTS.md"
+      - "README*.md"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/**"
+      - "scripts/**"
+      - "AGENTS.md"
+      - "README*.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repository-policy-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Repository Policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Verify release ownership boundaries
+        run: node --test scripts/repository-policy.test.cjs
+
+      - name: Validate workflow syntax
+        shell: bash
+        env:
+          ACTIONLINT_VERSION: "1.7.12"
+          ACTIONLINT_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+        run: |
+          set -euo pipefail
+          archive="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          download="${RUNNER_TEMP}/${archive}"
+          curl --fail --silent --show-error --location \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${archive}" \
+            --output "${download}"
+          echo "${ACTIONLINT_SHA256}  ${download}" | sha256sum --check -
+          tar --extract --gzip --file "${download}" --directory "${RUNNER_TEMP}" actionlint
+          "${RUNNER_TEMP}/actionlint" -color .github/workflows/*.yml
