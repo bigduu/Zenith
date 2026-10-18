@@ -12,16 +12,16 @@
     "bodhi": {
       "repository": "bigduu/Bodhi-AI",
       "workflow": "release.yml",
-      "ref": "refs/tags/bodhi-source-2026.10.16",
-      "revision": "f1079d4b422005c41369e55f8a07274620be9cba",
+      "ref": "refs/tags/bodhi-source-2026.10.17",
+      "revision": "3a04967a36147f2cc7b3a601233af31f82ac0b3d",
       "rootPath": "bodhi",
-      "tagObjectSha": "6b27f124f4a84bcd3459557888104c0466ef81d3"
+      "tagObjectSha": "986ee88f22eb3f3c8920a2679c9a63d9df4e8fca"
     }
   },
   "versions": {
-    "release": "2026.10.16",
+    "release": "2026.10.17",
     "bamboo": "2026.10.13",
-    "bodhi": "2026.10.16"
+    "bodhi": "2026.10.17"
   },
   "frontend": {
     "defaultPackage": "@bigduu/lotus-next",
