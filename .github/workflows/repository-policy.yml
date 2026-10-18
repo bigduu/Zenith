@@ -5,14 +5,14 @@ on:
     branches: [main]
     paths:
       - ".github/**"
-      - "scripts/repository-policy.test.cjs"
+      - "scripts/**"
       - "AGENTS.md"
       - "README*.md"
   pull_request:
     branches: [main]
     paths:
       - ".github/**"
-      - "scripts/repository-policy.test.cjs"
+      - "scripts/**"
       - "AGENTS.md"
       - "README*.md"
 
