@@ -131,9 +131,13 @@ Nova 的原生能力取决于操作系统和权限，源码中的浏览器启动
 
 ### 贡献与发布协调
 
-Zenith 维护文档、八个 gitlink 和发布列车，功能代码位于各模块。请使用隔离分支并遵循 [AGENTS.md](./AGENTS.md)。`git submodule status` 可查看检出提交，初始化会遵守已记录的 pin。更新 pin 是单独审核的改动，不是试用当前源码的前置步骤。
+Zenith 维护文档和八个 gitlink；功能代码与发布由各模块负责。请使用隔离分支并遵循 [AGENTS.md](./AGENTS.md)。`git submodule status` 可查看检出提交，初始化会遵守已记录的 pin。更新 pin 是单独审核的改动，不是 Bodhi 发布的前置步骤。
 
-[发布配置](./.github/release-train.config.json) 选择精确 Bamboo/Bodhi 提交和前端制品身份。[发布列车](./.github/workflows/release-train.yml) 验证输入后，依次发布 Bamboo 和 Bodhi；Lotus Next 是独立的制品生产步骤。配置或工作流存在并不保证构建和发布成功，应核对运行结果及实际制品。
+Bodhi 直接在自己的仓库发布，操作见 [Bodhi 发布手册](https://github.com/bigduu/Bodhi-AI/blob/main/docs/releasing.md)。候选提交锁定完整 Bamboo 二进制与 Lotus Next 制品；macOS Intel、macOS ARM64、Linux、Windows 全部通过构建、真实 sidecar 与浏览器验收后，才发布原始八个制品。最终发布失败时，由 Bodhi 核对原始构建 attempt 和制品身份后恢复。Zenith 不再分配版本、调度发布、等待发布或恢复草稿。
+
+Bamboo 的 [crate 与二进制发布](https://github.com/bigduu/Bamboo-agent/blob/main/.github/workflows/publish-crate.yml)和 Lotus Next 的 [npm 发布](https://github.com/bigduu/lotus-next/blob/main/.github/workflows/publish-npm.yml)分别由生产者负责。先发布并验证新制品，再通过消费者 PR 更新精确版本、源码和摘要锁。Bodhi 发布桌面壳复用已锁定的 Bamboo 二进制，不要求重新发布 Bamboo crate，也不修改上游版本。
+
+Bamboo 内嵌前端与 Bodhi 外置静态资源可以使用各自接受的 Lotus Next 制品；两者分别校验自己的锁。Zenith 开发源码指针可以独立前进，不再决定消费制品版本。旧共享 train、nightly 版本回写和根仓库恢复工具已退役，历史标签、已发布制品和带日期的审计记录继续保留。根仓库只执行本地只读策略检查与 Submodule Guard。
 
 - [发布手册](./AGENTS.md#release-playbook)
 - [Bamboo 架构](https://github.com/bigduu/Bamboo-agent/blob/dev/docs/design/architecture-overview.md)
