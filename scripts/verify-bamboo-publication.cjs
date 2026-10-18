@@ -8,7 +8,7 @@ const fs = require("node:fs")
 const os = require("node:os")
 const path = require("node:path")
 const { execFileSync } = require("node:child_process")
-const { readConfig, resolvePolicy, selectFrontend, verifyPackageArtifact } = require("./release-train-policy.cjs")
+const { readConfig, resolvePolicy, selectFrontend, verifyPackageArtifact, configForConsumer } = require("./release-train-policy.cjs")
 
 const MAX_ARCHIVE_BYTES = 128 * 1024 * 1024
 const cleanEnv = () => Object.fromEntries(["PATH", "SYSTEMROOT", "TMPDIR", "TEMP"]
@@ -73,7 +73,7 @@ async function readJson(response) {
 }
 
 async function inspectPublication(options) {
-  const config = typeof options.config === "string" ? readConfig(options.config) : options.config
+  const config = configForConsumer(typeof options.config === "string" ? readConfig(options.config) : options.config, "bamboo")
   const policy = resolvePolicy(config, { targets: "bamboo", bambooVersion: options.version, frontendPackage: options.frontendPackage })
   const selected = selectFrontend(config, policy.frontend_package)
   const version = policy.bamboo_version

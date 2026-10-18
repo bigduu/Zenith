@@ -147,8 +147,7 @@ const validateSource = (source, name, expected) => {
   }
 }
 
-const validateLotusNext = (frontend) => {
-  const label = "frontend.lotusNext"
+const validateLotusNext = (frontend, label = "frontend.lotusNext") => {
   assertExactKeys(
     frontend,
     [
@@ -247,7 +246,7 @@ const validateConfig = (config) => {
 
   assertExactKeys(
     config.frontend,
-    ["defaultPackage", "lotusNext", "legacyRollback"],
+    ["defaultPackage", "lotusNext", "legacyRollback", ...(Object.hasOwn(config.frontend, "bambooLotusNext") ? ["bambooLotusNext"] : [])],
     "frontend",
   )
   if (config.frontend.defaultPackage !== LOTUS_NEXT_PACKAGE) {
@@ -256,8 +255,18 @@ const validateConfig = (config) => {
     )
   }
   validateLotusNext(config.frontend.lotusNext)
+  if (Object.hasOwn(config.frontend, "bambooLotusNext")) validateLotusNext(config.frontend.bambooLotusNext, "frontend.bambooLotusNext")
   validateLegacyRollback(config.frontend.legacyRollback)
   return config
+}
+
+// A published Bamboo executable can embed a different accepted artifact from
+// Bodhi's external static directory. Each retains the complete strict identity.
+const configForConsumer = (config, consumer = "bodhi") => {
+  validateConfig(config)
+  if (consumer !== "bamboo" && consumer !== "bodhi") throw new Error("consumer must be bamboo or bodhi.")
+  if (consumer !== "bamboo" || !Object.hasOwn(config.frontend, "bambooLotusNext")) return config
+  return { ...config, frontend: { ...config.frontend, lotusNext: config.frontend.bambooLotusNext } }
 }
 
 const readConfig = (configPath) => {
@@ -363,6 +372,7 @@ const resolvePolicy = (config, input = {}) => {
       ? config.frontend.defaultPackage
       : input.frontendPackage
   const frontend = selectFrontend(config, requestedFrontend)
+  const bambooFrontend = selectFrontend(configForConsumer(config, "bamboo"), requestedFrontend)
 
   return {
     include_bamboo: String(includeBamboo),
@@ -388,6 +398,8 @@ const resolvePolicy = (config, input = {}) => {
     frontend_selection: frontend.selection,
     frontend_package: frontend.identity.packageName,
     frontend_version: frontend.identity.packageVersion,
+    bamboo_frontend_package: bambooFrontend.identity.packageName,
+    bamboo_frontend_version: bambooFrontend.identity.packageVersion,
   }
 }
 
@@ -780,9 +792,9 @@ const runCli = () => {
   if (command === "verify-tarball") {
     rejectUnknownOptions(
       arguments_,
-      new Set(["--config", "--frontend-package", "--tarball"]),
+      new Set(["--config", "--frontend-package", "--tarball", "--consumer"]),
     )
-    const config = readConfig(requireOption(arguments_, "--config"))
+    const config = configForConsumer(readConfig(requireOption(arguments_, "--config")), arguments_.get("--consumer"))
     const result = verifyTarball(
       config,
       requireOption(arguments_, "--frontend-package"),
@@ -803,9 +815,9 @@ const runCli = () => {
   if (command === "verify-package") {
     rejectUnknownOptions(
       arguments_,
-      new Set(["--config", "--frontend-package", "--package-dir"]),
+      new Set(["--config", "--frontend-package", "--package-dir", "--consumer"]),
     )
-    const config = readConfig(requireOption(arguments_, "--config"))
+    const config = configForConsumer(readConfig(requireOption(arguments_, "--config")), arguments_.get("--consumer"))
     const result = verifyPackageArtifact(
       config,
       requireOption(arguments_, "--frontend-package"),
@@ -836,6 +848,7 @@ module.exports = {
   LEGACY_LOTUS_PACKAGE,
   LOTUS_NEXT_PACKAGE,
   calculateResourcesSha256,
+  configForConsumer,
   formatGitHubOutputs,
   listResourcePaths,
   readConfig,

@@ -45,7 +45,7 @@ function bundle(payload, overrides = {}) {
   return { wrapper, zip: archive("zip", [...payload, { name: "frontend-manifest.json", bytes: wrapper }]) }
 }
 
-function fixture(t, exact = false, indirectKind, legacy = false, sourcePatch = false) {
+function fixture(t, exact = false, indirectKind, legacy = false, sourcePatch = false, splitFrontend = false) {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "zenith-publication-test-")))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
   const sourceDir = path.join(root, "source")
@@ -56,14 +56,15 @@ function fixture(t, exact = false, indirectKind, legacy = false, sourcePatch = f
     fs.writeFileSync(filename, bytes)
   }
   const config = clone(JSON.parse(fs.readFileSync(path.join(__dirname, "../.github/release-train.config.json"))))
+  if (!splitFrontend) delete config.frontend.bambooLotusNext
   const resources = [
     { name: "assets/app.js", bytes: Buffer.from("export const ready = true;\n") },
     { name: "index.html", bytes: Buffer.from("<main>accepted frontend</main>\n") },
   ]
   const records = resources.map(r => ({ path: r.name, size: r.bytes.length, sha256: sha256(r.bytes) }))
   const resourcesSha256 = sha256(records.map(r => `${r.path}\0${r.size}\0${r.sha256}\n`).join(""))
-  Object.assign(config.frontend.lotusNext, { resourcesSha256 })
-  const identity = config.frontend.lotusNext
+  const identity = splitFrontend ? config.frontend.bambooLotusNext : config.frontend.lotusNext
+  Object.assign(identity, { resourcesSha256 })
   const manifest = Buffer.from(json({ schemaVersion: 1, packageName: identity.packageName, packageVersion: identity.packageVersion, sourceRevision: identity.sourceRevision, sourceDirty: false, entrypoint: "index.html", resourcesSha256, resources: records }))
   identity.manifestSha256 = sha256(manifest)
   const nextPayload = [...resources, { name: "lotus-next-manifest.json", bytes: manifest }]
@@ -214,6 +215,16 @@ for (const kind of ["build", "dev", "optional"]) {
     assert.ok(f.calls.some(url => url === `https://static.crates.io/crates/bamboo-domain/bamboo-domain-${version}.crate`))
   })
 }
+
+test("verifies Bamboo's real source/archive/frontend closure with a distinct Bodhi frontend", async t => {
+  const f = fixture(t, false, undefined, false, false, true)
+  const result = await f.inspect()
+  assert.equal(result.state, "verified")
+  assert.equal(result.frontendVersion, "2026.10.16")
+  assert.equal(f.config.frontend.lotusNext.packageVersion, "2026.10.15")
+  f.config.frontend.bambooLotusNext = clone(f.config.frontend.lotusNext)
+  await assert.rejects(f.inspect(), /identity does not match the committed selection/)
+})
 
 test("verifies the fixed legacy rollback payload while accepted source remains locked to Lotus Next", async t => {
   const f = fixture(t, false, undefined, true)
