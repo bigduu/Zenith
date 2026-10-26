@@ -58,6 +58,15 @@ dist for every browser consumer. Rerun failed jobs only when their exact inputs
 and successful retained outputs still match; source changes require fresh
 affected evidence.
 
+Each successful formal target must persist its output and receipt before the
+next publication/finalization step. Key the checkpoint by frozen source, final
+version, target, locked inputs and original run/attempt; verify its bytes before
+reuse. Infrastructure failures may retry only the failed target with unchanged
+admitted inputs. A finalizer retry uses successful checkpoints and performs no
+compilation or packaging. If a previously successful original output is missing, stop for
+explicit recovery rather than quietly rebuilding it. Product/source repairs
+return through feature/dev and require a new frozen cut.
+
 Bamboo's current per-crate/per-server-block runners still compile overlapping
 test outputs. Disjoint test names alone do not resolve this. Before activation,
 use one physical Linux executor and one owned target directory for the canonical
@@ -65,6 +74,13 @@ Unit/E2E configuration, then reuse the compiled ignored SSH fixture as well.
 Native checks on other operating systems remain distinct. A future restoration
 of parallel case workers must transport the actual test outputs and required
 resources; dependency caches alone cannot establish compilation reuse.
+
+Apply the same ownership rule within each native OS: compatible test selections
+share one compilation and its outputs. An OS label alone does not justify two
+producers for overlapping targets. Record any required feature/profile/toolchain
+difference in the test map. Runtime acceptance, lint analysis and formal release
+outputs have distinct purposes; none may be copied into another workflow merely
+to repeat its existing gate.
 
 Lotus retains supported Node Unit compatibility lanes, but its ordinary browser
 suite has one canonical Node24 dist producer and four case shards. Real Bamboo
@@ -160,6 +176,12 @@ configurations, test selections, artifact names and ownership.
 7. Report exact source/check/run/attempt/artifact evidence and remaining work.
    Do not call a proposed, skipped, locally mocked or pending phase delivered.
 
+Before handing work to another agent, save the reviewable source as a commit
+and record its exact SHA, worktree, owner, validation and remaining steps. Use
+the same branch and evidence for a continuation; do not start duplicate suites
+because the agent changed. Preserve active worktrees and uncommitted evidence;
+only clean them after ownership and recovery have been checked.
+
 Repository branch protection must require its real feature aggregate, and main
 promotion must require its read-only source/release check. Changing a required
 check name and activating the matching rule are one coordinated cutover; do not
@@ -174,11 +196,11 @@ release selector.
 | Slice | Tracking | Activation state |
 | --- | --- | --- |
 | Shared plan, root instructions and ownership | Zenith #399 | This document; source-repository gates pending. |
-| Bamboo disjoint feature Unit/E2E and instructions | Bamboo #2311, tracker #2305 | Implementation; not activated. |
-| Lotus dev feature Unit/E2E and PR runtime identity | Lotus Next #446 | Implementation; not activated. |
-| Bodhi feature tests and debug assembly reuse | Bodhi #117 | Implementation; not activated. |
+| Bamboo disjoint feature Unit/E2E and instructions | Bamboo #2311, tracker #2305 | Draft implementation; not activated. Native ownership remains part of the complete coverage review. |
+| Lotus dev feature Unit/E2E and PR runtime identity | [Lotus Next #450](https://github.com/bigduu/lotus-next/pull/450), Issue #446 | Draft; hosted Unit/browser checks pass, Native Actor failure remains with the feature owner. |
+| Bodhi feature tests and debug assembly reuse | [Bodhi #118](https://github.com/bigduu/Bodhi-AI/pull/118), Issue #117 | Draft; hosted Unit/E2E pass on all three targets, admission/cutover pending. |
 | Homebrew instructions and one candidate audit | Homebrew tap #24 | Main-push removal/instructions drafted; authenticated automatic-PR handoff pending. |
-| New release-source producers and metadata-only main promotion | Per-repository dependent Issues under #399 | Pending complete feature evidence and source/controller admission. |
+| New release-source producers and metadata-only main promotion | [Bamboo #2318](https://github.com/bigduu/Bamboo-agent/issues/2318), [Lotus Next #451](https://github.com/bigduu/lotus-next/issues/451), [Bodhi #119](https://github.com/bigduu/Bodhi-AI/issues/119) | Pending complete feature evidence and source/controller admission. |
 | Docker final-asset consumer and Jiandu binary formula | Separate producer/consumer slices under #399 | Pending; do not claim zero downstream compilation. |
 
 Before cutover:
@@ -195,8 +217,9 @@ Before cutover:
   control changes through a dedicated source-only PR, with feature validation and
   exact postimage proof, without promoting unrelated runtime code or publishing.
 - Preserve active frozen sources, immutable tags and historical recovery. Lotus
-  #445/version28 uses the previous receipt contract and is an explicit cutover
-  dependency; do not treat its skipped Real Bamboo result as new-contract success.
+  #445/version28 uses the previous receipt contract, and #449/version29 is an
+  active producer continuation. Preserve both as explicit cutover dependencies;
+  do not treat an older skipped Real Bamboo result as new-contract success.
 - Only after the new producer and promotion proofs pass may the old automatic
   release test/build routes be retired. No new release cut uses the old
   release-repair-batch policy after activation.

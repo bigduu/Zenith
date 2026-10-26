@@ -257,9 +257,11 @@ including the [Bodhi release playbook](https://github.com/bigduu/Bodhi-AI/blob/m
    again. A trusted release dispatch may use a main-ref controller while building
    only the selected frozen source. Do not relabel
    the release source as the later merge commit or move the built release head.
-6. Recover only the original successful build outputs. A missing or failed native
-   target needs repair through feature/dev and a new cut; finalization recovery
-   never rebuilds or changes a previously uploaded asset. Retain frozen historical
+6. Retain each successful formal output and its receipt before finalization.
+   Retry an infrastructure failure only for the failed target with unchanged
+   admitted inputs; product/source repairs return through feature/dev and a new
+   cut. Finalization recovery uses the retained original outputs and never
+   rebuilds or changes a previously completed asset. Retain frozen historical
    receipt requirements, even when their workflow differs from the new contract.
 7. Update Zenith gitlinks in a separate focused PR after source admission. Those
    development pins are not publication prerequisites or artifact locks. Check
