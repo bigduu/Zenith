@@ -3,6 +3,8 @@
 Contract: `delivery-flow/v1`. This is the common policy for Bamboo, Lotus Next,
 Bodhi and their Homebrew consumer, regardless of which agent owns a change.
 Implementation is tracked in [Zenith #399](https://github.com/bigduu/Zenith/issues/399).
+The [Actions file audit](ci-workflow-audit.md) maps every reviewed workflow to
+its owner, deduplication decision and retained historical or analysis boundary.
 
 This document defines the reviewed target. The activation table below records
 which executable gates are still pending; a written policy is not evidence that
@@ -195,13 +197,19 @@ release selector.
 
 | Slice | Tracking | Activation state |
 | --- | --- | --- |
-| Shared plan, root instructions and ownership | Zenith #399 | This document; source-repository gates pending. |
-| Bamboo disjoint feature Unit/E2E and instructions | Bamboo #2311, tracker #2305 | Draft implementation; not activated. Native ownership remains part of the complete coverage review. |
-| Lotus dev feature Unit/E2E and PR runtime identity | [Lotus Next #450](https://github.com/bigduu/lotus-next/pull/450), Issue #446 | Draft; hosted Unit/browser checks pass, Native Actor failure remains with the feature owner. |
-| Bodhi feature tests and debug assembly reuse | [Bodhi #118](https://github.com/bigduu/Bodhi-AI/pull/118), Issue #117 | Draft; hosted Unit/E2E pass on all three targets, admission/cutover pending. |
-| Homebrew instructions and one candidate audit | Homebrew tap #24 | Main-push removal/instructions drafted; authenticated automatic-PR handoff pending. |
-| New release-source producers and metadata-only main promotion | [Bamboo #2318](https://github.com/bigduu/Bamboo-agent/issues/2318), [Lotus Next #451](https://github.com/bigduu/lotus-next/issues/451), [Bodhi #119](https://github.com/bigduu/Bodhi-AI/issues/119) | Pending complete feature evidence and source/controller admission. |
-| Docker final-asset consumer and Jiandu binary formula | Separate producer/consumer slices under #399 | Pending; do not claim zero downstream compilation. |
+| Shared plan, root instructions and ownership | [Zenith #400](https://github.com/bigduu/Zenith/pull/400), [#403](https://github.com/bigduu/Zenith/pull/403) | Merged. The executable source-repository cutovers below remain separate. |
+| Bamboo Linux feature Unit/E2E and instructions | [Bamboo #2322](https://github.com/bigduu/Bamboo-agent/pull/2322), Issue #2311 | Draft. The first hosted Linux attempt reached its 75-minute job limit; original logs and Cargo evidence are retained for classification. Separate default-package and narrow additive feature contexts preserve the selections; incomplete execution is not acceptance. |
+| Bamboo compatible native compilation ownership | [Bamboo #2319](https://github.com/bigduu/Bamboo-agent/issues/2319) | In implementation after the Linux ownership slice. Native OS, feature, profile and toolchain differences remain explicit; a green Linux result cannot substitute for these checks. |
+| Lotus dev feature Unit/E2E and PR runtime identity | [Lotus Next #450](https://github.com/bigduu/lotus-next/pull/450), Issue #446 | Draft. Unit, all four browser shards and Native Actor controls pass. [#453](https://github.com/bigduu/lotus-next/issues/453) preserves the original network-change failure and inconclusive diagnostic. One failed-job retry reused the same dist and passed packed local acceptance, then failed HTTPS browser control. Independent product repair [Bamboo #2326](https://github.com/bigduu/Bamboo-agent/issues/2326) needs a deterministic regression and a genuinely published replacement input before fresh complete Lotus acceptance. |
+| Bodhi feature tests and debug assembly reuse | [Bodhi #118](https://github.com/bigduu/Bodhi-AI/pull/118), Issue #117 | Original three-target Unit/E2E pass. Its source is in dev at `1ff40d39`, but GitHub still reports the PR open; matching Git parents/tree alone is not a confirmed merged-PR receipt. Do not authorize a frozen cut from that discrepancy. |
+| Bodhi frozen-source admission foundation | [Bodhi #123](https://github.com/bigduu/Bodhi-AI/pull/123), Issue #121 | Initial head passed six hosted feature checks. The reviewed retry-execution correction preserves physical original jobs separately from GitHub's logical copies; 78 local source checks pass and current-head hosted checks/review are pending. This read-only foundation does not activate publication or main promotion. |
+| Homebrew instructions and one candidate audit | [Homebrew tap #25](https://github.com/bigduu/homebrew-tap/pull/25), Issue #24 | Merged with five hosted checks passing. Main-push repetition is removed. Authenticated updater handoff has positive/negative policy coverage; the next real automatic candidate still supplies its own native evidence. |
+| Bamboo frozen-source release controller and original outputs | [Bamboo #2318](https://github.com/bigduu/Bamboo-agent/issues/2318), children [#2323](https://github.com/bigduu/Bamboo-agent/issues/2323), [#2324](https://github.com/bigduu/Bamboo-agent/issues/2324), [#2325](https://github.com/bigduu/Bamboo-agent/issues/2325) | Pending complete feature/native evidence, source/controller admission, original binary checkpoints and verified crate archive reuse. |
+| Lotus one final-version npm archive and main promotion | [Lotus Next #451](https://github.com/bigduu/lotus-next/issues/451), children [#454](https://github.com/bigduu/lotus-next/issues/454), [#455](https://github.com/bigduu/lotus-next/issues/455), [#456](https://github.com/bigduu/lotus-next/issues/456) | Source proof, actual archive durability and main/controller activation are separate bounded slices. Pending complete feature evidence; no new-contract producer is active. |
+| Bodhi original installer checkpoints and main promotion | [Bodhi #119](https://github.com/bigduu/Bodhi-AI/issues/119), child [#122](https://github.com/bigduu/Bodhi-AI/issues/122) | Checkpoint implementation is under review. Controller bootstrap and required main-promotion proof remain separate activation work. |
+| Bamboo Docker completed-asset consumption | [Bamboo #2320](https://github.com/bigduu/Bamboo-agent/issues/2320) | Pending. Await the final manifest and reuse published Linux x64 bytes; additional Linux ARM64 support has its own producer/ABI acceptance. |
+| Bamboo Rustdoc producer and retained site deployment | [Bamboo #2321](https://github.com/bigduu/Bamboo-agent/issues/2321) | Pending. Distinct Rustdoc selections and main-push recompilation still need a single producer plus retained site artifact; do not describe the current main path as compiler-free. |
+| Jiandu prebuilt formula dependency | Separate producer/consumer slice under #399 | Pending; the current source formula still compiles. Do not claim zero downstream compilation. |
 
 Before cutover:
 
@@ -217,8 +225,8 @@ Before cutover:
   control changes through a dedicated source-only PR, with feature validation and
   exact postimage proof, without promoting unrelated runtime code or publishing.
 - Preserve active frozen sources, immutable tags and historical recovery. Lotus
-  #445/version28 uses the previous receipt contract, and #449/version29 is an
-  active producer continuation. Preserve both as explicit cutover dependencies;
+  #445/version28 and the completed #449/version29 publication use the previous
+  receipt contract. Preserve both original identities and recovery evidence;
   do not treat an older skipped Real Bamboo result as new-contract success.
 - Only after the new producer and promotion proofs pass may the old automatic
   release test/build routes be retired. No new release cut uses the old

@@ -88,6 +88,8 @@ The activation table is authoritative for migration progress. Do not describe
 pending source-repository changes as active, create new release cuts through the
 old release-repair-batch policy, or silently change an in-flight frozen release.
 Update instructions, local commands, YAML and executable gate tests together.
+Consult the [complete Actions audit](docs/ci-workflow-audit.md) for each
+workflow's owner and retained analysis, diagnostic or historical boundary.
 
 ## Commit & Pull Request Guidelines
 Follow Conventional Commit style already used in history (for example, `chore: bump bamboo and bodhi submodule pointers`, `docs: add submodule usage guide`).
