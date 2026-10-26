@@ -39,12 +39,10 @@ test("wrapper workflows only check source and cannot dispatch or publish", () =>
 
 test("policy runs when a retired script is restored without other file changes", () => {
   const policy = readFileSync(path.join(root, ".github/workflows/repository-policy.yml"), "utf8");
-  const eventFilters = [
-    policy.match(/  push:([\s\S]*?)  pull_request:/)?.[1],
-    policy.match(/  pull_request:([\s\S]*?)\npermissions:/)?.[1],
-  ];
+  assert.doesNotMatch(policy, /^  push:/m, "Main must not repeat feature policy tests");
+  const eventFilters = [policy.match(/  pull_request:([\s\S]*?)\npermissions:/)?.[1]];
   for (const filter of eventFilters) {
-    assert.ok(filter, "Push and pull_request must both check policy changes");
+    assert.ok(filter, "Feature pull requests must check policy changes");
     const patterns = [...filter.matchAll(/^\s+- "([^"]+)"$/gm)].map((match) => match[1]);
     for (const changed of [
       "scripts/release-publication.cjs",
@@ -52,6 +50,7 @@ test("policy runs when a retired script is restored without other file changes",
       "scripts/finalize-bodhi-release.cjs",
       "scripts/verify-bamboo-publication.py",
       "scripts/repository-policy.test.cjs",
+      "docs/delivery-workflow.md",
     ]) {
       assert.ok(patterns.some((pattern) => path.matchesGlob(changed, pattern)), `Policy would miss ${changed}`);
     }

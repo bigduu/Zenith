@@ -58,7 +58,7 @@ From repository root:
 - `git submodule status` - show current pinned revisions.
 
 Common per-module commands:
-- `cd bamboo && cargo build && cargo test` - build and test backend.
+- `cd bamboo && cargo test --locked` - compile the test outputs and run backend tests; do not prepend a redundant workspace build.
 - `cd bamboo && cargo fmt --check && cargo clippy` - Rust formatting/lint checks.
 - `cd lotus-next && npm run dev` - run the canonical web app locally.
 - `cd lotus-next && npm run type-check && npm run test:run` - TS + Vitest validation.
@@ -76,6 +76,18 @@ Run the smallest meaningful suite while iterating, then run full affected suites
 - Backend changes: `cargo test` in `bamboo`.
 - Frontend changes: `npm run test:run` in `lotus-next`.
 - UI/workflow changes: include `lotus-next/e2e` coverage when behavior crosses pages or services.
+
+## Shared Delivery Workflow
+
+Every agent follows [delivery-flow/v1](docs/delivery-workflow.md) and the owning
+repository's root `AGENTS.md` and local delivery guide. Feature PRs own Unit/E2E
+and their repairs before dev admission. Frozen release branches only version,
+build, package and publish formal artifacts once. Main preserves stable source
+and immutable version/artifact records; it does not repeat tests or compilation.
+The activation table is authoritative for migration progress. Do not describe
+pending source-repository changes as active, create new release cuts through the
+old release-repair-batch policy, or silently change an in-flight frozen release.
+Update instructions, local commands, YAML and executable gate tests together.
 
 ## Commit & Pull Request Guidelines
 Follow Conventional Commit style already used in history (for example, `chore: bump bamboo and bodhi submodule pointers`, `docs: add submodule usage guide`).
@@ -220,35 +232,46 @@ Examples: `[lotus-next] feat: add conversation export`, `[bamboo] fix: streaming
 
 ## Release Playbook
 
-Each producer and product owns its release workflow. Zenith owns source gitlinks and documentation; it does not publish, allocate downstream versions, dispatch another repository, or recover Bodhi drafts. Use the [Bodhi release playbook](https://github.com/bigduu/Bodhi-AI/blob/main/docs/releasing.md) for exact commands and recovery requirements.
+Each producer owns its release workflow. Zenith owns gitlinks and documentation;
+it does not allocate versions, dispatch publishers or recover another product.
+Use [delivery-flow/v1](docs/delivery-workflow.md) and the owning repository's guide,
+including the [Bodhi release playbook](https://github.com/bigduu/Bodhi-AI/blob/main/docs/releasing.md).
 
-1. Land source and lock changes through the owning repository's reviewed PR flow:
-   - Use isolated branches/worktrees and Conventional Commits. Bamboo feature PRs target `dev`; promotion to `main` remains a separate change.
-   - Lotus Next publication is a separate protected producer step. Publish and verify its exact npm artifact before accepting that identity in a consumer lock.
-   - Bodhi owns `scripts/bamboo-sidecar-lock.json` and `scripts/frontend-package-lock.json`. Preserve their full source, version, target and digest identities; do not substitute a moving `latest`, registry bytes with edited digests, or a local source build.
-   - Bamboo's embedded frontend and Bodhi's external static directory can use different accepted Lotus Next identities. Validate each consumer's own lock.
-   - Update Zenith gitlinks in a separate focused PR after source merge. Those development pins are not a publication prerequisite or a second artifact lock.
+1. The feature owner runs and repairs Unit/E2E before reviewed dev admission.
+   Preserve native OS, real Host, browser and negative-control coverage in this
+   phase. Never move failing tests or runtime repairs into a release batch.
+2. Freeze one accepted dev cut. Reserve one final version and build each formal
+   artifact once. Release verifies source, version, architecture, package,
+   signature and hashes; it does not rerun Unit/E2E. Stamp disposable checkouts
+   where manifests intentionally retain `0.0.0`.
+3. Consumers use exact published identities. Bodhi owns its Bamboo/frontend locks
+   and consumes those bytes without Cargo/Vite fallback. Bamboo's embedded
+   frontend and Bodhi's external frontend may have different accepted locks.
+4. Publish and verify original assets in the owning repository. Preserve real
+   build source, controller, run/attempt and asset digests. The current native
+   target set is macOS ARM64, Linux x64 and Windows x64; historical receipts keep
+   their original target requirements. A tag or draft alone is not completion.
+5. Promote the completed release to main with read-only source/release proof.
+   Main stores stable code and immutable tag/manifest/provenance references;
+   its push/promotion events do not test, compile, pack or publish the product
+   again. A trusted release dispatch may use a main-ref controller while building
+   only the selected frozen source. Do not relabel
+   the release source as the later merge commit or move the built release head.
+6. Recover only the original successful build outputs. A missing or failed native
+   target needs repair through feature/dev and a new cut; finalization recovery
+   never rebuilds or changes a previously uploaded asset. Retain frozen historical
+   receipt requirements, even when their workflow differs from the new contract.
+7. Update Zenith gitlinks in a separate focused PR after source admission. Those
+   development pins are not publication prerequisites or artifact locks. Check
+   root policy with `node --test scripts/repository-policy.test.cjs` and
+   `actionlint .github/workflows/*.yml`; do not repeat downstream product suites.
+8. Homebrew owns one candidate installation audit and URL/version/hash update.
+   It does not rebuild Bamboo, Lotus or Bodhi, or rerun the same audit after merge.
+   Jiandu's current source formula is a tracked prebuilt-producer dependency,
+   not proof that downstream compilation has already been eliminated.
 
-2. Verify the exact candidate in the owning repository:
-   - Bamboo: `cargo fmt --check`, `cargo clippy` and `cargo test`, plus its publisher's source, dependency-closure and frontend gates.
-   - Lotus Next: `npm run verify` and `npm run test:e2e:built`, plus its publish workflow's real Bamboo round trip.
-   - Bodhi: `npm run test:build`, `node scripts/verify-boundaries.cjs migration`, `node scripts/verify-boundaries.cjs docs-boundary`, and actionlint for its workflows.
-   - Bodhi retains all four native targets: macOS Intel, macOS ARM64, Linux x64 and Windows x64. Real assembly, actor transport, browser-host and external static-directory gates must pass before final publication.
-   - Zenith policy changes: `node --test scripts/repository-policy.test.cjs` and `actionlint .github/workflows/*.yml`. No registry downloads or cross-repository publication checks run here.
-
-3. Publish independently:
-   - Bamboo publishes from its own successful main CI source or authorized exact-source manual publisher. Keep its publication queue and provenance checks in Bamboo.
-   - Bodhi's `release.yml` takes an explicit unused `bodhi_version` and full `expected_source_sha`, dispatched directly in `bigduu/Bodhi-AI` against that source. Source manifests retain `0.0.0`; only temporary publishing checkouts are stamped. The candidate's committed upstream locks remain authoritative.
-   - An ordinary Bodhi shell release reuses the locked published Bamboo binary and frontend. It does not republish Bamboo or Lotus Next.
-   - Watch the owning repository's run and verify its exact source, all four platform outcomes, final `app-v<version>` and eight asset identities. A draft or version's mere existence is not successful publication.
-
-4. Recover in the owning repository:
-   - Never rerun a Zenith train or dispatch through an old frozen train definition. Existing published assets and historical tags remain unchanged.
-   - Bodhi recovery binds the original release run, original attempt, exact source/version and verified asset receipt. All four original native jobs and gates must have succeeded; only finalization may be recovered without rebuilding.
-   - Missing or mismatched source, lock, gate, receipt or asset evidence stops recovery. A failed native build is not a finalizer-only recovery candidate.
-   - If a producer lock needs changing, publish and verify a new producer artifact, then accept it through a consumer PR. Do not mutate a lock to fit unexpected bytes or reuse a version for a different source.
-
-5. Verify delivery:
-   - Check final published identities in the producer/product repository. Source, configuration or a green fixture suite alone does not establish publication or native acceptance.
-   - The Homebrew tap independently follows stable Bodhi, Jiandu and Nova releases through its update PR and ARM64/Intel macOS checks. Zenith does not dispatch or update the tap.
-   - A tap no-op means its definitions already match published releases; installed users still run `brew update`, `brew upgrade bigduu/tap/jiandu bigduu/tap/nova`, and `brew upgrade --cask bigduu/tap/bodhi`.
+Read the migration activation table before any cut. Bootstrap missing dev
+branches and trusted controllers through their focused source-only changes;
+complete required feature evidence and release admission before retiring old
+entrypoints. Preserve active frozen releases and their owners. Do not dispatch
+an old Zenith train or silently apply new receipt rules to historical recovery.
