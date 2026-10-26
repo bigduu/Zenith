@@ -11,7 +11,7 @@ The audit covers every `.github/workflows/` file in these source snapshots:
 | --- | --- |
 | Bamboo | Main `d6325a732c7669f94962f604e4ce98966e374d73` and feature PR2322 `339c997918a05789fb06fc407106728e64b36a41`; removals compared with dev `bf2db02f07625b8638706e16c075f35a2cf3d1e7`. |
 | Lotus Next | Feature PR450 `55d1b7dc9d49eea09a79ea7667b121d7c4aca202`, with the existing historical publisher retained. |
-| Bodhi | Feature `2d8bdb3ca5f008e7cd6cd5671643248c9e1da06a` and source-foundation PR123 `ed0f04636cc31144ba36d1d912fb8db3cdc5b8c1`; release/recovery compared with stable main `c556e0fc96e63fd7ede7b061e7d9117c1e2fc7d1`. |
+| Bodhi | Feature `2d8bdb3ca5f008e7cd6cd5671643248c9e1da06a` and source-foundation PR123 `60c06ac580058ec15cbab45230715b4e57bd2eb6`; release/recovery compared with stable main `c556e0fc96e63fd7ede7b061e7d9117c1e2fc7d1`. |
 | Homebrew tap | PR25 `05bd845f6a7d77fc8af975825db7f9ce9685e3f6`, merged with the same tree as main `c7be602e335321efd126277a9e5fdcd9bebb3c4b`. |
 
 Source revisions identify the definitions reviewed here. Actual test snapshots,
