@@ -62,7 +62,7 @@ macOS dev-profile TLS unwind acceptance is distinct from test-profile runtime;
 Windows API-only Rust1.99 Actor inputs are distinct from stable embedded inputs.
 Coverage catalog counts are not native execution evidence.
 
-Original PR2322 head `8a1de1ff` completed real feature acceptance in
+Original PR2322 head `8a1de1ff` completed real canonical Linux Unit/E2E acceptance in
 [run40441830591/1](https://github.com/bigduu/Bamboo-agent/actions/runs/40441830591):
 actual tested merge `c5007d4c`, all nine selected jobs green, 31 default contexts,
 serial/SSH and all 19 additive cases complete. This accepts that source only.
