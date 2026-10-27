@@ -19,6 +19,13 @@ controller revisions, accepted merges and original build attempts remain separat
 identities in each repository's evidence. A later edit adds a fresh audit entry;
 it does not retroactively change one of these snapshots.
 
+Subsequent audit additions use Bamboo dev `fda1ec05abb6efa720c8af58176878cbfb46b2d8`
+for `trusted-observer.yml` and `a64a852810b7104954e9fd1f60230df09b48eef2`
+for `delegated-planner-acceptance.yml`, plus Bodhi accepted dev
+`93ba85d0dad4c76cf2c12d099a7b3f12050bf3f6` and trusted main
+`19f11149f5f1c19d07b80faec5b0ca88de74ba90`. These additions preserve the
+earlier snapshots above; they do not substitute a new source for an old run.
+
 ## Bamboo
 
 | File | Responsibility and review decision |
@@ -40,6 +47,8 @@ it does not retroactively change one of these snapshots.
 | `release-credentials-check.yml` | Explicit operator credential check; no ordinary feature/release test producer. Retain without adding automatic credential access. |
 | `claude.yml` | Explicitly mentioned issue/PR assistant. Not an automatic product test or release stage. Retain its existing authorization boundary. |
 | `pr-cache-cleanup.yml` | Closed-PR cache lifecycle. No product build/test. Retain fork restrictions. |
+| `trusted-observer.yml` | Added by accepted PR2313 after the original audit. Path-scoped Linux stable API-only runtime of domain/storage/server libraries plus stricter all-features library Clippy. It checks feature-head source rather than the canonical tested merge. Its API-only configuration and package graph are distinct from embedded default CI; migrate the owner explicitly before retiring this route. Do not claim that matching case names already establish deduplication or new-contract source evidence. |
+| `delegated-planner-acceptance.yml` | Added by accepted PR2304 after the original audit. Linux stable API-only Plan library, immutable-artifact library and real CLI/restart cases, followed by all-features library/integration Clippy. It also checks feature-head source. Runtime/compiler overlap must be compared with the canonical runner using actual target/features/configuration; its required-child integration lint is an additional selection. It remains active pending a bounded ownership/source-context migration. |
 
 Native TLS, Recorder and portable Skill selections are also embedded in
 `ci.yml`. Issue2319 must compare actual target/features/profile/toolchain within
@@ -66,14 +75,17 @@ run or a deterministic fix.
 
 | File | Responsibility and review decision |
 | --- | --- |
-| `ci.yml` | Feature PRs into dev run Node contracts and real Unit/E2E on Linux x64, macOS ARM64 and Windows x64. Reuse the debug/test assembly and staged resources; no CI installers or standalone release shell build. Aggregate outcomes remain fail-closed. |
-| `release.yml` | Sole final-version desktop installer producer. Consume locked published Bamboo and Lotus, not their source builds. Issue122 adds durable per-target original output checkpoints before finalization; source foundation121 is separate from activation. The Tauri hook should stage each upstream input once. |
+| `ci.yml` | Feature PRs into dev run Node contracts and real Unit/E2E on Linux x64, macOS ARM64 and Windows x64. Reuse the debug/test assembly and staged resources; no CI installers or standalone release shell build. Aggregate outcomes remain fail-closed. Main PRs execute the trusted-base read-only Main Admission check; main pushes do not repeat the product suites. Dev and main now require their respective real checks. |
+| `release.yml` | Sole final-version desktop installer producer. Consume locked published Bamboo and Lotus, not their source builds. Merged Issue122 adds durable per-target original output checkpoints before finalization; source foundation121 and original feature context127/130 are merged. The accepted controller is installed on main through PR134. No new-contract production run has yet proved the positive publication/promotion path. |
 | `recover-release.yml` | Reuses original installers/evidence and performs no compiler run. Keep the v1 frozen recovery contract; a new original-output contract must not fall back to it for newly admitted releases. |
 
 `web:build` in package mode stages and verifies an existing Lotus package; its
-name does not establish another Vite compilation. The current main protection
-and source-only controller bootstrap need concrete reviewed promotion gates
-before activation. Preserve concurrent release/dependency PRs and their locks.
+name does not establish another Vite compilation. PR134's source-only bootstrap
+preserved the prior main product/dependency tree and copied exactly 11 accepted
+controls. The actual negative PR135 was rejected by the required Main Admission
+check, then closed without merge. This is live negative admission evidence,
+not a completed v2 release or a positive published-release promotion. Preserve
+concurrent release/dependency PRs and their locks.
 
 ## Homebrew tap
 
