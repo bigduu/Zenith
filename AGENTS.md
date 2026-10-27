@@ -84,7 +84,7 @@ repository's root `AGENTS.md` and local delivery guide. Feature PRs own Unit/E2E
 and their repairs before dev admission. Frozen release branches only version,
 build, package and publish formal artifacts once. Main preserves stable source
 and immutable version/artifact records; it does not repeat tests or compilation.
-The activation table is authoritative for migration progress. Do not describe
+Use the tracker and live workflow files for migration progress. Do not describe
 pending source-repository changes as active, create new release cuts through the
 old release-repair-batch policy, or silently change an in-flight frozen release.
 Update instructions, local commands, YAML and executable gate tests together.
@@ -274,7 +274,7 @@ including the [Bodhi release playbook](https://github.com/bigduu/Bodhi-AI/blob/m
    Jiandu's current source formula is a tracked prebuilt-producer dependency,
    not proof that downstream compilation has already been eliminated.
 
-Read the migration activation table before any cut. Bootstrap missing dev
+Check the tracker and live workflows before any cut. Bootstrap missing dev
 branches and trusted controllers through their focused source-only changes;
 complete required feature evidence and release admission before retiring old
 entrypoints. Preserve active frozen releases and their owners. Do not dispatch
