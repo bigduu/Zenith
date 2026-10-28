@@ -84,6 +84,9 @@ repository's root `AGENTS.md` and local delivery guide. Feature PRs own Unit/E2E
 and their repairs before dev admission. Frozen release branches only version,
 build, package and publish formal artifacts once. Main preserves stable source
 and immutable version/artifact records; it does not repeat tests or compilation.
+Lotus publication trusts its normal protected dev merge and does not require
+expired feature-job records; Bamboo and Bodhi follow their own source-proof
+requirements in their local guides.
 Use the tracker and live workflow files for migration progress. Do not describe
 pending source-repository changes as active, create new release cuts through the
 old release-repair-batch policy, or silently change an in-flight frozen release.
