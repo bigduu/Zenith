@@ -5,6 +5,58 @@ This is the file index for [delivery-flow/v1](delivery-workflow.md), tracked by
 activation table before using a proposed path. Review of a file does not mean
 its replacement is deployed or its production run has passed.
 
+## Current activation and remaining gaps
+
+The following is a live-workflow review as of 2026-10-28 15:07 UTC, not a rewrite of the
+historical snapshots below. Recheck branch heads and run results before a cut:
+
+| Repository | Reviewed current source |
+| --- | --- |
+| Bamboo | Main `7ad74f5f75c6f6b4de430337c213f554158f86e0`; dev `e511f7f9b27161d2b86b22f50a3f43b5245038fc`. |
+| Lotus Next | Main `d5d4606c577d884b5cff040951cca87a0fc50bc3`; dev `b69db417d9ae2c4b7ff3e87d20932c78eedfe12d`. |
+| Bodhi | Main `b0c7c949117570170f4e5fd14a906f6449a119a8`; dev `69edd81366d8f9d5556f76ac0daef44770c02af0`. |
+| Homebrew tap | Main `4c51d6992575654781446c77c72677d9b6729712`; no dev branch. |
+
+- **Bamboo:** Dev PRs own the feature tests; main promotion uses the read-only
+  `Promotion Source` check. Main's `docs.yml` now deploys the retained feature
+  site instead of rebuilding Rustdoc; [run 40632077233](https://github.com/bigduu/Bamboo-agent/actions/runs/40632077233)
+  downloaded and verified that site successfully. The image workflow consumes
+  the published Linux x64 binary; Linux ARM64 remains a distinct build target.
+  The [automatic GHCR run](https://github.com/bigduu/Bamboo-agent/actions/runs/40631681558)
+  failed, while a [manual recovery](https://github.com/bigduu/Bamboo-agent/actions/runs/40637786339)
+  succeeded. The cache fix is on dev, but the default-branch listener has not
+  yet proved that fix on a later automatic run.
+- **Lotus Next:** Dev's publisher builds and packs one final tarball and retains
+  its bytes for publication. The protected-Dev trust change passed its
+  [feature CI](https://github.com/bigduu/lotus-next/actions/runs/40699194988).
+  The new publisher has not yet completed a production run. Main still contains
+  the historical manually dispatched publisher, which can build twice and run
+  Real Bamboo if its old candidate prerequisites are met; it has not been
+  retired. The old v29 publication is not evidence for the new producer.
+- **Bodhi:** Feature [run 40704922855](https://github.com/bigduu/Bodhi-AI/actions/runs/40704922855)
+  passed on all three platforms. The attempted v2026.10.30
+  [release](https://github.com/bigduu/Bodhi-AI/actions/runs/40701347544)
+  failed while selecting output on every target; all installer-build steps and
+  publication were skipped. The fix allowing build jobs to read the retained
+  reservation with read-only permissions is on dev, but its
+  [main controller PR](https://github.com/bigduu/Bodhi-AI/pull/151) remains
+  blocked. Neither a completed v2 publication nor a positive v2 main promotion
+  has been proved.
+- **Homebrew tap:** A [no-change scheduled run](https://github.com/bigduu/homebrew-tap/actions/runs/40688480142)
+  skipped update tests, native audit and merge. Candidate PRs still own their
+  appropriate installation acceptance; Jiandu's source formula runs Cargo
+  during installation. A prebuilt Jiandu producer and formula migration remain
+  necessary before claiming zero downstream compilation.
+
+The current index also includes Bamboo's path-scoped `observer-api-lint.yml`,
+manual `supervisor-epic-acceptance.yml` and `supervisor-role-acceptance.yml`,
+and the dev-only, fixed-v2026.10.19 `recover-frozen-crate-release.yml`.
+`frontend-acceptance.yml` and `observer-subscriptions.yml` are now manual
+diagnostics. Lotus `main-promotion.yml` is a trusted-base, read-only main PR
+admission workflow. Bamboo's old `orchestration-native-recovery.yml` and
+`scoped-context-view.yml` are absent on both reviewed branches. Bodhi and the
+tap retain the three workflow files listed in their historical sections.
+
 The audit covers every `.github/workflows/` file in these source snapshots:
 
 | Repository | Reviewed source |
