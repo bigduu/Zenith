@@ -100,11 +100,25 @@ not remove those real runtime prerequisites.
 | Bodhi | Shell Unit and real actor/static-dir/browser assembly E2E using the same debug/test output and locked published dependencies. | Stamp the final version and build each desktop installer once. No feature CI installers and no release-time Unit/E2E. | Publication and recovery retain original installer bytes and receipts; Homebrew verifies the published DMG. |
 | Homebrew tap | Updater Unit plus one necessary candidate installation/architecture/signing E2E. | No upstream product producer. | Main stores accepted URL/version/hash. Automatic updates own their prepared-candidate audit; ordinary main pushes do not repeat it. |
 
-Current native Bamboo v2 and Bodhi targets are macOS ARM64, Linux x64 and Windows
-x64. Historical receipts retain their original target set, including Intel
-macOS where required. Docker Linux ARM64 is an additional target, not a duplicate
-of the existing Linux x64 executable; producer support and runtime ABI checks are
-a separate bounded change.
+[Zenith #530](https://github.com/bigduu/Zenith/issues/530) tracks the planned
+Bamboo and Bodhi native matrix.
+
+| Platform | Release target |
+| --- | --- |
+| macOS ARM64 | `aarch64-apple-darwin` |
+| Linux x64 | `x86_64-unknown-linux-gnu` |
+| Linux ARM64 | `aarch64-unknown-linux-gnu` |
+| Windows x64 | `x86_64-pc-windows-msvc` |
+| Windows ARM64 | `aarch64-pc-windows-msvc` |
+
+The existing three-target Bamboo and Bodhi contracts apply to their frozen
+sources. Historical receipts retain their original target sets, including
+macOS Intel where required. Activate the new targets per producer after native
+feature acceptance and review. Bamboo publishes the original binaries first.
+Bodhi pins those exact bytes with its verified browser and runtime inputs.
+GHCR consumes the published Linux binaries after verifying the target and
+runtime ABI. Follow the tracker for the first verified publication of each
+expanded contract.
 
 Jiandu's current Homebrew formula compiles from a source archive. Eliminating
 that downstream compilation requires a real prebuilt Jiandu producer and a

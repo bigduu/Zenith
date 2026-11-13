@@ -253,9 +253,11 @@ including the [Bodhi release playbook](https://github.com/bigduu/Bodhi-AI/blob/m
    and consumes those bytes without Cargo/Vite fallback. Bamboo's embedded
    frontend and Bodhi's external frontend may have different accepted locks.
 4. Publish and verify original assets in the owning repository. Preserve real
-   build source, controller, run/attempt and asset digests. The current native
-   target set is macOS ARM64, Linux x64 and Windows x64; historical receipts keep
-   their original target requirements. A tag or draft alone is not completion.
+   build source, controller, run/attempt and asset digests. The planned Bamboo
+   and Bodhi target set is macOS ARM64, Linux x64 and ARM64, and Windows x64
+   and ARM64. Check [Zenith #530](https://github.com/bigduu/Zenith/issues/530)
+   for activation evidence. Frozen releases and historical receipts keep their
+   original target requirements. Completion requires the verified assets.
 5. Promote the completed release to main with read-only source/release proof.
    Main stores stable code and immutable tag/manifest/provenance references;
    its push/promotion events do not test, compile, pack or publish the product
