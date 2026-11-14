@@ -24,7 +24,19 @@ agent：它用工具处理你的项目，高风险操作前先征求你的同意
 
 ## 开始使用
 
-**macOS（推荐用 Homebrew）：**
+### 终端一键安装
+
+适用于 macOS 13.5 及以上的 Apple Silicon Mac，以及使用 APT 的 Linux x64。
+
+```sh
+curl -q --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL https://bigduu.github.io/Pavilion/install.sh | sh
+```
+
+脚本会校验最新稳定版安装包。macOS 将 Bodhi 安装到 `~/Applications`，Linux 需要 Python 3 或 `jq`，并按 sudo 和 APT 的提示确认安装。[平台要求与下载](https://bigduu.github.io/Pavilion/download?lang=zh#terminal-install)
+
+### Homebrew 和手动安装
+
+**macOS 使用 Homebrew**
 
 ```sh
 brew tap bigduu/tap
