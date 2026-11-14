@@ -12,7 +12,7 @@ Zenith) is the index for the desktop app, the agent runtime and its MCP tools.
 - **Does the work, not just chat:** the Bamboo runtime has file, shell and web
   tools, skills, MCP servers, sub-agents, cron schedules and workflows.
 - **Your choice of model:** Anthropic, OpenAI (and OpenAI-compatible endpoints),
-  Gemini or GitHub Copilot.
+  and Gemini.
 - **Memory your other agents can share:** [Jiandu](https://github.com/bigduu/Jiandu)
   is a local MCP memory server (BM25 + CJK, no embeddings) that Claude Code,
   Codex and Cursor can use too.

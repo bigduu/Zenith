@@ -10,7 +10,7 @@ agent：它用工具处理你的项目，高风险操作前先征求你的同意
 
 - **真干活，不只聊天**：Bamboo 运行时内置文件、命令行和网页工具，支持 Skills、MCP 服务、
   子 agent、定时任务和工作流。
-- **模型自己选**：Anthropic、OpenAI（以及兼容 OpenAI 接口的服务）、Gemini 或 GitHub Copilot。
+- **模型自己选**：Anthropic、OpenAI（以及兼容 OpenAI 接口的服务）、Gemini。
 - **记忆能和其他 agent 共享**：[简牍 Jiandu](https://github.com/bigduu/Jiandu/blob/main/README.zh-CN.md)
   是本地 MCP 记忆服务（BM25 + 中文分词，不需要向量库），Claude Code、Codex、Cursor 也能接入。
 - **不止在终端里**：用 [Nova](https://github.com/bigduu/Nova/blob/master/README.zh-CN.md) 操作
