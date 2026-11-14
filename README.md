@@ -27,7 +27,22 @@ prepares project context without calling a model. [Static image](docs/readme-ref
 
 ## Get started
 
-**macOS (Homebrew, recommended):**
+### Install from your terminal
+
+Run this on Apple Silicon macOS 13.5+ or APT-based Linux x64:
+
+```sh
+curl -q --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL https://bigduu.github.io/Pavilion/install.sh | sh
+```
+
+The script verifies the latest stable installer and puts Bodhi in
+`~/Applications` on macOS. Linux requires Python 3 or `jq`. Follow the sudo
+and APT prompts to confirm installation.
+[Platform requirements and downloads](https://bigduu.github.io/Pavilion/download?lang=en#terminal-install)
+
+### Homebrew and manual installation
+
+**macOS with Homebrew**
 
 ```sh
 brew tap bigduu/tap
