@@ -2,6 +2,8 @@
 
 Contract: `delivery-flow/v1`. This is the common policy for Bamboo, Lotus Next,
 Bodhi and their Homebrew consumer, regardless of which agent owns a change.
+The [release notes contract](#release-notes) applies to formal releases from
+every Zenith submodule.
 Implementation is tracked in [Zenith #399](https://github.com/bigduu/Zenith/issues/399).
 The [Actions file audit](ci-workflow-audit.md) maps every reviewed workflow to
 its owner, deduplication decision and retained historical or analysis boundary.
@@ -22,7 +24,7 @@ or publication dispatchers to these metadata consumers.
 | --- | --- | --- |
 | Feature PR into `dev` | The feature owner fixes its Unit and E2E failures. Test binaries and browser fixtures are compiled here, once for each distinct configuration. | Required Unit/E2E outcomes, complete coverage, current review and exact head/base/source evidence. |
 | `dev` | Integrates accepted features. Normal pushes do not repeat the feature suites. | Accepted merge/tree linked to the original feature checks; no unchecked direct admission. |
-| Frozen `release/<cut-SHA>` | Select an accepted dev cut, reserve one final version, build/package each formal target once and publish the original assets. | Source admission, version/architecture/package/signature/resource/hash checks and completed publication receipts. |
+| Frozen `release/<cut-SHA>` | Select an accepted dev cut, reserve one final version, build/package each formal target once and publish the original assets. | Source admission, version/architecture/package/signature/resource/hash checks, verified release notes and completed publication receipts. |
 | Promotion to `main` | Preserve stable source and its immutable version, tag and artifact records. | Read-only proof of the built source, completed release, normal promotion and unchanged product tree. |
 | Main push/promotion events, recovery and consumers | Read, verify, distribute or recover the accepted assets. | Original source/version/run/attempt/artifact identities. No product rebuild or full test rerun. |
 
@@ -168,6 +170,39 @@ source, version reservation and admitted dev ancestry. API failures are unknown
 state: read back the targeted remote identity before retrying a write. A final
 manifest means every required asset is complete. Tag creation or a public crate
 Release alone does not establish binary availability.
+
+## Release notes
+
+The publisher of each formal release owns versioned, user-facing notes for the
+product it ships. Publish the notes alongside the GitHub Release or at a durable
+location linked to the exact package version or tag for registry-only releases
+such as Lotus Next. Retain the notes with the original publication evidence for
+readback and recovery.
+
+- Describe what users will see change, including relevant fixes, new behavior
+  and upgrade requirements. Link the original Git commit subjects and the full
+  comparison. Version numbers, dependency-lock subjects and a raw commit list
+  alone do not explain the update.
+- Use the previous completed release on the same channel and the actual source
+  for the new release. Resolve both from published version records or verified
+  artifact receipts. Read all pages of the commit range before summarizing it,
+  and link the full range when shortening the inline list. Identify a first
+  release explicitly and describe the delivered product.
+- For a bundled product, compare its previous and current shipped component
+  identities from the verified manifests and frozen locks. Cover the product's
+  own changes and every component added, removed or changed. For each updated
+  component, give its version transition, the changes users receive and the Git
+  comparison between the two shipped sources. Bodhi applies this to the Bamboo
+  engine, the Lotus Next interface and other components that change in the
+  installation. Bamboo applies it to the Lotus Next package when its embedded
+  frontend changes. Moving branch heads and Zenith gitlinks cannot establish
+  what shipped.
+- The owning producer checks notes before public finalization. Check the
+  delivered component list, version and source endpoints, and the presence of a
+  change description and Git evidence for each changed component. Test the case
+  where the only local source change updates a component lock, a missing or
+  unrelated history range, and a range larger than one API page. Preserve the
+  original notes and receipt format for frozen releases and historical recovery.
 
 ## Agent procedure
 

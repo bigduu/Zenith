@@ -64,3 +64,10 @@ test("current playbook and READMEs point to repository-owned publishers", () => 
     assert.doesNotMatch(body, /\]\([^)]*(?:release-train|nightly-release|recover-bodhi-release|release-policy)/, `${file} must not link a retired release authority`);
   }
 });
+
+test("the release playbook links the shared release notes contract", () => {
+  const playbook = readFileSync(path.join(root, "AGENTS.md"), "utf8").split("## Release Playbook")[1];
+  const workflow = readFileSync(path.join(root, "docs/delivery-workflow.md"), "utf8");
+  assert.match(playbook, /\]\(docs\/delivery-workflow\.md#release-notes\)/);
+  assert.match(workflow, /^## Release notes$/m);
+});
