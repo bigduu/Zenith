@@ -258,6 +258,10 @@ including the [Bodhi release playbook](https://github.com/bigduu/Bodhi-AI/blob/m
    and ARM64. Check [Zenith #530](https://github.com/bigduu/Zenith/issues/530)
    for activation evidence. Frozen releases and historical receipts keep their
    original target requirements. Completion requires the verified assets.
+   Follow the [release notes contract](docs/delivery-workflow.md#release-notes)
+   for every formal release. Explain user-visible changes and link the actual
+   Git history for each changed component shipped with the product, using the
+   previous and current published identities.
 5. Promote the completed release to main with read-only source/release proof.
    Main stores stable code and immutable tag/manifest/provenance references;
    its push/promotion events do not test, compile, pack or publish the product
